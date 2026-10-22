@@ -14,9 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive;
 
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveTrieNodeReplayer;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveTrieNodeStrategy;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.FinalizedTrieNodeArchiver;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 
@@ -27,24 +29,26 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Lifecycle handle for the Bonsai archive's background components: trie-node capture, the flat-DB
- * archive migrator and, when archive proofs are enabled, the trie-node replayer. Built by {@link
- * BonsaiArchiveFactory}.
+ * archive migrator and, when archive proofs are enabled, the finalized trie-node archiver. Built by
+ * {@link BonsaiArchiveFactory}.
  */
 public final class BonsaiArchiveService implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiArchiveService.class);
 
   /**
-   * The trie-node capture strategy and replayer that exist only when archive proofs are enabled.
+   * The trie-node capture strategy and archiver that exist only when archive proofs are enabled.
    */
-  record ProofCapture(ArchiveTrieNodeStrategy strategy, ArchiveTrieNodeReplayer replayer) {}
+  record ProofCapture(ArchiveTrieNodeStrategy strategy, FinalizedTrieNodeArchiver archiver) {}
 
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
+  private final Blockchain blockchain;
   private final BonsaiFlatDbToArchiveMigrator migrator;
   private final long maxLayersToLoad;
   private final Optional<ProofCapture> proofCapture;
@@ -53,11 +57,13 @@ public final class BonsaiArchiveService implements Closeable {
 
   BonsaiArchiveService(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final Blockchain blockchain,
       final BonsaiFlatDbToArchiveMigrator migrator,
       final long maxLayersToLoad,
       final Optional<ProofCapture> proofCapture,
       final List<ExecutorService> executors) {
     this.worldStateStorage = worldStateStorage;
+    this.blockchain = blockchain;
     this.migrator = migrator;
     this.maxLayersToLoad = maxLayersToLoad;
     this.proofCapture = proofCapture;
@@ -79,21 +85,37 @@ public final class BonsaiArchiveService implements Closeable {
           capture
               .strategy()
               .setHasChainEstimate(() -> synchronizer.getBestPeerChainHead().isPresent());
+          capture.strategy().setFinalizedBlockLimit(this::finalizedBlockLimit);
+          capture.strategy().setCatchUpTo(capture.archiver()::catchUpTo);
           synchronizer.subscribeInSync(capture.strategy(), maxLayersToLoad);
-          startReplayer(synchronizer, capture);
+          startFinalizedArchiver(synchronizer, capture);
         });
     startMigration(synchronizer);
   }
 
-  private void startReplayer(final Synchronizer synchronizer, final ProofCapture capture) {
-    final AtomicBoolean replayerStarted = new AtomicBoolean(false);
+  /**
+   * The finalized block's number. Unlimited when there is no finality signal (no competing blocks
+   * reach a peer-less node without a consensus client) or when the finalized block is not yet
+   * imported (it is ahead of every block being imported).
+   */
+  @VisibleForTesting
+  long finalizedBlockLimit() {
+    return blockchain
+        .getFinalized()
+        .flatMap(blockchain::getBlockHeader)
+        .map(BlockHeader::getNumber)
+        .orElse(Long.MAX_VALUE);
+  }
+
+  private void startFinalizedArchiver(final Synchronizer synchronizer, final ProofCapture capture) {
+    final AtomicBoolean archiverStarted = new AtomicBoolean(false);
     synchronizer.subscribeInSync(
         inSync -> {
           if (inSync
               && synchronizer.getBestPeerChainHead().isPresent()
-              && replayerStarted.compareAndSet(false, true)) {
-            LOG.info("Node is in sync, starting archive trie-node replayer");
-            capture.replayer().start();
+              && archiverStarted.compareAndSet(false, true)) {
+            LOG.info("Node is in sync, starting finalized trie-node archiver");
+            capture.archiver().start();
           }
         },
         maxLayersToLoad);
@@ -131,10 +153,10 @@ public final class BonsaiArchiveService implements Closeable {
   /** Stops background work and shuts down executors. Must run before the storage closes. */
   @Override
   public void close() {
-    // Replayer and migrator first so in-flight callbacks finish before storage closes, then the
+    // Archiver and migrator first so in-flight callbacks finish before storage closes, then the
     // capture strategy (drains the trie-capture pool). shutdownNow afterwards is idempotent and
     // covers components that were never started.
-    proofCapture.ifPresent(capture -> capture.replayer().close());
+    proofCapture.ifPresent(capture -> capture.archiver().close());
     migrator.close();
     proofCapture.ifPresent(capture -> capture.strategy().close());
     for (final ExecutorService executor : executors) {

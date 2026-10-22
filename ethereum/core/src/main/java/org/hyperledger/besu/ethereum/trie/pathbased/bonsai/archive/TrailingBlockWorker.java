@@ -18,11 +18,13 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 
 import java.io.Closeable;
 import java.util.OptionalLong;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BooleanSupplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -143,6 +145,29 @@ public abstract class TrailingBlockWorker implements Closeable {
     } catch (final RejectedExecutionException e) {
       catchUpRunning.set(false);
       LOG.debug("{} executor shut down; skipping catch-up", getClass().getSimpleName());
+    }
+  }
+
+  /**
+   * Runs {@code task} on the worker's executor, after any in-flight catch-up, and waits for it.
+   *
+   * @param task the work to run, returning whether it succeeded
+   * @return the task's result, or false if it threw or the worker is closed
+   */
+  protected final boolean runAndWait(final BooleanSupplier task) {
+    if (closed) {
+      return false;
+    }
+    try {
+      return executorService.submit(task::getAsBoolean).get();
+    } catch (final RejectedExecutionException e) {
+      return false;
+    } catch (final InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return false;
+    } catch (final ExecutionException e) {
+      LOG.warn("{} task failed", getClass().getSimpleName(), e.getCause());
+      return false;
     }
   }
 

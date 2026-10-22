@@ -71,7 +71,7 @@ public class ArchiveTrieNodeWriter implements Closeable {
   private volatile long lastArchivedBlock = -1L;
 
   /**
-   * When non-null (replayer mode), archive-history and coverage writes go here instead of the
+   * When non-null (archiver mode), archive-history and coverage writes go here instead of the
    * persist transaction, so a snapshot recompute's base writes can be discarded while archive
    * writes reach canonical storage.
    */
@@ -178,7 +178,7 @@ public class ArchiveTrieNodeWriter implements Closeable {
   /**
    * Declares that the archive holds this writer's chain up to {@code block}, so the next block
    * diffs against its history. Callers that persist throwaway writes through this writer, such as
-   * when positioning a replayer state, use it to undo the continuity marker those writes moved.
+   * when positioning an archiver state, use it to undo the continuity marker those writes moved.
    */
   public void markArchivedThrough(final long block) {
     this.lastArchivedBlock = block;

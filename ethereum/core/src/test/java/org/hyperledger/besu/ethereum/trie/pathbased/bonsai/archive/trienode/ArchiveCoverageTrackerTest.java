@@ -55,17 +55,28 @@ class ArchiveCoverageTrackerTest {
   }
 
   @Test
-  void lastCoveredBlockIsHighestRecorded() {
-    assertThat(progress.lastCoveredBlock()).isEmpty();
+  void coverageSpansFirstToLastRecorded() {
+    assertThat(progress.getCoverage()).isEmpty();
 
     final SegmentedKeyValueStorageTransaction tx1 = storage.startTransaction();
     progress.record(tx1, 5L);
     tx1.commit();
     final SegmentedKeyValueStorageTransaction tx2 = storage.startTransaction();
-    progress.record(tx2, 10L);
+    progress.record(tx2, 6L);
     tx2.commit();
 
-    assertThat(progress.lastCoveredBlock()).hasValue(10L);
+    assertThat(progress.getCoverage()).hasValue(new ArchiveCoverageTracker.Coverage(5L, 6L));
+  }
+
+  @Test
+  void rerecordingCoveredBlockMovesLastBack() {
+    recordCommitted(5L);
+    recordCommitted(6L);
+    recordCommitted(7L);
+
+    recordCommitted(6L);
+
+    assertThat(progress.getCoverage()).hasValue(new ArchiveCoverageTracker.Coverage(5L, 6L));
   }
 
   @Test
@@ -86,14 +97,14 @@ class ArchiveCoverageTrackerTest {
     tx1.commit();
 
     final SegmentedKeyValueStorageTransaction tx2 = storage.startTransaction();
-    progress.record(tx2, 10L);
+    progress.record(tx2, 6L);
     tx2.commit();
 
-    // Covered range is [5, 10]
+    // Covered range is [5, 6]
     assertThat(progress.hasArchiveBlock(5L)).isTrue();
-    assertThat(progress.hasArchiveBlock(10L)).isTrue();
+    assertThat(progress.hasArchiveBlock(6L)).isTrue();
     assertThat(progress.hasArchiveBlock(4L)).isFalse();
-    assertThat(progress.hasArchiveBlock(11L)).isFalse();
+    assertThat(progress.hasArchiveBlock(7L)).isFalse();
   }
 
   @Test
@@ -115,5 +126,11 @@ class ArchiveCoverageTrackerTest {
     // NOT committed
 
     assertThat(progress.hasArchiveBlock(7L)).isFalse();
+  }
+
+  private void recordCommitted(final long block) {
+    final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
+    progress.record(tx, block);
+    tx.commit();
   }
 }

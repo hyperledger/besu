@@ -25,7 +25,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveTrieNodeStrategy;
@@ -41,6 +44,9 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -120,6 +126,38 @@ class BonsaiArchiveFactoryTest {
     archive = createArchive(config, storage);
 
     assertThat(storage.getTrieNodeStrategy()).isNotInstanceOf(ArchiveTrieNodeStrategy.class);
+  }
+
+  @Test
+  void finalizedBlockLimitIsFinalizedBlockNumber() {
+    final Hash finalized = Hash.hash(Bytes.of(1));
+    final BlockHeader header = new BlockHeaderTestFixture().number(42L).buildHeader();
+    when(blockchain.getFinalized()).thenReturn(Optional.of(finalized));
+    when(blockchain.getBlockHeader(finalized)).thenReturn(Optional.of(header));
+    final DataStorageConfiguration config = archiveConfig(true);
+    archive = createArchive(config, storage(config));
+
+    assertThat(archive.finalizedBlockLimit()).isEqualTo(42L);
+  }
+
+  @Test
+  void finalizedBlockLimitUnlimitedWithoutFinality() {
+    when(blockchain.getFinalized()).thenReturn(Optional.empty());
+    final DataStorageConfiguration config = archiveConfig(true);
+    archive = createArchive(config, storage(config));
+
+    assertThat(archive.finalizedBlockLimit()).isEqualTo(Long.MAX_VALUE);
+  }
+
+  @Test
+  void finalizedBlockLimitUnlimitedWhenFinalizedBlockNotImported() {
+    final Hash finalized = Hash.hash(Bytes.of(1));
+    when(blockchain.getFinalized()).thenReturn(Optional.of(finalized));
+    when(blockchain.getBlockHeader(finalized)).thenReturn(Optional.empty());
+    final DataStorageConfiguration config = archiveConfig(true);
+    archive = createArchive(config, storage(config));
+
+    assertThat(archive.finalizedBlockLimit()).isEqualTo(Long.MAX_VALUE);
   }
 
   @Test

@@ -56,7 +56,7 @@ import org.mockito.quality.Strictness;
 /**
  * Integration tests for ongoing archive proof sync.
  *
- * <p>Uses {@code ControllableReplayer} (a test subclass that stubs out {@code captureRange}) to
+ * <p>Uses {@code ControllableArchiver} (a test subclass that stubs out {@code captureRange}) to
  * verify: cursor persistence across restarts, single-catch-up coverage of multi-block gaps, reorg
  * safety (target constraint prevents above-target capture), and the Phase-A → Phase-B handoff
  * cursor seed.
@@ -77,7 +77,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
   private SegmentedInMemoryKeyValueStorage archiveStorage;
   private MutableBlockchain blockchain;
   private BlockDataGenerator blockDataGenerator;
-  private final List<ArchiveTrieNodeReplayer> replayers = new ArrayList<>();
+  private final List<FinalizedTrieNodeArchiver> archivers = new ArrayList<>();
 
   @BeforeEach
   void setUp() {
@@ -90,7 +90,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
 
   @AfterEach
   void tearDown() {
-    replayers.forEach(
+    archivers.forEach(
         r -> {
           try {
             r.close();
@@ -101,156 +101,156 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
   }
 
   /**
-   * A replayer catches up over a multi-block gap in a single run when the target is large enough.
+   * A archiver catches up over a multi-block gap in a single run when the target is large enough.
    * Verifies that {@code captureRange(0, target)} is called and cursor reaches the target.
    */
   @Test
-  void replayerCatchesUpEntireTargetGapInOneRun() throws Exception {
+  void archiverCatchesUpEntireTargetGapInOneRun() throws Exception {
     appendBlocks(10); // head=10, target = 10-4/2 = 8
-    final ControllableReplayer replayer = createControllableReplayer();
-    replayer.start();
+    final ControllableArchiver archiver = createControllableArchiver();
+    archiver.start();
 
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(replayer.cursor.get()).isEqualTo(8L));
+        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(8L));
   }
 
   /**
-   * After a crash and restart (new replayer instance over same storage), the replayer resumes from
+   * After a crash and restart (new archiver instance over same storage), the archiver resumes from
    * the archive's coverage record.
    */
   @Test
   void restartResumesFromCoverageCursor() throws Exception {
     appendBlocks(10); // head=10, target=8
-    final ControllableReplayer firstReplayer = createControllableReplayer();
-    firstReplayer.start();
+    final ControllableArchiver firstArchiver = createControllableArchiver();
+    firstArchiver.start();
 
-    // Wait for first replayer to capture to target=8
+    // Wait for first archiver to capture to target=8
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(firstReplayer.cursor.get()).isEqualTo(8L));
-    firstReplayer.close();
+        .untilAsserted(() -> assertThat(firstArchiver.cursor.get()).isEqualTo(8L));
+    firstArchiver.close();
 
     // Simulate 3 more blocks arriving before the restart
     appendBlocks(3); // head=13, target=11
 
-    // Second replayer: coverage = 8, so cursor = 8
-    final ControllableReplayer secondReplayer = createControllableReplayer();
-    secondReplayer.start();
-    assertThat(secondReplayer.cursor.get()).isEqualTo(8L);
+    // Second archiver: coverage = 8, so cursor = 8
+    final ControllableArchiver secondArchiver = createControllableArchiver();
+    secondArchiver.start();
+    assertThat(secondArchiver.cursor.get()).isEqualTo(8L);
 
     // It then catches up from 8 to 11
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(secondReplayer.cursor.get()).isEqualTo(11L));
+        .untilAsserted(() -> assertThat(secondArchiver.cursor.get()).isEqualTo(11L));
   }
 
   /**
    * Phase-A handoff: if live capture archived up to block H, the coverage record says so and the
-   * replayer seeds its cursor from H (not 0), avoiding re-archiving blocks already written.
+   * archiver seeds its cursor from H (not 0), avoiding re-archiving blocks already written.
    */
   @Test
   void phaseAHandoffCursorSeedsPhaseBCorrectly() throws Exception {
     appendBlocks(10); // head=10, target=8
-    final ControllableReplayer replayer = createControllableReplayer();
+    final ControllableArchiver archiver = createControllableArchiver();
 
     // Simulate Phase A having archived up to block 5
     final SegmentedKeyValueStorageTransaction coverageTx = archiveStorage.startTransaction();
     new ArchiveCoverageTracker(archiveStorage).record(coverageTx, 5L);
     coverageTx.commit();
-    replayer.start();
-    assertThat(replayer.cursor.get()).isEqualTo(5L);
+    archiver.start();
+    assertThat(archiver.cursor.get()).isEqualTo(5L);
 
     // Phase B should catch up from 5 to 8 (not from 0)
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(replayer.cursor.get()).isEqualTo(8L));
+        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(8L));
   }
 
   /**
-   * When the target advances repeatedly as new heads arrive, the replayer eventually processes all
+   * When the target advances repeatedly as new heads arrive, the archiver eventually processes all
    * blocks up to the new target. The single-flight guard ensures this happens via re-arm (not via
    * concurrent catch-ups).
    */
   @Test
   void targetAdvanceDrivesOngoingCatchUps() throws Exception {
     appendBlocks(5); // head=5, target=3
-    final ControllableReplayer replayer = createControllableReplayer();
-    replayer.start();
+    final ControllableArchiver archiver = createControllableArchiver();
+    archiver.start();
 
     // Wait to reach the initial target
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(replayer.cursor.get()).isEqualTo(3L));
+        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(3L));
 
     // Add more blocks, advancing target to 5, then 7
     appendBlocks(2); // head=7, target=5
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(replayer.cursor.get()).isEqualTo(5L));
+        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(5L));
 
     appendBlocks(2); // head=9, target=7
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(replayer.cursor.get()).isEqualTo(7L));
+        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(7L));
   }
 
   /**
-   * The replayer never captures blocks above the target. When a reorg event fires for a block above
+   * The archiver never captures blocks above the target. When a reorg event fires for a block above
    * the finality horizon, the target (head − maxLayers / 2) does not change enough to pull in
    * non-final blocks, and no capture happens above the target.
    */
   @Test
   void captureNeverExceedsReplayTarget() throws Exception {
     appendBlocks(4); // head=4, target = 4-4/2 = 2
-    final ControllableReplayer replayer = createControllableReplayer();
-    replayer.start();
+    final ControllableArchiver archiver = createControllableArchiver();
+    archiver.start();
 
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(replayer.cursor.get()).isEqualTo(2L));
+        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(2L));
 
     // A non-canonical fork block fires (block observer sees non-canonical event)
     // The observer checks isNewCanonicalHead() → false, so replayTarget stays at 2
-    assertThat(replayer.targetBlock()).isEqualTo(2L);
-    assertThat(replayer.cursor.get()).isEqualTo(2L);
+    assertThat(archiver.targetBlock()).isEqualTo(2L);
+    assertThat(archiver.cursor.get()).isEqualTo(2L);
   }
 
   /**
-   * After close, the replayer ignores subsequent block-added events and does not advance the
+   * After close, the archiver ignores subsequent block-added events and does not advance the
    * cursor.
    */
   @Test
-  void replayerDoesNotAdvanceAfterClose() throws Exception {
+  void archiverDoesNotAdvanceAfterClose() throws Exception {
     appendBlocks(5); // head=5, target=2
     final PausedCapture paused = new PausedCapture();
-    final ControllableReplayer replayer =
-        createControllableReplayer(Executors.newScheduledThreadPool(1), paused);
-    replayer.start();
+    final ControllableArchiver archiver =
+        createControllableArchiver(Executors.newScheduledThreadPool(1), paused);
+    archiver.start();
 
     paused.awaitStart(); // paused mid-capture
     paused.release();
 
-    replayer.close();
+    archiver.close();
 
     // After close, adding blocks should not trigger new catch-ups
     appendBlocks(5);
     // Wait a moment and verify cursor hasn't advanced past what was in-flight
     Thread.sleep(200);
-    assertThat(replayer.observerId()).isEqualTo(OptionalLong.empty());
+    assertThat(archiver.observerId()).isEqualTo(OptionalLong.empty());
   }
 
   // --- helpers ---
 
-  private ControllableReplayer createControllableReplayer() {
-    return createControllableReplayer(Executors.newScheduledThreadPool(1), null);
+  private ControllableArchiver createControllableArchiver() {
+    return createControllableArchiver(Executors.newScheduledThreadPool(1), null);
   }
 
-  private ControllableReplayer createControllableReplayer(
+  private ControllableArchiver createControllableArchiver(
       final ScheduledExecutorService executor, final PausedCapture paused) {
-    // ControllableReplayer persists its cursor advances to archiveStorage so restart tests work
-    final ControllableReplayer replayer =
-        new ControllableReplayer(
+    // ControllableArchiver persists its cursor advances to archiveStorage so restart tests work
+    final ControllableArchiver archiver =
+        new ControllableArchiver(
             worldStateStorage,
             worldStateProvider,
             trieLogManager,
@@ -261,8 +261,8 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
             DEEP_INTERVAL,
             paused,
             archiveStorage);
-    replayers.add(replayer);
-    return replayer;
+    archivers.add(archiver);
+    return archiver;
   }
 
   private MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
@@ -288,16 +288,16 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
   // --- test doubles ---
 
   /**
-   * A replayer that stubs captureRange: updates cursor and persists it to real storage so restart
+   * A archiver that stubs captureRange: updates cursor and persists it to real storage so restart
    * tests can verify durability.
    */
-  static class ControllableReplayer extends ArchiveTrieNodeReplayer {
+  static class ControllableArchiver extends FinalizedTrieNodeArchiver {
 
     final AtomicInteger captureRangeCalls = new AtomicInteger();
     private final PausedCapture paused;
     private final SegmentedInMemoryKeyValueStorage persistStorage;
 
-    ControllableReplayer(
+    ControllableArchiver(
         final BonsaiWorldStateKeyValueStorage worldStateStorage,
         final BonsaiWorldStateProvider worldStateProvider,
         final TrieLogManager trieLogManager,

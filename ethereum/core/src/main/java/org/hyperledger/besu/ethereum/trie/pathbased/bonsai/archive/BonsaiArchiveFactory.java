@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveTrieNodeReplayer;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveTrieNodeStrategy;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.FinalizedTrieNodeArchiver;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ExtraStorageConfiguration;
@@ -84,11 +84,11 @@ public final class BonsaiArchiveFactory {
     if (unstable.getBonsaiArchiveStateProofsEnabled()) {
       final ExecutorService trieCapturePool =
           Executors.newFixedThreadPool(captureParallelism, namedThreads("trie-capture"));
-      final ScheduledExecutorService replayerExecutor =
-          Executors.newScheduledThreadPool(1, namedThreads("archive-trienode-replayer"));
-      final ExecutorService replayerCapturePool =
-          Executors.newFixedThreadPool(captureParallelism, namedThreads("trie-capture-replayer"));
-      executors.addAll(List.of(trieCapturePool, replayerExecutor, replayerCapturePool));
+      final ScheduledExecutorService archiverExecutor =
+          Executors.newScheduledThreadPool(1, namedThreads("finalized-trienode-archiver"));
+      final ExecutorService archiverCapturePool =
+          Executors.newFixedThreadPool(captureParallelism, namedThreads("trie-capture-finalized"));
+      executors.addAll(List.of(trieCapturePool, archiverExecutor, archiverCapturePool));
       final ArchiveTrieNodeStrategy strategy =
           ArchiveTrieNodeStrategy.createArchiveStrategy(
               worldStateStorage.getComposedWorldStateStorage(),
@@ -101,13 +101,13 @@ public final class BonsaiArchiveFactory {
           Optional.of(
               new BonsaiArchiveService.ProofCapture(
                   strategy,
-                  new ArchiveTrieNodeReplayer(
+                  new FinalizedTrieNodeArchiver(
                       worldStateStorage,
                       provider,
                       provider.getTrieLogManager(),
                       blockchain,
-                      replayerExecutor,
-                      replayerCapturePool,
+                      archiverExecutor,
+                      archiverCapturePool,
                       unstable.getBonsaiArchiveShallowCheckpointInterval(),
                       unstable.getBonsaiArchiveDeepCheckpointInterval())));
     }
@@ -124,6 +124,11 @@ public final class BonsaiArchiveFactory {
     provider.setArchiveMigrationProgressSupplier(migrator::getMigratedBlockNumber);
 
     return new BonsaiArchiveService(
-        worldStateStorage, migrator, extraStorage.getMaxLayersToLoad(), proofCapture, executors);
+        worldStateStorage,
+        blockchain,
+        migrator,
+        extraStorage.getMaxLayersToLoad(),
+        proofCapture,
+        executors);
   }
 }

@@ -30,12 +30,16 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
+import java.util.function.LongPredicate;
+import java.util.function.LongSupplier;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link TrieNodeStrategy} that archives every trie-node write into {@code
@@ -58,6 +62,8 @@ import org.apache.tuweni.bytes.Bytes32;
 public class ArchiveTrieNodeStrategy
     implements TrieNodeStrategy, Synchronizer.InSyncListener, Closeable {
 
+  private static final Logger LOG = LoggerFactory.getLogger(ArchiveTrieNodeStrategy.class);
+
   private final TrieNodeStrategy base;
   private final ArchiveTrieNodeWriter trieNodeWriter;
 
@@ -68,8 +74,27 @@ public class ArchiveTrieNodeStrategy
   // True when an external chain estimate exists (e.g. a peer or CL that knows the chain head)
   private volatile BooleanSupplier hasChainEstimate;
 
+  // True when the last in-sync event said the node is behind the network, so every block it imports
+  // is already final. Otherwise capture may be running at the head.
+  private volatile boolean behindNetwork = false;
+
+  // Highest block that can no longer be reorged out. Consulted unless the node is behind the
+  // network.
+  private volatile LongSupplier finalizedBlockLimit = () -> Long.MAX_VALUE;
+
+  // Archives the blocks up to the given one that were imported while capture was off, returning
+  // whether it succeeded. Runs before capture resumes so coverage never skips over them.
+  private volatile LongPredicate catchUpTo = target -> true;
+
+  // Set when capture starts or resumes, cleared once the catch-up before its first block succeeds.
+  private volatile boolean needsCatchUp = true;
+
   // Block number is constant within a transaction; cache it to avoid a storage read per node write.
   private final Cache<SegmentedKeyValueStorageTransaction, Long> txBlockNumberCache =
+      Caffeine.newBuilder().weakKeys().build();
+
+  // Whether to archive is decided once per transaction, so a block is archived whole or not at all.
+  private final Cache<SegmentedKeyValueStorageTransaction, Boolean> txCaptureCache =
       Caffeine.newBuilder().weakKeys().build();
 
   /**
@@ -99,12 +124,12 @@ public class ArchiveTrieNodeStrategy
   }
 
   /**
-   * Like {@link #createArchiveStrategy} but for the trie-node replayer: capture is always on (the
-   * replayer only ever processes final blocks) and the caller drives archive-write routing via
-   * {@link ArchiveTrieNodeWriter#setArchiveWriteTransaction}. Reads (diff base / coverage) still
-   * use the supplied canonical storage.
+   * Like {@link #createArchiveStrategy} but for the finalized trie-node archiver: capture is always
+   * on (the archiver only ever processes final blocks) and the caller drives archive-write routing
+   * via {@link ArchiveTrieNodeWriter#setArchiveWriteTransaction}. Reads (diff base / coverage)
+   * still use the supplied canonical storage.
    */
-  public static ArchiveTrieNodeStrategy createReplayerStrategy(
+  public static ArchiveTrieNodeStrategy createFinalizedArchiverStrategy(
       final SegmentedKeyValueStorage canonicalLiveStorage,
       final ExecutorService trieCapturePool,
       final int shallowCheckpointInterval,
@@ -123,7 +148,7 @@ public class ArchiveTrieNodeStrategy
     return strategy;
   }
 
-  /** Returns the underlying writer so the replayer can call {@code setArchiveWriteTransaction}. */
+  /** Returns the underlying writer so the archiver can call {@code setArchiveWriteTransaction}. */
   public ArchiveTrieNodeWriter getTrieNodeWriter() {
     return trieNodeWriter;
   }
@@ -135,6 +160,25 @@ public class ArchiveTrieNodeStrategy
   public void setHasChainEstimate(final BooleanSupplier hasChainEstimate) {
     this.hasChainEstimate =
         Objects.requireNonNull(hasChainEstimate, "hasChainEstimate must not be null");
+  }
+
+  /**
+   * Supplies the highest block that can no longer be reorged out. Unless the node is behind the
+   * network, capture may be running at the head and only archives blocks up to this limit; the
+   * finalized archiver archives the rest once they are final.
+   */
+  public void setFinalizedBlockLimit(final LongSupplier finalizedBlockLimit) {
+    this.finalizedBlockLimit =
+        Objects.requireNonNull(finalizedBlockLimit, "finalizedBlockLimit must not be null");
+  }
+
+  /**
+   * Supplies the catch-up run before capture starts or resumes. It is called on the importing
+   * thread with the block before the first one to be captured, and must archive every block up to
+   * it before returning true.
+   */
+  public void setCatchUpTo(final LongPredicate catchUpTo) {
+    this.catchUpTo = Objects.requireNonNull(catchUpTo, "catchUpTo must not be null");
   }
 
   /**
@@ -155,13 +199,16 @@ public class ArchiveTrieNodeStrategy
 
   @Override
   public void onInSyncStatusChange(final boolean inSync) {
+    behindNetwork = !inSync;
     // A peer-less node reports "in sync" forever, so only trust a corroborated in-sync signal.
-    archiving.set(!inSync || !hasChainEstimate.getAsBoolean());
+    setArchiving(!inSync || !hasChainEstimate.getAsBoolean());
   }
 
   @VisibleForTesting
   void setArchiving(final boolean archive) {
-    this.archiving.set(archive);
+    if (!archiving.getAndSet(archive) && archive) {
+      needsCatchUp = true;
+    }
   }
 
   private static long readBlockNumber(final SegmentedKeyValueStorage storage) {
@@ -171,8 +218,44 @@ public class ArchiveTrieNodeStrategy
         .orElse(0L);
   }
 
-  private boolean shouldCaptureBlock(final long block) {
-    return block == 0L || archiving.get();
+  private boolean shouldCaptureBlock(
+      final SegmentedKeyValueStorageTransaction transaction, final long block) {
+    // Not computed inside the cache: a catch-up can block for a long time.
+    Boolean capture = txCaptureCache.getIfPresent(transaction);
+    if (capture == null) {
+      capture = decideCapture(block);
+      txCaptureCache.put(transaction, capture);
+    }
+    return capture;
+  }
+
+  private boolean decideCapture(final long block) {
+    if (block == 0L) {
+      return true;
+    }
+    if (!archiving.get()) {
+      return false;
+    }
+    if (!behindNetwork && block > finalizedBlockLimit.getAsLong()) {
+      return false;
+    }
+    return catchUpBeforeCapture(block);
+  }
+
+  private boolean catchUpBeforeCapture(final long block) {
+    if (!needsCatchUp) {
+      return true;
+    }
+    if (catchUpTo.test(block - 1L)) {
+      needsCatchUp = false;
+      return true;
+    }
+    LOG.warn(
+        "Archive trie-node capture could not archive the blocks before {}; it stays off until it"
+            + " is next enabled, and the finalized archiver will archive them",
+        block);
+    archiving.set(false);
+    return false;
   }
 
   // Bonsai re-commits unchanged nodes along a touched path; skip archiving them to avoid
@@ -196,7 +279,7 @@ public class ArchiveTrieNodeStrategy
       final Bytes node) {
     final long block = txBlockNumberCache.get(transaction, ignored -> readBlockNumber(storage));
     base.putTrieNode(storage, transaction, key, nodeHash, node);
-    if (shouldCaptureBlock(block)) {
+    if (shouldCaptureBlock(transaction, block)) {
       final Bytes prior = readPriorNode(storage, key, block);
       if (isNoOpRewrite(prior, node)) {
         return;
@@ -212,7 +295,7 @@ public class ArchiveTrieNodeStrategy
       final Bytes key) {
     final long block = txBlockNumberCache.get(transaction, ignored -> readBlockNumber(storage));
     base.removeTrieNode(storage, transaction, key);
-    if (shouldCaptureBlock(block)) {
+    if (shouldCaptureBlock(transaction, block)) {
       final Bytes prior = readPriorNode(storage, key, block);
       // Removing a node that doesn't exist is a no-op for the archive.
       if (prior != null) {
@@ -242,12 +325,14 @@ public class ArchiveTrieNodeStrategy
       final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction) {
     txBlockNumberCache.invalidate(transaction);
+    txCaptureCache.invalidate(transaction);
     trieNodeWriter.onBeforeCommit(transaction);
   }
 
   @Override
   public void onRollback(final SegmentedKeyValueStorageTransaction transaction) {
     txBlockNumberCache.invalidate(transaction);
+    txCaptureCache.invalidate(transaction);
     trieNodeWriter.onRollback(transaction);
   }
 

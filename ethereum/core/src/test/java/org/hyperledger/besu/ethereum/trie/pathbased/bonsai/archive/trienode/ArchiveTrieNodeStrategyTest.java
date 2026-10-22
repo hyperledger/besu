@@ -28,8 +28,11 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -150,6 +153,148 @@ class ArchiveTrieNodeStrategyTest {
     assertThat(historyStore.getLatestBefore(ArchiveNodeKey.account(location), 6L))
         .as("peer-less in-sync must keep archiving")
         .isPresent();
+  }
+
+  @Test
+  void peerlessCaptureStopsAtFinalizedBlock() {
+    // Without a chain estimate, capture runs at the head, where blocks above the finalized block
+    // can still be reorged out. Only blocks at or below it are archived.
+    final ArchiveTrieNodeStrategy strategy =
+        new ArchiveTrieNodeStrategy(new BonsaiTrieNodeStrategy(), capture, () -> false);
+    strategy.onInSyncStatusChange(true);
+    strategy.setFinalizedBlockLimit(() -> 5L);
+
+    final Bytes atFinalized = Bytes.of(0x05);
+    setStoredBlockNumber(4L); // current block 5
+    put(strategy, atFinalized, Bytes.fromHexString("0x0505"));
+
+    final Bytes aboveFinalized = Bytes.of(0x06);
+    setStoredBlockNumber(5L); // current block 6
+    put(strategy, aboveFinalized, Bytes.fromHexString("0x0606"));
+
+    assertThat(historyStore.getLatestBefore(ArchiveNodeKey.account(atFinalized), 5L))
+        .as("block at the finalized block is archived")
+        .isPresent();
+    assertThat(historyStore.getLatestBefore(ArchiveNodeKey.account(aboveFinalized), 6L))
+        .as("block above the finalized block is not archived")
+        .isEmpty();
+    assertThat(coverageTracker.hasArchiveBlock(6L)).isFalse();
+  }
+
+  @Test
+  void finalizedBlockLimitIgnoredWhenBehindNetwork() {
+    // Behind the network, every imported block is already final regardless of the local finalized
+    // block, which goes stale during a long catch-up.
+    final ArchiveTrieNodeStrategy strategy =
+        new ArchiveTrieNodeStrategy(new BonsaiTrieNodeStrategy(), capture, () -> true);
+    strategy.onInSyncStatusChange(false);
+    strategy.setFinalizedBlockLimit(() -> 5L);
+
+    setStoredBlockNumber(5L); // current block 6
+    final Bytes location = Bytes.of(0x0e);
+    put(strategy, location, Bytes.fromHexString("0xcafe"));
+
+    assertThat(historyStore.getLatestBefore(ArchiveNodeKey.account(location), 6L)).isPresent();
+  }
+
+  @Test
+  void finalizedBlockLimitStillAppliesWhenChainEstimateAppearsLater() {
+    // Peers connecting while the node is near the head raise no in-sync event, so capture keeps
+    // running at the head and must stay limited to final blocks.
+    final AtomicBoolean hasEstimate = new AtomicBoolean(false);
+    final ArchiveTrieNodeStrategy strategy =
+        new ArchiveTrieNodeStrategy(new BonsaiTrieNodeStrategy(), capture, hasEstimate::get);
+    strategy.onInSyncStatusChange(true);
+    strategy.setFinalizedBlockLimit(() -> 5L);
+    hasEstimate.set(true);
+
+    setStoredBlockNumber(5L); // current block 6
+    final Bytes location = Bytes.of(0x0e);
+    put(strategy, location, Bytes.fromHexString("0xcafe"));
+
+    assertThat(historyStore.getLatestBefore(ArchiveNodeKey.account(location), 6L)).isEmpty();
+  }
+
+  @Test
+  void catchesUpOnceBeforeFirstCapturedBlock() {
+    final ArchiveTrieNodeStrategy strategy = strategyWithGate(true);
+    final List<Long> catchUps = new ArrayList<>();
+    strategy.setCatchUpTo(
+        target -> {
+          catchUps.add(target);
+          return true;
+        });
+
+    setStoredBlockNumber(5L); // current block 6
+    put(strategy, Bytes.of(0x06), Bytes.fromHexString("0x0606"));
+    setStoredBlockNumber(6L); // current block 7
+    put(strategy, Bytes.of(0x07), Bytes.fromHexString("0x0707"));
+
+    assertThat(catchUps).containsExactly(5L);
+  }
+
+  @Test
+  void catchesUpAgainWhenCaptureResumes() {
+    final ArchiveTrieNodeStrategy strategy = strategyWithGate(true);
+    final List<Long> catchUps = new ArrayList<>();
+    strategy.setCatchUpTo(
+        target -> {
+          catchUps.add(target);
+          return true;
+        });
+    setStoredBlockNumber(5L); // current block 6
+    put(strategy, Bytes.of(0x06), Bytes.fromHexString("0x0606"));
+
+    strategy.setArchiving(false);
+    strategy.setArchiving(true);
+    setStoredBlockNumber(8L); // current block 9
+    put(strategy, Bytes.of(0x09), Bytes.fromHexString("0x0909"));
+
+    assertThat(catchUps).containsExactly(5L, 8L);
+  }
+
+  @Test
+  void failedCatchUpTurnsCaptureOff() {
+    final ArchiveTrieNodeStrategy strategy = strategyWithGate(true);
+    final AtomicInteger catchUps = new AtomicInteger();
+    strategy.setCatchUpTo(
+        target -> {
+          catchUps.incrementAndGet();
+          return false;
+        });
+
+    setStoredBlockNumber(5L); // current block 6
+    put(strategy, Bytes.of(0x06), Bytes.fromHexString("0x0606"));
+    setStoredBlockNumber(6L); // current block 7
+    put(strategy, Bytes.of(0x07), Bytes.fromHexString("0x0707"));
+
+    assertThat(historyStore.getLatestBefore(ArchiveNodeKey.account(Bytes.of(0x06)), 6L)).isEmpty();
+    assertThat(historyStore.getLatestBefore(ArchiveNodeKey.account(Bytes.of(0x07)), 7L)).isEmpty();
+    assertThat(coverageTracker.hasCoverage()).isFalse();
+    assertThat(catchUps).hasValue(1);
+  }
+
+  @Test
+  void finalizedBlockLimitReadOncePerTransaction() {
+    final ArchiveTrieNodeStrategy strategy =
+        new ArchiveTrieNodeStrategy(new BonsaiTrieNodeStrategy(), capture, () -> false);
+    final AtomicInteger reads = new AtomicInteger();
+    strategy.setFinalizedBlockLimit(
+        () -> {
+          reads.incrementAndGet();
+          return Long.MAX_VALUE;
+        });
+    setStoredBlockNumber(5L);
+
+    final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
+    final Bytes nodeA = Bytes.fromHexString("0xaaaa");
+    final Bytes nodeB = Bytes.fromHexString("0xbbbb");
+    strategy.putTrieNode(storage, tx, Bytes.of(0x0a), hash(nodeA), nodeA);
+    strategy.putTrieNode(storage, tx, Bytes.of(0x0b), hash(nodeB), nodeB);
+    strategy.onBeforeCommit(storage, tx);
+    tx.commit();
+
+    assertThat(reads).hasValue(1);
   }
 
   @Test
