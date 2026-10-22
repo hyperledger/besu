@@ -267,12 +267,11 @@ configure(allprojects - project(':platform')) {
     }
     // spotless check applied to build.gradle (groovy) files
     // temporary disabled till Eclipse Foundation is available
-    /*
-    groovyGradle {
-      target '*.gradle'
-      greclipse('4.31').configFile(rootProject.file('gradle/spotless/greclipse.properties'))
-      endWithNewline()
-    }*/
+//    groovyGradle {
+//      target '*.gradle'
+//      greclipse('4.31').configFile(rootProject.file('gradle/spotless/greclipse.properties'))
+//      endWithNewline()
+//    }
     // Below this line are currently only license header tasks
     format 'ShellScripts', {
       target '**/*.sh'
