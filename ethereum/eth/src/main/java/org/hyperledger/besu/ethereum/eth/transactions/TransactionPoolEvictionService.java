@@ -36,10 +36,6 @@ public class TransactionPoolEvictionService {
     this.evictionInterval = evictionInterval;
   }
 
-  public Duration getEvictionInterval() {
-    return evictionInterval;
-  }
-
   public void start() {
     assert (!timerId.isPresent());
     timerId =
