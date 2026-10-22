@@ -29,6 +29,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public interface BlockchainStorage {
 
   Optional<Hash> getChainHead();
@@ -44,6 +46,8 @@ public interface BlockchainStorage {
   Optional<BlockBody> getBlockBody(Hash blockHash);
 
   Optional<BlockAccessList> getBlockAccessList(Hash blockHash);
+
+  Optional<Bytes> getBlockAccessListRlp(Hash blockHash);
 
   Optional<List<TransactionReceipt>> getTransactionReceipts(Hash blockHash);
 

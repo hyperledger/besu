@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import org.apache.tuweni.bytes.Bytes;
+
 /** An interface for reading data from the blockchain. */
 public interface Blockchain {
   /**
@@ -195,6 +197,18 @@ public interface Blockchain {
   Optional<BlockBody> getBlockBodySafe(Hash blockHeaderHash);
 
   Optional<BlockAccessList> getBlockAccessList(Hash blockHash);
+
+  /**
+   * Returns the RLP of a block's access list without decoding it, for callers that only serve the
+   * encoded list.
+   *
+   * @param blockHash The hash of the block whose access list should be returned.
+   * @return The RLP-encoded block access list, if present.
+   */
+  default Optional<Bytes> getBlockAccessListRlp(final Hash blockHash) {
+    return getBlockAccessList(blockHash)
+        .map(blockAccessList -> blockAccessList.rawRlp().orElseGet(blockAccessList::encode));
+  }
 
   /**
    * Given a block's hash, returns the list of transaction receipts associated with this block's

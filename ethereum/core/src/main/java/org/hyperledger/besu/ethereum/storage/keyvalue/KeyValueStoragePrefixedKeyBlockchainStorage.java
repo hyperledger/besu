@@ -158,6 +158,11 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   }
 
   @Override
+  public Optional<Bytes> getBlockAccessListRlp(final Hash blockHash) {
+    return get(BLOCK_ACCESS_LIST_PREFIX, blockHash.getBytes());
+  }
+
+  @Override
   public Optional<List<TransactionReceipt>> getTransactionReceipts(final Hash blockHash) {
     return get(TRANSACTION_RECEIPTS_PREFIX, blockHash.getBytes())
         .map(this::rlpDecodeTransactionReceipts);
