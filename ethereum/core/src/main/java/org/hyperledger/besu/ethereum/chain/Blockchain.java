@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.util.Comparator;
 import java.util.List;
@@ -186,6 +187,17 @@ public interface Blockchain {
    * @return The block body corresponding to the target block.
    */
   Optional<BlockBody> getBlockBody(Hash blockHeaderHash);
+
+  /**
+   * Returns the RLP of a block's body as it is sent to peers, without decoding it, for callers that
+   * only serve the encoded body.
+   *
+   * @param blockHeaderHash The hash of the block whose body should be returned.
+   * @return The RLP-encoded block body, if present.
+   */
+  default Optional<Bytes> getBlockBodyRlp(final Hash blockHeaderHash) {
+    return getBlockBody(blockHeaderHash).map(body -> RLP.encode(body::writeWrappedBodyTo));
+  }
 
   /**
    * Safe version of {@code getBlockBody} (it should take any locks necessary to ensure any block

@@ -306,6 +306,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorageTest {
     final Bytes balRlp = updater.putBlockAccessList(blockHash, bal);
     updater.commit();
 
+    Assertions.assertEquals(Optional.of(bodyRlp), blockchainStorage.getBlockBodyRlp(blockHash));
     Assertions.assertEquals(block.getBody(), blockchainStorage.decodeBlockBody(bodyRlp));
     Assertions.assertEquals(
         Optional.of(block.getBody()), blockchainStorage.getBlockBody(blockHash));

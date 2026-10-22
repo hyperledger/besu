@@ -645,7 +645,8 @@ public class EthServerTest {
   private List<Block> setupBlocks(final int count) {
     final List<Block> blocks = dataGenerator.blockSequence(count);
     for (Block block : blocks) {
-      when(blockchain.getBlockBody(block.getHash())).thenReturn(Optional.of(block.getBody()));
+      when(blockchain.getBlockBodyRlp(block.getHash()))
+          .thenReturn(Optional.of(RLP.encode(block.getBody()::writeWrappedBodyTo)));
       when(blockchain.getBlockHeader(block.getHash())).thenReturn(Optional.of(block.getHeader()));
       when(blockchain.getBlockHeader(block.getHeader().getNumber()))
           .thenReturn(Optional.of(block.getHeader()));

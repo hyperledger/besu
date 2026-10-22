@@ -45,6 +45,8 @@ public interface BlockchainStorage {
 
   Optional<BlockBody> getBlockBody(Hash blockHash);
 
+  Optional<Bytes> getBlockBodyRlp(Hash blockHash);
+
   Optional<BlockAccessList> getBlockAccessList(Hash blockHash);
 
   Optional<Bytes> getBlockAccessListRlp(Hash blockHash);

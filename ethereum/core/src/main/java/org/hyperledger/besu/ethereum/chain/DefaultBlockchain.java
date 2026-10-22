@@ -511,6 +511,13 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public Optional<Bytes> getBlockBodyRlp(final Hash blockHeaderHash) {
+    return blockBodiesCache
+        .get(blockHeaderHash)
+        .or(() -> blockchainStorage.getBlockBodyRlp(blockHeaderHash));
+  }
+
+  @Override
   public synchronized Optional<BlockBody> getBlockBodySafe(final Hash blockHeaderHash) {
     return getBlockBody(blockHeaderHash);
   }

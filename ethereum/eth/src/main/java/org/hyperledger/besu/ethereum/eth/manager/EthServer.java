@@ -18,7 +18,6 @@ import static org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMes
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -210,20 +209,18 @@ class EthServer {
         break;
       }
       count++;
-      final Optional<BlockBody> maybeBody = blockchain.getBlockBody(hash);
-      if (maybeBody.isEmpty()) {
+      final Optional<Bytes> maybeBodyRlp = blockchain.getBlockBodyRlp(hash);
+      if (maybeBodyRlp.isEmpty()) {
         continue;
       }
 
-      final BlockBody body = maybeBody.get();
-      final BytesValueRLPOutput bodyOutput = new BytesValueRLPOutput();
-      body.writeWrappedBodyTo(bodyOutput);
-      final int encodedSize = bodyOutput.encodedSize();
+      final Bytes bodyRlp = maybeBodyRlp.get();
+      final int encodedSize = bodyRlp.size();
       if (responseSizeEstimate + encodedSize > maxMessageSize) {
         break;
       }
       responseSizeEstimate += encodedSize;
-      rlp.writeRaw(bodyOutput.encoded());
+      rlp.writeRaw(bodyRlp);
     }
     rlp.endList();
     return BlockBodiesMessage.createUnsafe(rlp.encoded());
