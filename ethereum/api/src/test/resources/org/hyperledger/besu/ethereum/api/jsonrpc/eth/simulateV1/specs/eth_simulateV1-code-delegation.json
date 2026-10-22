@@ -1,5 +1,6 @@
 {
   "comment": "This test simulates an ERC-7702 style delegated authorization flow using eth_simulateV1",
+  "comment": "9999 override: Contract sends all its Ether to the address provided as call data, 9998 override: contract returns the balance of the address provided as call data.",
   "request": {
     "jsonrpc": "2.0",
     "id": 1,
