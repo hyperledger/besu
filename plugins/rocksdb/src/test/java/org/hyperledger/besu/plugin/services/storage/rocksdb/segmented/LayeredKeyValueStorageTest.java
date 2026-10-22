@@ -33,6 +33,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage.NearestKeyValue;
 import org.hyperledger.besu.services.kvstore.KeyComparator;
 import org.hyperledger.besu.services.kvstore.LayeredKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
@@ -524,6 +525,52 @@ public class LayeredKeyValueStorageTest {
     assertEquals(
         parentStackDepth(1, maxDepth, top -> top.streamKeys(segmentId).toList().size()),
         parentStackDepth(500, maxDepth, top -> top.streamKeys(segmentId).toList().size()));
+  }
+
+  @Test
+  void deepChainGetNearestReachesParentAtConstantStackDepth() {
+    Bytes key = Bytes.of(1);
+    AtomicInteger maxDepth = new AtomicInteger();
+    when(parentStorage.getNearestBefore(segmentId, key))
+        .thenAnswer(
+            __ -> {
+              recordStackDepth(maxDepth);
+              return Optional.of(new NearestKeyValue(key, Optional.of(key.toArrayUnsafe())));
+            });
+
+    // A recursive implementation reaches the parent a few frames deeper per layer.
+    ToIntFunction<LayeredKeyValueStorage> read =
+        top -> top.getNearestBefore(segmentId, key).isPresent() ? 1 : 0;
+    assertEquals(parentStackDepth(1, maxDepth, read), parentStackDepth(500, maxDepth, read));
+  }
+
+  @Test
+  void getNearestPicksTheNearestKeyAcrossLayersAndBaseStorage() {
+    SegmentedInMemoryKeyValueStorage base = new SegmentedInMemoryKeyValueStorage();
+    var baseTx = base.startTransaction();
+    baseTx.put(segmentId, Bytes.of(1, 0).toArrayUnsafe(), new byte[] {1});
+    baseTx.put(segmentId, Bytes.of(3, 0).toArrayUnsafe(), new byte[] {1});
+    baseTx.commit();
+    LayeredKeyValueStorage bottom = new LayeredKeyValueStorage(base);
+    var bottomTx = bottom.startTransaction();
+    bottomTx.put(segmentId, Bytes.of(2, 0).toArrayUnsafe(), new byte[] {2});
+    bottomTx.commit();
+    LayeredKeyValueStorage top = new LayeredKeyValueStorage(bottom);
+    var topTx = top.startTransaction();
+    topTx.put(segmentId, Bytes.of(1, 5).toArrayUnsafe(), new byte[] {3});
+    topTx.commit();
+
+    Function<Optional<NearestKeyValue>, Bytes> nearestKey = nearest -> nearest.orElseThrow().key();
+    // nearest in the top layer, the bottom layer and the base storage
+    assertEquals(Bytes.of(1, 5), nearestKey.apply(top.getNearestBefore(segmentId, Bytes.of(1, 9))));
+    assertEquals(Bytes.of(2, 0), nearestKey.apply(top.getNearestBefore(segmentId, Bytes.of(2, 9))));
+    assertEquals(Bytes.of(3, 0), nearestKey.apply(top.getNearestBefore(segmentId, Bytes.of(3, 9))));
+    assertEquals(Bytes.of(1, 0), nearestKey.apply(top.getNearestAfter(segmentId, Bytes.of(0, 9))));
+    assertEquals(Bytes.of(1, 5), nearestKey.apply(top.getNearestAfter(segmentId, Bytes.of(1, 1))));
+    assertEquals(Bytes.of(2, 0), nearestKey.apply(top.getNearestAfter(segmentId, Bytes.of(1, 9))));
+    // exact matches
+    assertEquals(Bytes.of(2, 0), nearestKey.apply(top.getNearestBefore(segmentId, Bytes.of(2, 0))));
+    assertEquals(Bytes.of(3, 0), nearestKey.apply(top.getNearestAfter(segmentId, Bytes.of(3, 0))));
   }
 
   @Test

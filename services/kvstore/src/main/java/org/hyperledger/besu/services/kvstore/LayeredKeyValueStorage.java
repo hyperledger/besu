@@ -240,33 +240,47 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
   @Override
   public Optional<NearestKeyValue> getNearestBefore(
       final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
-    return getNearest(
-        key,
-        k -> super.getNearestBefore(segmentIdentifier, k),
-        k -> parent.getNearestBefore(segmentIdentifier, k),
-        false);
+    return getNearest(segmentIdentifier, key, false);
   }
 
   @Override
   public Optional<NearestKeyValue> getNearestAfter(
       final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
-    return getNearest(
-        key,
-        k -> super.getNearestAfter(segmentIdentifier, k),
-        k -> parent.getNearestAfter(segmentIdentifier, k),
-        true);
+    return getNearest(segmentIdentifier, key, true);
   }
 
   private Optional<NearestKeyValue> getNearest(
-      final Bytes key,
-      final Function<Bytes, Optional<NearestKeyValue>> ourNearestFunction,
-      final Function<Bytes, Optional<NearestKeyValue>> parentNearestFunction,
-      final boolean isAfter)
+      final SegmentIdentifier segmentIdentifier, final Bytes key, final boolean isAfter)
       throws StorageException {
+    throwIfClosed();
+    // Each layer's own nearest, top first, then fold them onto the base storage's nearest from
+    // the bottom up: the same result as each layer combining its nearest with its parent's.
+    final List<Optional<NearestKeyValue>> layerNearest = new ArrayList<>();
+    for (LayeredKeyValueStorage layer = this; layer != null; layer = layer.parentLayer) {
+      layerNearest.add(layer.getLocalNearest(segmentIdentifier, key, isAfter));
+    }
+    Optional<NearestKeyValue> nearest =
+        isAfter
+            ? baseStorage.getNearestAfter(segmentIdentifier, key)
+            : baseStorage.getNearestBefore(segmentIdentifier, key);
+    for (int i = layerNearest.size() - 1; i >= 0; i--) {
+      nearest = combineNearest(layerNearest.get(i), nearest, key, isAfter);
+    }
+    return nearest;
+  }
 
-    final Optional<NearestKeyValue> ourNearest = ourNearestFunction.apply(key);
-    final Optional<NearestKeyValue> parentNearest = parentNearestFunction.apply(key);
+  private Optional<NearestKeyValue> getLocalNearest(
+      final SegmentIdentifier segmentIdentifier, final Bytes key, final boolean isAfter) {
+    return isAfter
+        ? super.getNearestAfter(segmentIdentifier, key)
+        : super.getNearestBefore(segmentIdentifier, key);
+  }
 
+  private Optional<NearestKeyValue> combineNearest(
+      final Optional<NearestKeyValue> ourNearest,
+      final Optional<NearestKeyValue> parentNearest,
+      final Bytes key,
+      final boolean isAfter) {
     if (ourNearest.isPresent() && parentNearest.isPresent()) {
       return compareNearest(ourNearest, parentNearest, key, isAfter);
     } else if (ourNearest.isPresent()) {
