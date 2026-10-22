@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -37,6 +38,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.Collections;
@@ -47,6 +49,7 @@ import com.google.common.collect.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -156,6 +159,23 @@ public class FilterManagerTest {
 
     assertThat(filterManager.uninstallFilter(filterId)).isTrue();
     verify(filterRepository).delete(eq(filterId));
+  }
+
+  @Test
+  public void pendingTransactionsAreNotifiedAsync() {
+    final ArgumentCaptor<PendingTransactionAddedListener> listenerCaptor =
+        ArgumentCaptor.forClass(PendingTransactionAddedListener.class);
+    verify(transactionPool)
+        .subscribePendingTransactionsAsync(
+            listenerCaptor.capture(), eq(FilterManager.class.getName()));
+    verify(transactionPool, never()).subscribePendingTransactions(any());
+
+    final String filterId = filterManager.installPendingTransactionFilter();
+    final Transaction transaction = blockGenerator.transaction();
+    listenerCaptor.getValue().onTransactionAdded(transaction);
+
+    assertThat(filterManager.pendingTransactionChanges(filterId))
+        .containsExactly(transaction.getHash());
   }
 
   @Test
