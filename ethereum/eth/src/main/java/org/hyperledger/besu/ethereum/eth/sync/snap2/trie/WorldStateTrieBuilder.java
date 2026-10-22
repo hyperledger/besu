@@ -208,7 +208,6 @@ public final class WorldStateTrieBuilder {
               ? Optional.empty()
               : Optional.of(visitor.accountTrie.build());
       visitor.commitFixes();
-      writer.commit();
       return subtree;
     } catch (final Throwable e) {
       // the other partitions stop too, and the build reports the first failure
@@ -308,6 +307,8 @@ public final class WorldStateTrieBuilder {
 
     // a failed commit leaves no batch to abort
     private void commitFixes() {
+      // the nodes first: a committed root always has its trie
+      writer.commit();
       final SyncStateStorage.Batch batch = fixes;
       fixes = null;
       pendingFixes = 0;

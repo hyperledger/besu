@@ -207,6 +207,55 @@ class WorldStateTrieBuilderTest {
   }
 
   @Test
+  void commitsTheStorageNodesBeforeTheRootsThatPointToThem() {
+    final Storages storages = SyncStorageFixture.create(Format.BONSAI);
+    final World world = SyncStorageFixture.randomWorld(new Random(8), 2000);
+    world.writeFlat(storages.sync());
+    final SyncStateStorage storage = spy(storages.sync());
+    final List<Bytes32> checked = new ArrayList<>();
+    doAnswer(
+            invocation -> {
+              final SyncStateStorage.Batch batch = spy(storages.sync().batch());
+              final List<Bytes32> fixed = new ArrayList<>();
+              doAnswer(
+                      put -> {
+                        fixed.add(put.getArgument(0));
+                        put.callRealMethod();
+                        return null;
+                      })
+                  .when(batch)
+                  .putAccount(any(), any());
+              // a crash right after this commit keeps these roots: their tries must be stored
+              doAnswer(
+                      commit -> {
+                        commit.callRealMethod();
+                        fixed.stream()
+                            .filter(world.storage::containsKey)
+                            .forEach(
+                                account -> {
+                                  final MerkleTrie<Bytes32, Bytes> trie =
+                                      storages.storageTrie(account, world.storageRoot(account));
+                                  world
+                                      .storageLeaves(account)
+                                      .forEach(
+                                          (slot, leaf) ->
+                                              assertThat(trie.get(slot)).contains(leaf));
+                                  checked.add(account);
+                                });
+                        return null;
+                      })
+                  .when(batch)
+                  .commit();
+              return batch;
+            })
+        .when(storage)
+        .batch();
+
+    assertThat(builder(storage, hash -> false).build().root()).isEqualTo(world.root());
+    assertThat(checked).hasSize(world.storage.size());
+  }
+
+  @Test
   void throwsWhenCancelledOnceThePartitionsAreDone() {
     final Storages storages = SyncStorageFixture.create(Format.BONSAI);
     final World world = SyncStorageFixture.randomWorld(new Random(4), 100);
