@@ -62,11 +62,26 @@ class StorageTaskTest {
     task.trieWritten(Optional.of(ROOT_NODE));
 
     task.refreshRoot(OTHER_ROOT);
+    // no root node for a trie written at an older root
+    assertThat(task.trieRootNode()).isEmpty();
     assertThat(task.writesTrieAt(OTHER_ROOT)).isFalse();
     // the ranges of the other root are missing from the trie, even if the root comes back
     task.refreshRoot(ROOT);
     assertThat(task.writesTrieAt(ROOT)).isFalse();
     assertThat(task.trieRootNode()).isEmpty();
+  }
+
+  @Test
+  void keepsAStaleRootUntilItIsRefreshed() {
+    final StorageTask task = new StorageTask(Bytes32.ZERO, ROOT);
+
+    task.markRootStale();
+    assertThat(task.isRootStale()).isTrue();
+    assertThat(task.storageRoot()).isEqualTo(ROOT);
+
+    task.refreshRoot(OTHER_ROOT);
+    assertThat(task.isRootStale()).isFalse();
+    assertThat(task.storageRoot()).isEqualTo(OTHER_ROOT);
   }
 
   @Test

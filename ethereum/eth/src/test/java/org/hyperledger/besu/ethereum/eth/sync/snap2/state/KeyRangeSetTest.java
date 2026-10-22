@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snap2.state;
 
 import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.ethereum.trie.RangeManager;
 
@@ -47,12 +48,9 @@ class KeyRangeSetTest {
   }
 
   @Test
-  void mergesTheRangesOnBothSidesOfACarry() {
-    final KeyRangeSet set = new KeyRangeSet();
-    set.add(key(0x10), key(0xff));
-    set.add(key(0x100), key(0x1ff));
-
-    assertThat(set.snapshot()).containsExactly(entry(key(0x10), key(0x1ff)));
+  void rejectsARangeThatEndsBeforeItStarts() {
+    assertThatThrownBy(() -> new KeyRangeSet().add(key(2), key(1)))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
@@ -74,16 +72,31 @@ class KeyRangeSetTest {
   }
 
   @Test
-  void detectsTheFullKeySpace() {
+  void mergesEveryRangeANewOneSpans() {
+    final KeyRangeSet set = new KeyRangeSet();
+    set.add(key(10), key(20));
+    set.add(key(30), key(40));
+    set.add(key(50), key(60));
+
+    set.add(key(5), key(55));
+
+    assertThat(set.snapshot()).containsExactly(entry(key(5), key(60)));
+  }
+
+  @Test
+  void measuresTheCoverageUntilTheKeySpaceIsFull() {
     final KeyRangeSet set = new KeyRangeSet();
     final List<Map.Entry<Bytes32, Bytes32>> parts =
         new ArrayList<>(
             RangeManager.generateRanges(RangeManager.MIN_RANGE, RangeManager.MAX_RANGE, 16)
                 .entrySet());
     assertThat(parts).hasSize(16);
+    int added = 0;
     for (final Map.Entry<Bytes32, Bytes32> part : parts.reversed()) {
       assertThat(set.isFull()).isFalse();
+      assertThat(set.coverage()).isEqualTo(added / 16.0);
       set.add(part.getKey(), part.getValue());
+      added++;
     }
     assertThat(set.isFull()).isTrue();
     assertThat(set.coverage()).isEqualTo(1.0);
