@@ -1609,7 +1609,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateTransactionPoolOptions() {
-    transactionPoolOptions.validate(commandLine, genesisConfigOptionsSupplier.get());
+    transactionPoolOptions.validate(commandLine, genesisConfigOptionsSupplier.get(), logger);
   }
 
   private void validateDataStorageOptions() {
@@ -2359,14 +2359,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.warn(
           "Forcing price bump for transaction replacement to 0, since min-gas-price is set to 0");
       txPoolConfBuilder.priceBump(Percentage.ZERO);
-    }
-
-    if (transactionPoolOptions.isRetentionHoursIgnored(commandLine)) {
-      logger.warn(
-          TransactionPoolOptions.TX_POOL_RETENTION_HOURS_OPTION
-              + " is ignored when "
-              + TransactionPoolOptions.TX_POOL_RETENTION_SECONDS_OPTION
-              + " is set");
     }
 
     if (miningParametersSupplier

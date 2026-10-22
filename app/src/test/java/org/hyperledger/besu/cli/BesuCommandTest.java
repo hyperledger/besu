@@ -2693,8 +2693,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "30",
         "--tx-pool-retention-hours",
         "5");
-    // the txpool configuration is built more than once during startup, so the warning repeats
-    verify(mockLogger, atLeastOnce())
+    verify(mockLogger)
         .warn("--tx-pool-retention-hours is ignored when --tx-pool-retention-seconds is set");
   }
 

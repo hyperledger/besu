@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.slf4j.Logger;
 import picocli.CommandLine;
 
 /** The Transaction pool Cli stable options. */
@@ -421,9 +422,12 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
    *
    * @param commandLine the full commandLine to check all the options specified by the user
    * @param genesisConfigOptions the genesis config options
+   * @param logger the logger used to report configuration warnings
    */
   public void validate(
-      final CommandLine commandLine, final GenesisConfigOptions genesisConfigOptions) {
+      final CommandLine commandLine,
+      final GenesisConfigOptions genesisConfigOptions,
+      final Logger logger) {
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
         "Could not use legacy or sequenced transaction pool options with layered implementation",
@@ -455,6 +459,15 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
           "Transaction pool retention seconds must be greater than 0, or "
               + TransactionPoolConfiguration.DEFAULT_TX_RETENTION_SECONDS
               + " to disable it");
+    }
+
+    if (sequencedOptions.pendingTxRetentionSeconds > 0
+        && CommandLineUtils.isOptionSet(commandLine, Sequenced.TX_POOL_RETENTION_HOURS)) {
+      logger.warn(
+          Sequenced.TX_POOL_RETENTION_HOURS
+              + " is ignored when "
+              + Sequenced.TX_POOL_RETENTION_SECONDS
+              + " is set");
     }
   }
 
@@ -530,22 +543,4 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   public boolean isMinGasPriceSet(final CommandLine commandLine) {
     return CommandLineUtils.isOptionSet(commandLine, TransactionPoolOptions.TX_POOL_MIN_GAS_PRICE);
   }
-
-  /**
-   * Is the tx-pool-retention-hours option ignored because tx-pool-retention-seconds (which takes
-   * priority) is enabled?
-   *
-   * @param commandLine the command line
-   * @return true if tx-pool-retention-hours is set but ignored
-   */
-  public boolean isRetentionHoursIgnored(final CommandLine commandLine) {
-    return sequencedOptions.pendingTxRetentionSeconds > 0
-        && CommandLineUtils.isOptionSet(commandLine, Sequenced.TX_POOL_RETENTION_HOURS);
-  }
-
-  /** The name of the tx-pool-retention-hours option, for messages */
-  public static final String TX_POOL_RETENTION_HOURS_OPTION = Sequenced.TX_POOL_RETENTION_HOURS;
-
-  /** The name of the tx-pool-retention-seconds option, for messages */
-  public static final String TX_POOL_RETENTION_SECONDS_OPTION = Sequenced.TX_POOL_RETENTION_SECONDS;
 }
