@@ -144,17 +144,16 @@ class RequestSchedulerPeersTest {
 
   @Test
   void ignoresThePeersWithoutAKnownHeight() {
-    final EthPeer known = connect(List.of(), EthProtocol.LATEST);
+    connectAt(1_000);
     connect(List.of(), EthProtocol.LATEST);
-    known.chainState().updateHeightEstimate(1_000);
 
     assertThat(scheduler.bestPeerHeight()).isEqualTo(1_000);
   }
 
   @Test
   void takesTheLowerHeightOfTwoPeers() {
-    connect(List.of(), EthProtocol.LATEST).chainState().updateHeightEstimate(900);
-    connect(List.of(), EthProtocol.LATEST).chainState().updateHeightEstimate(1_000);
+    connectAt(900);
+    connectAt(1_000);
 
     assertThat(scheduler.bestPeerHeight()).isEqualTo(900);
   }
@@ -167,12 +166,9 @@ class RequestSchedulerPeersTest {
   @Test
   void prefersThePeersAtTheBestHeight() {
     runTheLoopOnTheTestThread();
-    final EthPeer behind = connect(List.of(), EthProtocol.LATEST);
-    final EthPeer first = connect(List.of(), EthProtocol.LATEST);
-    final EthPeer second = connect(List.of(), EthProtocol.LATEST);
-    behind.chainState().updateHeightEstimate(900);
-    first.chainState().updateHeightEstimate(1_000);
-    second.chainState().updateHeightEstimate(1_000);
+    final EthPeer behind = connectAt(900);
+    final EthPeer first = connectAt(1_000);
+    final EthPeer second = connectAt(1_000);
     assertThat(scheduler.bestPeerHeight()).isEqualTo(1_000);
 
     // the two peers at the tip take the lookups as long as they have free slots
@@ -188,12 +184,9 @@ class RequestSchedulerPeersTest {
   @Test
   void ignoresAHeightNoOtherPeerReaches() {
     runTheLoopOnTheTestThread();
-    final EthPeer first = connect(List.of(), EthProtocol.LATEST);
-    final EthPeer second = connect(List.of(), EthProtocol.LATEST);
-    final EthPeer outlier = connect(List.of(), EthProtocol.LATEST);
-    first.chainState().updateHeightEstimate(1_000);
-    second.chainState().updateHeightEstimate(1_000);
-    outlier.chainState().updateHeightEstimate(1_000_000_000);
+    final EthPeer first = connectAt(1_000);
+    final EthPeer second = connectAt(1_000);
+    final EthPeer outlier = connectAt(1_000_000_000);
     // the highest height two peers reach
     assertThat(scheduler.bestPeerHeight()).isEqualTo(1_000);
 
@@ -223,6 +216,13 @@ class RequestSchedulerPeersTest {
     scheduler =
         new RequestScheduler(
             ethPeers, new NoOpMetricsSystem(), Duration.ofSeconds(10), 4, 4, 1, loop, () -> 0);
+  }
+
+  // a validated eth peer that announced the given height
+  private EthPeer connectAt(final long height) {
+    final EthPeer peer = connect(List.of(), EthProtocol.LATEST);
+    peer.chainState().updateHeightEstimate(height);
+    return peer;
   }
 
   private EthPeer connect(final List<PeerValidator> validators, final Capability... capabilities) {

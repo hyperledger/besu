@@ -327,13 +327,12 @@ public final class RequestScheduler implements RequestSender {
   @Override
   public long bestPeerHeight() {
     final long[] heights =
-        ethPeers
-            .streamAvailablePeers()
-            .filter(peer -> peer.isFullyValidated() && peer.hasEstimatedChainHeight())
-            .mapToLong(EthPeerImmutableAttributes::estimatedChainHeight)
+        validatedPeers()
+            .mapToLong(peer -> peer.chainState().getEstimatedHeight())
+            .filter(height -> height > 0)
             .sorted()
             .toArray();
-    // the second highest: a peer announcing a height no other reaches cannot raise it alone
+    // the second highest, so that a single peer cannot raise it
     return heights.length == 0 ? 0 : heights[Math.max(0, heights.length - 2)];
   }
 
