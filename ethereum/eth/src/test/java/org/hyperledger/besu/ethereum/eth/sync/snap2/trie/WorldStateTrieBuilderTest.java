@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snap2.storage.SyncStorageFixture.F
 import org.hyperledger.besu.ethereum.eth.sync.snap2.storage.SyncStorageFixture.Storages;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.storage.SyncStorageFixture.World;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.RangeManager;
 import org.hyperledger.besu.ethereum.trie.common.PatriciaTrieAccountValue;
 
 import java.util.ArrayList;
@@ -199,6 +200,26 @@ class WorldStateTrieBuilderTest {
     assertThat(result.slots()).isEqualTo(world.storage.get(lost).size());
     final MerkleTrie<Bytes32, Bytes> trie = storages.storageTrie(lost, world.storageRoot(lost));
     world.storageLeaves(lost).forEach((key, leaf) -> assertThat(trie.get(key)).contains(leaf));
+  }
+
+  @Test
+  void removesTheSlotsOfAnAccountMissingFromTheFlatState() {
+    final Storages storages = SyncStorageFixture.create(Format.BONSAI);
+    final World world = SyncStorageFixture.randomWorld(new Random(12), 200);
+    world.writeFlat(storages.sync());
+    // slots left by an account the flat state no longer holds
+    final Bytes32 missing = Bytes32.fromHexString("0x" + "5a".repeat(32));
+    assertThat(world.accounts).doesNotContainKey(missing);
+    final SyncStateStorage.Batch batch = storages.sync().batch();
+    batch.putStorage(missing, Bytes32.ZERO, UInt256.ONE);
+    batch.putStorage(missing, Bytes32.fromHexString("0x" + "01".repeat(32)), UInt256.valueOf(2));
+    batch.commit();
+    assertThat(slotsWithoutAccount(storages.sync())).hasSize(2);
+
+    final WorldStateTrieBuilder.Result result = builder(storages.sync(), hash -> false).build();
+
+    assertThat(result.root()).isEqualTo(world.root());
+    assertThat(slotsWithoutAccount(storages.sync())).isEmpty();
   }
 
   @ParameterizedTest
@@ -409,6 +430,26 @@ class WorldStateTrieBuilderTest {
     assertThat(batches).isNotEmpty();
     verify(batches.getLast(), never()).commit();
     verify(batches.getLast()).abort();
+  }
+
+  // the slots a scan gives outside the accounts, all of which it skips
+  private static List<Bytes32> slotsWithoutAccount(final SyncStateStorage storage) {
+    final List<Bytes32> slots = new ArrayList<>();
+    storage.scan(
+        RangeManager.MIN_RANGE,
+        RangeManager.MAX_RANGE,
+        new SyncStateStorage.ScanVisitor() {
+          @Override
+          public boolean onAccount(final Bytes32 accountHash, final Bytes account) {
+            return false;
+          }
+
+          @Override
+          public void onSlot(final Bytes32 accountHash, final Bytes32 slotHash, final Bytes value) {
+            slots.add(slotHash);
+          }
+        });
+    return slots;
   }
 
   // the partitions run one after the other on the test thread, with small batches of fixes
