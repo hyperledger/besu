@@ -210,15 +210,15 @@ dependencies {
   }
 }
 
-
-spotless {
-  // spotless check applied to build.gradle (groovy) files
-  groovyGradle {
-    target '*.gradle'
-    greclipse('4.31').configFile(rootProject.file('gradle/spotless/greclipse.properties'))
-    endWithNewline()
-  }
-}
+// temporary disable till Eclipse Foundation is available
+//spotless {
+//  // spotless check applied to build.gradle (groovy) files
+//  groovyGradle {
+//    target '*.gradle'
+//    greclipse('4.31').configFile(rootProject.file('gradle/spotless/greclipse.properties'))
+//    endWithNewline()
+//  }
+//}
 
 publishing {
   publications {
