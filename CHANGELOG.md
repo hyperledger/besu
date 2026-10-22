@@ -26,6 +26,7 @@
 - Debug traces with an opcode filter or a step limit report the post-execution gas of the last recorded operation; every later operation overwrote it. [#11524](https://github.com/besu-eth/besu/pull/11524)
 - The PAY opcode (EIP-5920, future EIPs fork only) pays from the current address instead of the caller. [#11544](https://github.com/besu-eth/besu/pull/11544)
 - A peer that answers a header, body or sync block body request with malformed RLP is now disconnected for breach of protocol, as it already was for pooled transactions, receipts and block access lists. Previously the decoding failure was logged at ERROR as a server error and the peer stayed connected. [#11451](https://github.com/besu-eth/besu/pull/11451)
+- `eth_simulateV1` with Bonsai storage now applies a `state` override to the account's whole storage, so slots the override does not list read as zero, as with `eth_call` and Forest storage. Previously slots already stored on chain kept their values. Block processing had the same fault: after a transaction cleared an account's storage, for example by creating a contract at that address, a later transaction in the block could read a slot's old value, and that value was written back to state. [#11522](https://github.com/besu-eth/besu/issues/11522)
 
 ### Additions and Improvements
 - `trace_filter` accepts `mode`: `intersection`, the default, or `union`, which matches a trace in either `fromAddress` or `toAddress`. An unknown value is rejected with `-32602`. [#11436](https://github.com/besu-eth/besu/pull/11436)
