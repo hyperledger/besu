@@ -14,21 +14,32 @@
  */
 package org.hyperledger.besu.ethereum.util;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.internal.AddressStorageSlotKey;
 
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+/**
+ * Checks that the benchmark helper still produces the two key populations the TLOAD/TSTORE
+ * benchmarks rely on, now that {@link AddressStorageSlotKey} hashes 32-bit lanes and collisions
+ * have to be solved for rather than written down in closed form.
+ */
 public class AddressStorageSlotKeyHashingTest {
+
+  private static final int KEYS = 300_000;
+
   private static Stream<Arguments> addressArgs() {
     final Random rand = new Random(234234L);
     return Stream.concat(
@@ -39,36 +50,37 @@ public class AddressStorageSlotKeyHashingTest {
   @ParameterizedTest
   @MethodSource("addressArgs")
   void hashCodeKeysCollide(final Address address) throws Exception {
-    for (int i = 0; i < 1_000; i++) {
-      for (int j = 0; j < i; j++) {
-        final AddressStorageSlotKey key_i =
-            new AddressStorageSlotKey(
-                address, AddressStorageSlotKeyHashing.collidingHash(address, i));
-        final AddressStorageSlotKey key_j =
-            new AddressStorageSlotKey(
-                address, AddressStorageSlotKeyHashing.collidingHash(address, j));
+    final Set<Integer> hashCodes = new HashSet<>();
+    final Set<Bytes32> slots = new HashSet<>();
+    final Set<AddressStorageSlotKey> keys = new HashSet<>();
 
-        assertThat(key_i.hashCode()).isEqualTo(key_j.hashCode());
-        assertThat(key_i).isNotEqualTo(key_j);
-      }
+    for (int i = 0; i < KEYS; i++) {
+      final Bytes32 slot = AddressStorageSlotKeyHashing.collidingHash(address, i);
+      slots.add(slot);
+      final AddressStorageSlotKey key = new AddressStorageSlotKey(address, slot);
+      hashCodes.add(key.hashCode());
+      keys.add(key);
     }
+
+    // Every key is different, but they all land on one hash code and so in one bucket.
+    assertThat(slots).hasSize(KEYS);
+    assertThat(keys).hasSize(KEYS);
+    assertThat(hashCodes).hasSize(1);
   }
 
   @ParameterizedTest
   @MethodSource("addressArgs")
   void hashCodeKeysAreDistinct(final Address address) throws Exception {
-    for (int i = 0; i < 1_000; i++) {
-      for (int j = 0; j < i; j++) {
-        final AddressStorageSlotKey key_i =
-            new AddressStorageSlotKey(
-                address, AddressStorageSlotKeyHashing.distinctHash(address, i));
-        final AddressStorageSlotKey key_j =
-            new AddressStorageSlotKey(
-                address, AddressStorageSlotKeyHashing.distinctHash(address, j));
+    final Set<Integer> hashCodes = new HashSet<>();
+    final Set<Bytes32> slots = new HashSet<>();
 
-        assertThat(key_i.hashCode()).isNotEqualTo(key_j.hashCode());
-        assertThat(key_i).isNotEqualTo(key_j);
-      }
+    for (int i = 0; i < KEYS; i++) {
+      final Bytes32 slot = AddressStorageSlotKeyHashing.distinctHash(address, i);
+      slots.add(slot);
+      hashCodes.add(new AddressStorageSlotKey(address, slot).hashCode());
     }
+
+    assertThat(slots).hasSize(KEYS);
+    assertThat(hashCodes).hasSize(KEYS);
   }
 }
