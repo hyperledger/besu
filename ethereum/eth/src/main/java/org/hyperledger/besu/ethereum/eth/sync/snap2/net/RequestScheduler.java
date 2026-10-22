@@ -239,12 +239,12 @@ public final class RequestScheduler implements RequestSender {
   @Override
   public <T> CompletableFuture<RequestSender.Response<T>> submit(
       final SyncRequest<T> request, final Set<EthPeer> excluded) {
-    return enqueue(request, excluded, false);
+    return enqueue(request, excluded);
   }
 
   private <T> CompletableFuture<RequestSender.Response<T>> enqueue(
-      final SyncRequest<T> request, final Set<EthPeer> excluded, final boolean retry) {
-    final Pending<T> pending = new Pending<>(request, new HashSet<>(excluded), retry);
+      final SyncRequest<T> request, final Set<EthPeer> excluded) {
+    final Pending<T> pending = new Pending<>(request, new HashSet<>(excluded));
     track(pending.future);
 
     // tracked first, so that a concurrent stop either fails it or is seen here
@@ -283,7 +283,7 @@ public final class RequestScheduler implements RequestSender {
       final Set<EthPeer> excluded,
       final int attemptsLeft,
       final CompletableFuture<RequestSender.Response<T>> result) {
-    enqueue(request, excluded, true)
+    enqueue(request, excluded)
         .whenComplete(
             (response, error) -> {
               if (error == null) {
@@ -460,14 +460,14 @@ public final class RequestScheduler implements RequestSender {
     }
 
     final boolean expired = now - pending.waitingSince > queueTimeout.toNanos();
-    final boolean retried = pending.retry && !pending.excluded.isEmpty();
-    if (expired || retried) {
+    final boolean excluding = !pending.excluded.isEmpty();
+    if (expired || excluding) {
       final Servers servers = servers(pending, candidates);
       if (servers == Servers.AVAILABLE) {
         // busy peers serve it: it waits for them
         pending.waitingSince = now;
       } else if (expired || servers == Servers.EXCLUDED) {
-        // the retries start over at once when every peer that serves it failed it
+        // the caller hears at once when only the peers it left out serve it
         countRequest(pending.request.name(), Outcome.NO_PEER);
         pending.future.completeExceptionally(
             failure(NO_PEER, null, "no peer could serve " + pending.request.name()));
@@ -837,17 +837,14 @@ public final class RequestScheduler implements RequestSender {
   private static final class Pending<T> {
     private final SyncRequest<T> request;
     private final Set<EthPeer> excluded;
-    private final boolean retry;
     private final CompletableFuture<RequestSender.Response<T>> future = new CompletableFuture<>();
     private long sequence;
     // when it was queued, or last found waiting for a busy peer
     private long waitingSince;
 
-    private Pending(
-        final SyncRequest<T> request, final Set<EthPeer> excluded, final boolean retry) {
+    private Pending(final SyncRequest<T> request, final Set<EthPeer> excluded) {
       this.request = request;
       this.excluded = excluded;
-      this.retry = retry;
     }
   }
 

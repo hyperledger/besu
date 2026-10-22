@@ -34,9 +34,10 @@ public interface RequestSender {
   record Response<T>(T value, EthPeer peer) {}
 
   /**
-   * Sends a request to one peer, never one of {@code excluded}. The future fails with a {@link
-   * RequestFailedException}, or with the exception the code of the request threw. It may complete
-   * on a thread of the sender: its continuations must not block.
+   * Sends a request to one peer, never one of {@code excluded}, and fails it at once when only
+   * those serve it. The future fails with a {@link RequestFailedException}, or with the exception
+   * the code of the request threw. It may complete on a thread of the sender: its continuations
+   * must not block.
    */
   <T> CompletableFuture<Response<T>> submit(SyncRequest<T> request, Set<EthPeer> excluded);
 
