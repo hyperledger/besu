@@ -23,6 +23,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.snap2.net.RequestFailedExce
 
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
+import org.hyperledger.besu.ethereum.eth.SnapProtocolVersion;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -816,7 +817,7 @@ public final class RequestScheduler implements RequestSender {
       case ETH -> true;
       // range requests are the same in snap/1 and snap/2, so any snap peer serves them
       case SNAP -> SnapProtocol.isAgreed(peer.getAgreedCapabilities());
-      case SNAP2 -> peer.getAgreedCapabilities().contains(SnapProtocol.SNAP2);
+      case SNAP2 -> peer.getAgreedCapabilities().contains(SnapProtocolVersion.V2.getCapability());
     };
   }
 
