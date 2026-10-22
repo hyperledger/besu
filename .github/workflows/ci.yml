@@ -19,12 +19,13 @@ on:
   # full CI on any branch
   workflow_dispatch:
 
-# Runs on release process branches each validate a different commit, so they get a group
-# of their own and are never cancelled by a newer push. Pull requests, including those targeting
-# rebase/**, keep the usual behaviour: only their latest head is relevant.
+# Pushes other than to main (release process branches) and manual runs each validate a different
+# commit, so every such run gets a group of its own and is never cancelled. Pull requests,
+# including those targeting rebase/**, and pushes to main keep the usual behaviour: only the
+# latest commit is relevant.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}${{ (startsWith(github.ref, 'refs/heads/rebase/') || startsWith(github.ref, 'refs/heads/ci/') || startsWith(github.ref, 'refs/heads/ds/')) && format('-{0}', github.run_id) || '' }}
-  cancel-in-progress: ${{ !(startsWith(github.ref, 'refs/heads/rebase/') || startsWith(github.ref, 'refs/heads/ci/') || startsWith(github.ref, 'refs/heads/ds/')) }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}${{ (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref != 'refs/heads/main')) && format('-{0}', github.run_id) || '' }}
+  cancel-in-progress: true
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.parallel=true"
@@ -36,20 +37,21 @@ permissions:
 
 # Job matrix:
 #
-#   push to main:      [gradleWrapper, spotless, checkLicense]
+#   push to main:      [testScope, gradleWrapper, spotless, checkLicense]
 #                    → build
 #                    → dockerBuildTest (docker-build-test.yml: build + goss-test)
 #                    → dockerPublish   (docker-publish.yml: push `develop` image + sign)
 #
-#   pull_request:    [gradleWrapper, spotless, checkLicense]
+#   pull_request:    [testScope, gradleWrapper, spotless, checkLicense]
 #                  → [build, verifySourceMetadata, unitTests, integrationTests, referenceTests, referenceTestsEvmV2,
 #                     devnetTests, devnetTestsEvmV2, acceptanceTests]
 #                  → dockerBuildTest (docker-build-test.yml: build + goss-test; dockerPublish skipped - not on main)
-#                  → allTestsPassed (PR merge gate).
+#                  → allTestsPassed (PR merge gate; needs build, the suites and dockerBuildTest).
 #
 #   workflow_dispatch, push to ds/**: as pull_request (full CI).
-#   push to rebase/** or ci/**, pull_request to rebase/**: as pull_request, with unitTests as the
-#                  only test suite and no dockerBuildTest (fast checks).
+#   push to rebase/** or ci/**, pull_request to rebase/**: as pull_request, with only build and
+#                  unitTests (fast checks): verifySourceMetadata, the other suites and dockerBuildTest
+#                  are skipped, and allTestsPassed requires build and unitTests.
 #
 #   testScope selects between them: none (push to main), fast or full.
 
