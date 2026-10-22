@@ -665,7 +665,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @CommandLine.Option(
       names = {"--cache-last-blocks"},
-      description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
+      description =
+          "Specifies the number of last blocks whose headers and total difficulty to cache. Bodies,"
+              + " receipts and block access lists of the last 128 blocks are always cached"
+              + " (default: ${DEFAULT-VALUE})")
   private final Integer numberOfBlocksToCache = 0;
 
   @CommandLine.Option(

@@ -51,6 +51,30 @@ public interface BlockchainStorage {
 
   Optional<List<TransactionReceipt>> getTransactionReceipts(Hash blockHash);
 
+  /**
+   * Decodes a block body in the format {@link Updater#putBlockBody} stores it.
+   *
+   * @param rlp The stored RLP.
+   * @return The decoded block body.
+   */
+  BlockBody decodeBlockBody(Bytes rlp);
+
+  /**
+   * Decodes transaction receipts in the format {@link Updater#putTransactionReceipts} stores them.
+   *
+   * @param rlp The stored RLP.
+   * @return The decoded transaction receipts.
+   */
+  List<TransactionReceipt> decodeTransactionReceipts(Bytes rlp);
+
+  /**
+   * Decodes a block access list in the format {@link Updater#putBlockAccessList} stores it.
+   *
+   * @param rlp The stored RLP.
+   * @return The decoded block access list.
+   */
+  BlockAccessList decodeBlockAccessList(Bytes rlp);
+
   Optional<Hash> getBlockHash(long blockNumber);
 
   Optional<Difficulty> getTotalDifficulty(Hash blockHash);
@@ -65,11 +89,25 @@ public interface BlockchainStorage {
 
     void putBlockHeader(Hash blockHash, BlockHeader blockHeader);
 
-    void putBlockBody(Hash blockHash, BlockBody blockBody);
+    /**
+     * Puts the supplied block body in the database against the supplied block hash.
+     *
+     * @param blockHash The block hash to store the body against
+     * @param blockBody The body to be stored
+     * @return The RLP that was stored
+     */
+    Bytes putBlockBody(Hash blockHash, BlockBody blockBody);
 
     void putSyncBlockBody(Hash blockHash, SyncBlockBody blockBody);
 
-    void putBlockAccessList(Hash blockHash, BlockAccessList blockAccessList);
+    /**
+     * Puts the supplied block access list in the database against the supplied block hash.
+     *
+     * @param blockHash The block hash to store the block access list against
+     * @param blockAccessList The block access list to be stored
+     * @return The RLP that was stored
+     */
+    Bytes putBlockAccessList(Hash blockHash, BlockAccessList blockAccessList);
 
     void putSyncBlockAccessList(Hash blockHash, SyncBlockAccessList syncBlockAccessList);
 
@@ -80,8 +118,9 @@ public interface BlockchainStorage {
      *
      * @param blockHash The block hash to store the receipts against
      * @param transactionReceipts The receipts to be stored
+     * @return The RLP that was stored
      */
-    void putTransactionReceipts(Hash blockHash, List<TransactionReceipt> transactionReceipts);
+    Bytes putTransactionReceipts(Hash blockHash, List<TransactionReceipt> transactionReceipts);
 
     /**
      * Puts the supplied SyncTransactionReceipts' rawRlp in the database against the supplied block

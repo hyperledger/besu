@@ -31,6 +31,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage.Updater;
 import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
@@ -38,6 +39,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -53,6 +55,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class KeyValueStoragePrefixedKeyBlockchainStorageTest {
   private final BlockHeaderFunctions blockHeaderFunctions = mock(BlockHeaderFunctions.class);
@@ -279,5 +283,37 @@ public class KeyValueStoragePrefixedKeyBlockchainStorageTest {
         Optional.empty(),
         blockchainStorage.getBlockAccessListRlp(generator.hash()),
         "BAL RLP of an unknown block must be empty");
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void testUpdaterReturnsStoredRlpThatDecodesToStoredData(final boolean receiptCompaction) {
+    populateBlockchainStorage(kvBlockchain, variableValues);
+
+    final var blockchainStorage =
+        new KeyValueStoragePrefixedKeyBlockchainStorage(
+            kvBlockchain, variablesStorage, new MainnetBlockHeaderFunctions(), receiptCompaction);
+
+    final BlockDataGenerator generator = new BlockDataGenerator();
+    final Block block = generator.block();
+    final Hash blockHash = block.getHash();
+    final List<TransactionReceipt> receipts = generator.receipts(block);
+    final BlockAccessList bal = generator.blockAccessList();
+
+    final Updater updater = blockchainStorage.updater();
+    final Bytes bodyRlp = updater.putBlockBody(blockHash, block.getBody());
+    final Bytes receiptsRlp = updater.putTransactionReceipts(blockHash, receipts);
+    final Bytes balRlp = updater.putBlockAccessList(blockHash, bal);
+    updater.commit();
+
+    Assertions.assertEquals(block.getBody(), blockchainStorage.decodeBlockBody(bodyRlp));
+    Assertions.assertEquals(
+        Optional.of(block.getBody()), blockchainStorage.getBlockBody(blockHash));
+    Assertions.assertEquals(
+        blockchainStorage.getTransactionReceipts(blockHash).get(),
+        blockchainStorage.decodeTransactionReceipts(receiptsRlp));
+    Assertions.assertEquals(
+        Optional.of(balRlp), blockchainStorage.getBlockAccessListRlp(blockHash));
+    Assertions.assertEquals(bal, blockchainStorage.decodeBlockAccessList(balRlp));
   }
 }
