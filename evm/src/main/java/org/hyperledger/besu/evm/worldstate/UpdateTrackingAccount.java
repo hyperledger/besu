@@ -108,11 +108,9 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     this.oldCodeHash = account.getCodeHash();
     if (Hash.EMPTY.equals(this.oldCodeHash)) {
       this.oldCode = Code.EMPTY_CODE;
-    } else if (account instanceof UpdateTrackingAccount<?> parentTracker
-        && parentTracker.updatedCode != null) {
-      // code set in this transaction is in memory: sharing it through the cache keeps its jump
-      // destination analysis done once
-      this.oldCode = parentTracker.getOrCreateCachedCode();
+    } else if (account instanceof UpdateTrackingAccount<?> parent && parent.codeWasUpdated()) {
+      // the parent may set its code again, so the code it has now is kept
+      this.oldCode = parent.getOrCreateCachedCode();
     }
 
     this.updatedStorage = new TreeMap<>();
@@ -222,6 +220,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
 
   @Override
   public boolean hasCode() {
+    // checks the size of updated code, as the default would hash it
     return updatedCode == null ? !Hash.EMPTY.equals(oldCodeHash) : updatedCode.getSize() > 0;
   }
 

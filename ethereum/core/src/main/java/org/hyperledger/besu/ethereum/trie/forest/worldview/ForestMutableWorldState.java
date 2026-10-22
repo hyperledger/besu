@@ -300,11 +300,6 @@ public class ForestMutableWorldState implements MutableWorldState {
     }
 
     @Override
-    public boolean hasCode() {
-      return !Hash.EMPTY.equals(getCodeHash());
-    }
-
-    @Override
     public Hash getCodeHash() {
       return accountValue.getCodeHash();
     }

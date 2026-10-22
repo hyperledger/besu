@@ -224,11 +224,6 @@ public class JournaledAccount implements MutableAccount, Undoable {
     return codeHash.get();
   }
 
-  @Override
-  public boolean hasCode() {
-    return !Hash.EMPTY.equals(codeHash.get());
-  }
-
   /**
    * Mark the account as deleted/not deleted
    *
