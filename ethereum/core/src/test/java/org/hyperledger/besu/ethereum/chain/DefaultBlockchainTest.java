@@ -1180,6 +1180,90 @@ public class DefaultBlockchainTest {
         false);
   }
 
+  @Test
+  public void storesSyncBodiesInAnyOrderWithoutMovingTheChainHead() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final Block genesisBlock = gen.genesisBlock();
+    final DefaultBlockchain blockchain =
+        createMutableBlockchain(
+            new InMemoryKeyValueStorage(), new InMemoryKeyValueStorage(), genesisBlock);
+    final List<Block> blocks = blocksAbove(gen, genesisBlock, 4, Difficulty.ONE);
+    blockchain.storeBlockHeaders(blocks.stream().map(Block::getHeader).toList());
+
+    for (final int index : new int[] {3, 1, 2, 0}) {
+      blockchain.unsafeStoreSyncBodiesAndReceipts(
+          List.of(toSyncBlockWithReceipts(blocks.get(index))), true);
+    }
+
+    assertThat(blockchain.getChainHeadBlockNumber()).isZero();
+    for (final Block block : blocks) {
+      assertThat(blockchain.getBlockBody(block.getHash())).isPresent();
+      block
+          .getBody()
+          .getTransactions()
+          .forEach(
+              transaction ->
+                  assertThat(blockchain.getTransactionLocation(transaction.getHash())).isPresent());
+    }
+  }
+
+  @Test
+  public void storesProofOfStakeHeadersWithTheirTotalDifficulty() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final Block genesisBlock = gen.genesisBlock();
+    final DefaultBlockchain blockchain =
+        createMutableBlockchain(
+            new InMemoryKeyValueStorage(), new InMemoryKeyValueStorage(), genesisBlock);
+    final List<BlockHeader> headers =
+        blocksAbove(gen, genesisBlock, 3, Difficulty.ZERO).stream().map(Block::getHeader).toList();
+    final Difficulty totalDifficulty = Difficulty.of(17);
+
+    blockchain.storeBlockHeaders(headers, totalDifficulty);
+
+    assertThat(blockchain.getChainHeadBlockNumber()).isZero();
+    for (final BlockHeader header : headers) {
+      assertThat(blockchain.getBlockHeader(header.getNumber())).contains(header);
+      assertThat(blockchain.getTotalDifficultyByHash(header.getHash())).contains(totalDifficulty);
+    }
+  }
+
+  @Test
+  public void keepsTheBlockTheBodiesAreStoredFrom() {
+    final Block genesisBlock = new BlockDataGenerator().genesisBlock();
+    final KeyValueStorage chainKv = new InMemoryKeyValueStorage();
+    final KeyValueStorage variablesKv = new InMemoryKeyValueStorage();
+    final DefaultBlockchain blockchain =
+        createMutableBlockchain(chainKv, variablesKv, genesisBlock);
+    assertThat(blockchain.getBodiesFrom()).isEmpty();
+
+    blockchain.unsafeSetBodiesFrom(2);
+
+    assertThat(blockchain.getBodiesFrom()).contains(2L);
+    // stored, so a restarted node reads it back
+    assertThat(createMutableBlockchain(chainKv, variablesKv, genesisBlock).getBodiesFrom())
+        .contains(2L);
+  }
+
+  // count blocks above the parent, each the child of the one before
+  private static List<Block> blocksAbove(
+      final BlockDataGenerator gen,
+      final Block parent,
+      final int count,
+      final Difficulty difficulty) {
+    final List<Block> blocks = new ArrayList<>();
+    Block last = parent;
+    for (int i = 0; i < count; i++) {
+      last =
+          gen.block(
+              new BlockOptions()
+                  .setBlockNumber(last.getHeader().getNumber() + 1)
+                  .setParentHash(last.getHash())
+                  .setDifficulty(difficulty));
+      blocks.add(last);
+    }
+    return blocks;
+  }
+
   private SyncBlockWithReceipts toSyncBlockWithReceipts(final Block block) {
     final BytesValueRLPOutput output = new BytesValueRLPOutput();
     block.getBody().writeWrappedBodyTo(output);

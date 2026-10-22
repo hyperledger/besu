@@ -61,6 +61,16 @@ public interface Blockchain {
   Optional<Long> getEarliestBlockNumber();
 
   /**
+   * Returns the lowest block whose body and receipts a sync stored, as it did those of every block
+   * above it up to the chain head; the blocks below may still miss theirs.
+   *
+   * @return the block, or empty when no sync recorded one
+   */
+  default Optional<Long> getBodiesFrom() {
+    return Optional.empty();
+  }
+
+  /**
    * Return the block number of the head of the canonical chain.
    *
    * @return The block number of the head of the chain.

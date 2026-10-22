@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
-import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -406,6 +405,11 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public Optional<Long> getBodiesFrom() {
+    return blockchainStorage.getBodiesFrom();
+  }
+
+  @Override
   public Hash getChainHeadHash() {
     return chainHeader.getHash();
   }
@@ -601,13 +605,27 @@ public class DefaultBlockchain implements MutableBlockchain {
   @Override
   public void storeBlockHeaders(final List<BlockHeader> blockHeaders) {
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    blockHeaders.forEach(header -> putCanonicalHeader(updater, header));
+    updater.commit();
+  }
+
+  @Override
+  public void storeBlockHeaders(
+      final List<BlockHeader> blockHeaders, final Difficulty totalDifficulty) {
+    final BlockchainStorage.Updater updater = blockchainStorage.batchUpdater();
     blockHeaders.forEach(
         header -> {
-          final Hash hash = header.getHash();
-          updater.putBlockHeader(hash, header);
-          updater.putBlockHash(header.getNumber(), hash);
+          putCanonicalHeader(updater, header);
+          updater.putTotalDifficulty(header.getHash(), totalDifficulty);
         });
     updater.commit();
+  }
+
+  private static void putCanonicalHeader(
+      final BlockchainStorage.Updater updater, final BlockHeader header) {
+    final Hash hash = header.getHash();
+    updater.putBlockHeader(hash, header);
+    updater.putBlockHash(header.getNumber(), hash);
   }
 
   @Override
@@ -725,28 +743,50 @@ public class DefaultBlockchain implements MutableBlockchain {
     Difficulty lastImportedTotalDifficulty = totalDifficulty;
     int lastImportedTransactionCount = chainHeadTransactionCount;
     for (final SyncBlockWithReceipts blockAndReceipts : blocksAndReceipts) {
-      final SyncBlock block = blockAndReceipts.getBlock();
-      final BlockHeader header = block.getHeader();
+      final BlockHeader header = blockAndReceipts.getHeader();
       final Hash blockHash = header.getHash();
-      final SyncBlockBody body = block.getBody();
       updater.putBlockHash(header.getNumber(), blockHash);
-      updater.putSyncBlockBody(blockHash, body);
-      updater.putSyncTransactionReceipts(blockHash, blockAndReceipts.getReceipts());
+      putSyncBlock(updater, blockAndReceipts, indexTransactions);
       lastImportedTotalDifficulty = calculateTotalDifficultyForSyncing(header);
       updater.putTotalDifficulty(blockHash, lastImportedTotalDifficulty);
       lastImportedHeader = header;
-      lastImportedTransactionCount = body.getEncodedTransactions().size();
-      if (indexTransactions) {
-        final List<Hash> listOfTxHashes =
-            body.getEncodedTransactions().stream().map(Hash::hash).toList();
-        indexTransactionHashesForBlock(updater, blockHash, listOfTxHashes);
-      }
+      lastImportedTransactionCount =
+          blockAndReceipts.getBlock().getBody().getEncodedTransactions().size();
     }
     updater.setChainHead(lastImportedHeader.getBlockHash());
     updater.commit();
     chainHeadTransactionCount = lastImportedTransactionCount;
     totalDifficulty = lastImportedTotalDifficulty;
     chainHeader = lastImportedHeader;
+  }
+
+  @Override
+  public void unsafeStoreSyncBodiesAndReceipts(
+      final List<SyncBlockWithReceipts> blocksAndReceipts, final boolean indexTransactions) {
+    final BlockchainStorage.Updater updater = blockchainStorage.batchUpdater();
+    blocksAndReceipts.forEach(block -> putSyncBlock(updater, block, indexTransactions));
+    updater.commit();
+  }
+
+  private void putSyncBlock(
+      final BlockchainStorage.Updater updater,
+      final SyncBlockWithReceipts blockAndReceipts,
+      final boolean indexTransactions) {
+    final Hash blockHash = blockAndReceipts.getHeader().getHash();
+    final SyncBlockBody body = blockAndReceipts.getBlock().getBody();
+    updater.putSyncBlockBody(blockHash, body);
+    updater.putSyncTransactionReceipts(blockHash, blockAndReceipts.getReceipts());
+    if (indexTransactions) {
+      indexTransactionHashesForBlock(
+          updater, blockHash, body.getEncodedTransactions().stream().map(Hash::hash).toList());
+    }
+  }
+
+  @Override
+  public void unsafeSetBodiesFrom(final long blockNumber) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    updater.setBodiesFrom(blockNumber);
+    updater.commit();
   }
 
   @Override
