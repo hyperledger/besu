@@ -95,7 +95,6 @@ public class EthCreateAccessList extends AbstractEstimateGas {
     return fee.map(Wei.ZERO::equals).orElse(true);
   }
 
-  // Simulate as an access list transaction so that a block before Berlin rejects it.
   private CallParameter withAccessList(final CallParameter callParams) {
     if (callParams.getAccessList().isPresent()) {
       return callParams;
