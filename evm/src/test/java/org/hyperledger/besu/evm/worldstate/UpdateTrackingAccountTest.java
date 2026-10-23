@@ -146,6 +146,21 @@ class UpdateTrackingAccountTest {
   }
 
   @Test
+  void keepsItsSnapshotOfTheCodeTheWrappedTrackerSet() {
+    final UpdateTrackingAccount<Account> parent =
+        new UpdateTrackingAccount<>(
+            new StubAccount(new Code(CODE, Hash.hash(CODE)), new MapCodeCache()));
+    parent.setCode(OTHER_CODE);
+    final UpdateTrackingAccount<Account> child = new UpdateTrackingAccount<>(parent);
+
+    parent.setCode(CODE);
+
+    assertThat(child.getCodeHash()).isEqualTo(Hash.hash(OTHER_CODE));
+    assertThat(child.getCode()).isEqualTo(OTHER_CODE);
+    assertThat(child.getOrCreateCachedCode().getBytes()).isEqualTo(OTHER_CODE);
+  }
+
+  @Test
   void doesNotLoadCodeWhenOnlyMetadataOrCodeHashIsQueried() {
     final MapCodeCache cache = new MapCodeCache();
     final StubAccount wrapped = new StubAccount(new Code(CODE, Hash.hash(CODE)), cache);

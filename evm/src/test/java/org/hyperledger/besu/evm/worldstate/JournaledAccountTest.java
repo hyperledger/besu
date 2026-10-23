@@ -21,6 +21,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.collections.undo.Undoable;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -62,11 +63,56 @@ class JournaledAccountTest {
     verify(wrapped).setCode(OTHER_CODE);
   }
 
+  @Test
+  void readsTheCodeOfTheWrappedAccountOnlyWhenItIsRequested() {
+    final MutableAccount wrapped = contract(CODE);
+    final JournaledAccount account = new JournaledAccount(wrapped);
+
+    assertThat(account.hasCode()).isTrue();
+    verify(wrapped, never()).getCode();
+
+    assertThat(account.getCode()).isEqualTo(CODE);
+    verify(wrapped).getCode();
+  }
+
+  @Test
+  void undoingSetCodeGoesBackToTheCodeOfTheWrappedAccount() {
+    final MutableAccount wrapped = contract(CODE);
+    final JournaledAccount account = new JournaledAccount(wrapped);
+    final long mark = account.mark();
+
+    account.setCode(OTHER_CODE);
+    assertThat(account.getCode()).isEqualTo(OTHER_CODE);
+
+    account.undo(mark);
+    assertThat(account.codeWasUpdated()).isFalse();
+    assertThat(account.getCodeHash()).isEqualTo(Hash.hash(CODE));
+    assertThat(account.getCode()).isEqualTo(CODE);
+
+    account.commit();
+    verify(wrapped, never()).setCode(any());
+  }
+
+  @Test
+  void isNotUpdatedWhenCreatedWithTheMarkAtZero() {
+    final long mark = Undoable.markState.get();
+    // as in a fresh JVM, where nothing has advanced the mark yet
+    Undoable.markState.set(0);
+    try {
+      final JournaledAccount account = new JournaledAccount(contract(CODE));
+
+      assertThat(account.codeWasUpdated()).isFalse();
+    } finally {
+      Undoable.markState.set(mark);
+    }
+  }
+
   private static MutableAccount contract(final Bytes code) {
     final MutableAccount account = mock(MutableAccount.class);
     when(account.getAddress()).thenReturn(Address.fromHexString("0x1234"));
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(account.getCodeHash()).thenReturn(Hash.hash(code));
+    when(account.getCode()).thenReturn(code);
     return account;
   }
 }

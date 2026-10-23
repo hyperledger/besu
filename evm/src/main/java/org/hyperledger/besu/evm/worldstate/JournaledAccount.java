@@ -155,7 +155,8 @@ public class JournaledAccount implements MutableAccount, Undoable {
    * @return {@code true} if the code was updated.
    */
   public boolean codeWasUpdated() {
-    return code.lastUpdate() >= transactionBoundaryMark;
+    // an update made after the boundary has a later mark, and no update at all has mark 0
+    return code.lastUpdate() > transactionBoundaryMark;
   }
 
   /**
