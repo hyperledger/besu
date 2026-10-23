@@ -87,6 +87,21 @@ class HeaderBackfillTest {
   }
 
   @Test
+  void storesTheTrustedChainFromShortAnswersThatMixChains() {
+    // peers answer four headers at most, and serve by number another chain from block 31 to 35
+    sender.answerAtMost(4);
+    sender.serve(chain);
+    sender.serve(fork(chain.subList(0, 31), 35));
+    final HeaderBackfill backfill = backfill(chain.getFirst(), chain.get(60));
+
+    final CompletableFuture<Void> done = backfill.run(executor);
+    executor.runAll();
+
+    assertThat(done).isCompleted();
+    assertThat(stored).containsExactlyElementsOf(chain.subList(1, 60).reversed());
+  }
+
+  @Test
   void failsWhenTheHeadersDoNotLeadToTheFloor() {
     sender.serve(chain);
     final BlockHeader otherFloor = new BlockHeaderTestFixture().number(5).buildHeader();
@@ -163,6 +178,7 @@ class HeaderBackfillTest {
     private final EthPeer peer = mock(EthPeer.class);
     private final Map<Long, BlockHeader> served = new HashMap<>();
     private final Map<Hash, BlockHeader> known = new HashMap<>();
+    private int maxAnswer = Integer.MAX_VALUE;
 
     private FakeSender() {
       when(peer.getAgreedCapabilities()).thenReturn(Set.of(EthProtocol.LATEST));
@@ -181,6 +197,11 @@ class HeaderBackfillTest {
       headers.forEach(header -> known.put(header.getHash(), header));
     }
 
+    // answers at most this many headers, as a peer may
+    private void answerAtMost(final int headers) {
+      maxAnswer = headers;
+    }
+
     @Override
     public <T> CompletableFuture<Response<T>> submit(
         final SyncRequest<T> request, final Set<EthPeer> excluded) {
@@ -192,7 +213,7 @@ class HeaderBackfillTest {
               .map(known::get)
               .orElseGet(() -> served.get(message.blockNumber().getAsLong()));
       final List<BlockHeader> headers = new ArrayList<>();
-      while (header != null && headers.size() < message.maxHeaders()) {
+      while (header != null && headers.size() < Math.min(message.maxHeaders(), maxAnswer)) {
         headers.add(header);
         header = known.get(header.getParentHash());
       }
