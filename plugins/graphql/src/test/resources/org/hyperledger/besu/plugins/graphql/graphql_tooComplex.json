@@ -1,0 +1,14 @@
+{
+  "request": "{ block { transactions { block { transactions { block { number }}}}}}",
+  "response": {
+    "errors": [
+      {
+        "message": "maximum query complexity exceeded 204 > 200",
+        "extensions": {
+          "classification": "ExecutionAborted"
+        }
+      }
+    ]
+  },
+  "statusCode": 400
+}

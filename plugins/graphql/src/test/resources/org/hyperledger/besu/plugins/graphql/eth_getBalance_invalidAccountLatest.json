@@ -1,0 +1,14 @@
+{
+  "request": "{ pending { account(address: \"0xdeaff00ddeaff00ddeaff00ddeaff00ddeaff00d\") { balance } } }",
+  "response": {
+    "data": {
+      "pending": {
+        "account": {
+          "balance": "0x0"
+        }
+      }
+    }
+  },
+  "statusCode": 200
+}
+

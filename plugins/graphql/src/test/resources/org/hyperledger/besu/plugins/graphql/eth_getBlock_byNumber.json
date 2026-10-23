@@ -1,0 +1,42 @@
+{
+  "request": "{block (number : \"0x1e\") {transactions{hash} timestamp difficulty totalDifficulty gasUsed gasLimit hash nonce ommerCount logsBloom mixHash ommerHash extraData stateRoot receiptsRoot transactionCount transactionsRoot ommers{hash} ommerAt(index : 1){hash} miner{address} account(address: \"0x6295ee1b4f6dd65047762f924ecd367c17eabf8f\"){balance} parent{hash} }} ",
+  "response": {
+    "data": {
+      "block": {
+        "transactions": [
+          {
+            "hash": "0x9cc6c7e602c56aa30c554bb691377f8703d778cec8845f4b88c0f72516b304f4"
+          }
+        ],
+        "timestamp": "0x561bc336",
+        "difficulty": "0x20740",
+        "totalDifficulty": "0x3e6cc0",
+        "gasUsed": "0x5c21",
+        "gasLimit": "0x2fefd8",
+        "hash": "0xc8df1f061abb4d0c107b2b1a794ade8780b3120e681f723fe55a7be586d95ba6",
+        "nonce": "0x5c321bd9e9f040f1",
+        "ommerCount": "0x0",
+        "logsBloom": "0x00000000000000000000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000000000000080000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000400000000000000000200000000000000000002000000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000800000000040000000000000000000000000000000000000000010000000000000000000000000",
+        "mixHash": "0x6ce1c4afb4f85fefd1b0ed966b20cd248f08d9a5b0df773f75c6c2f5cc237b7c",
+        "ommerHash": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+        "extraData": "0x",
+        "stateRoot": "0xdb46d6bb168130fe2cb60b4b24346137b5741f11283e0d7edace65c5f5466b2e",
+        "receiptsRoot": "0x88b3b304b058b39791c26fdb94a05cc16ce67cf8f84f7348cb3c60c0ff342d0d",
+        "transactionCount": "0x1",
+        "transactionsRoot": "0x5a8d5d966b48e1331ae19eb459eb28882cdc7654e615d37774b79204e875dc01",
+        "ommers": [],
+        "ommerAt": null,
+        "miner": {
+          "address": "0x8888f1f195afa192cfee860698584c030f4c9db1"
+        },
+        "account": {
+          "balance": "0x12c"
+        },
+        "parent": {
+          "hash": "0xf8cfa377bd766cdf22edb388dd08cc149e85d24f2796678c835f3c54ab930803"
+        }
+      }
+    }
+  },
+  "statusCode": 200
+}

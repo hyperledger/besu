@@ -1,0 +1,25 @@
+{
+  "request": "{transaction (hash : \"0x3ecd2ca6cf26c864d0ea5f038a58d4cd4a46a3e242fe92f446f392fdc232dd98\") { accessList { address storageKeys } maxFeePerGas maxPriorityFeePerGas nonce type status yParity v} } ",
+  "response": {
+    "data": {
+      "transaction": {
+        "accessList": [
+          {
+            "address": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+            "storageKeys": [
+              "0x0000000000000000000000000000000000000000000000000000000000000000"
+            ]
+          }
+        ],
+        "maxFeePerGas": "0xb2d05e00",
+        "maxPriorityFeePerGas": "0x3b9aca00",
+        "nonce": "0x20",
+        "type": "0x2",
+        "status": "0x1",
+        "yParity": "0x0",
+        "v": "0x0"
+      }
+    }
+  },
+  "statusCode": 200
+}

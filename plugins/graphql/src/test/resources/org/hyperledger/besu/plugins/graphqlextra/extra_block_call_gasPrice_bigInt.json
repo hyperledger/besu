@@ -1,0 +1,22 @@
+{
+  "request" : "{ block(number: 8) { call(data: {from: \"0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b\", to: \"0x6295ee1b4f6dd65047762f924ecd367c17eabf8f\", data: \"0x12a7b914\", gasPrice: \"0x1\"}) { data status gasUsed } } }",
+  "response" : {
+    "errors" : [ {
+      "message" : "Exception while fetching data (/block/call) : java.lang.reflect.InvocationTargetException",
+      "locations" : [ {
+        "line" : 1,
+        "column" : 22
+      } ],
+      "path" : [ "block", "call" ],
+      "extensions" : {
+        "classification" : "DataFetchingException"
+      }
+    } ],
+    "data" : {
+      "block" : {
+        "call" : null
+      }
+    }
+  },
+  "statusCode" : 400
+}

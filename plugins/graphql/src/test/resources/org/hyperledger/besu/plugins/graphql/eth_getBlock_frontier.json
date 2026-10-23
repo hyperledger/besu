@@ -1,0 +1,29 @@
+{
+  "request": "{block (number: 32) { difficulty extraData miner { address } mixHash nonce stateRoot totalDifficulty transactions { gasPrice type yParity v r s} }} ",
+  "response": {
+    "data": {
+      "block": {
+        "difficulty": "0x207c0",
+        "extraData": "0x",
+        "miner": {
+          "address": "0x8888f1f195afa192cfee860698584c030f4c9db1"
+        },
+        "mixHash": "0x4edd77bfff565659bb0ae09421918e4def65d938a900eb94230eb01f5ce80c99",
+        "nonce": "0xdb063000b00e8026",
+        "stateRoot": "0xf65f3dd13f72f5fa5607a5224691419969b4f4bae7a00a6cdb853f2ca9eeb1be",
+        "totalDifficulty": "0x427c00",
+        "transactions": [
+          {
+            "gasPrice": "0x1",
+            "type": "0x0",
+            "yParity": null,
+            "v": "0x1b",
+            "r": "0x705b002a7df60707d33812e0298411721be20ea5a2f533707295140d89263b79",
+            "s": "0x78024390784f24160739533b3ceea2698289a02afd9cc768581b4aa3d5f4b105"
+          }
+        ]
+      }
+    }
+  },
+  "statusCode": 200
+}

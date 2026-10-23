@@ -1,0 +1,17 @@
+{
+  "request" : "{ block(number: 8) { miner { address balance transactionCount code storage(slot: \"0x0000000000000000000000000000000000000000000000000000000000000004\") } } }",
+  "response" : {
+    "data" : {
+      "block" : {
+        "miner" : {
+          "address" : "0x8888f1f195afa192cfee860698584c030f4c9db1",
+          "balance" : "0x22f72c52a4bf91607",
+          "transactionCount" : "0x0",
+          "code" : "0x",
+          "storage" : "0x0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    }
+  },
+  "statusCode" : 200
+}

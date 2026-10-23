@@ -1,0 +1,13 @@
+{
+  "request": "{ pending { account(address: \"0x8888f1f195afa192cfee860698584c030f4c9db1\") { code } } }",
+  "response": {
+    "data": {
+      "pending": {
+        "account": {
+          "code": "0x"
+        }
+      }
+    }
+  },
+  "statusCode": 200
+}

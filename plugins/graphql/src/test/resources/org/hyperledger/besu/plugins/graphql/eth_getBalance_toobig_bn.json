@@ -1,0 +1,27 @@
+{
+  "request": "{ block(number:\"0x220\") { account(address: \"0x6295ee1b4f6dd65047762f924ecd367c17eabf8f\") { balance } } }",
+  "response": {
+    "errors": [
+      {
+        "message": "Exception while fetching data (/block) : Block number 544 was not found",
+        "locations": [
+          {
+            "line": 1,
+            "column": 3
+          }
+        ],
+        "path": [
+          "block"
+        ],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ],
+    "data": {
+      "block": null
+    }
+  },
+  "statusCode": 400
+}
+

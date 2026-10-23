@@ -1,0 +1,22 @@
+{
+  "request" : "{ transaction(hash: \"0x9cc6c7e602c56aa30c554bb691377f8703d778cec8845f4b88c0f72516b304f4\") { from { address balance transactionCount code } to { address balance transactionCount storage(slot: \"0x0000000000000000000000000000000000000000000000000000000000000004\") } } }",
+  "response" : {
+    "data" : {
+      "transaction" : {
+        "from" : {
+          "address" : "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+          "balance" : "0x340ab63a02166aa9",
+          "transactionCount" : "0x1e",
+          "code" : "0x"
+        },
+        "to" : {
+          "address" : "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+          "balance" : "0x12c",
+          "transactionCount" : "0x0",
+          "storage" : "0xaabbccffffffffffffffffffffffffffffffffffffffffffffffffffffffffee"
+        }
+      }
+    }
+  },
+  "statusCode" : 200
+}
