@@ -78,6 +78,27 @@ public final class SyncStorageFixture {
     };
   }
 
+  /** Returns the slots stored for an account, keyed by slot hash, by a scan of its key alone. */
+  public static NavigableMap<Bytes32, Bytes> slots(
+      final SyncStateStorage storage, final Bytes32 accountHash) {
+    final NavigableMap<Bytes32, Bytes> slots = new TreeMap<>();
+    storage.scan(
+        accountHash,
+        accountHash,
+        new SyncStateStorage.ScanVisitor() {
+          @Override
+          public boolean onAccount(final Bytes32 hash, final Bytes account) {
+            return true;
+          }
+
+          @Override
+          public void onSlot(final Bytes32 hash, final Bytes32 slotHash, final Bytes value) {
+            slots.put(slotHash, value);
+          }
+        });
+    return slots;
+  }
+
   /** A flat world state keyed by hash, as the download writes it. */
   public static final class World {
     public final TreeMap<Bytes32, PatriciaTrieAccountValue> accounts = new TreeMap<>();

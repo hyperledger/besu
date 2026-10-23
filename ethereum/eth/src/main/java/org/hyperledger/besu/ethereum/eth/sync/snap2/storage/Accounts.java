@@ -46,4 +46,11 @@ public final class Accounts {
   public static boolean hasKnownStorageTrie(final Hash storageRoot) {
     return !storageRoot.equals(Hash.EMPTY_TRIE_HASH) && !storageRoot.equals(UNKNOWN_STORAGE_ROOT);
   }
+
+  /** Returns whether the account is empty in the EIP-161 sense. */
+  public static boolean isEmpty(final PatriciaTrieAccountValue account) {
+    return account.getNonce() == 0
+        && account.getBalance().isZero()
+        && account.getCodeHash().equals(Hash.EMPTY);
+  }
 }
