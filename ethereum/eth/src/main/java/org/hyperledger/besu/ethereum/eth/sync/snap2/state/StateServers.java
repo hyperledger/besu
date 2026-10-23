@@ -25,8 +25,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Tells, from their answers, which peers serve the state of the pivot. A peer that answers nothing
  * for a pivot another peer serves, or for two pivots in a row, is left out of state requests for a
- * while and then probed again. It also stops counting as a snap server, so that the peer list makes
- * room for peers that serve. Owned by the state download loop.
+ * while and stops counting as a snap server. Not thread safe: the download loop owns it.
  */
 final class StateServers {
 

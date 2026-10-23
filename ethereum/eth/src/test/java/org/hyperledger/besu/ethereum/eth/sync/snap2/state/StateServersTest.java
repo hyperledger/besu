@@ -83,12 +83,26 @@ class StateServersTest {
   }
 
   @Test
+  void leavesOutAPeerTenMinutesAtMost() {
+    servers.served(serving, 0);
+    // the sixth strike would double the wait to 16 minutes
+    for (int strike = 0; strike < 6; strike++) {
+      servers.empty(lazy, 0, 0);
+    }
+
+    assertThat(servers.excluded(599 * SECOND)).contains(lazy);
+    assertThat(servers.excluded(601 * SECOND)).isEmpty();
+  }
+
+  @Test
   void forgetsDisconnectedPeers() {
     servers.served(serving, 0);
     servers.empty(lazy, 0, 0);
     when(lazy.isDisconnected()).thenReturn(true);
+    when(serving.isDisconnected()).thenReturn(true);
 
     assertThat(servers.excluded(0)).isEmpty();
+    assertThat(servers.hasServed(serving)).isFalse();
   }
 
   private static EthPeer peer() {

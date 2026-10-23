@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
+import org.hyperledger.besu.ethereum.eth.sync.snap2.net.SnapMessages;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.net.SyncRequest;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
@@ -41,6 +42,14 @@ class ByteCodesRequestTest {
   private final ByteCodesRequest request =
       new ByteCodesRequest(List.of(hash(FIRST), hash(SECOND), hash(THIRD)), 4096);
   private final EthPeer peer = mock(EthPeer.class);
+
+  @Test
+  void asksForTheCodesByHash() {
+    assertThat(request.message(peer).getData())
+        .isEqualTo(
+            SnapMessages.getByteCodes(List.of(hash(FIRST), hash(SECOND), hash(THIRD)), 4096)
+                .getData());
+  }
 
   @Test
   void keepsTheCodesServedInRequestOrderWithGaps() {

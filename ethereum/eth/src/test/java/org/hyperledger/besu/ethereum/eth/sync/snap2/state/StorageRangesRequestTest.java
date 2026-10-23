@@ -18,10 +18,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
+import org.hyperledger.besu.ethereum.eth.sync.snap2.net.SnapMessages;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.net.SyncRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snap2.trie.RangeProofs;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.RangeManager;
@@ -32,7 +35,6 @@ import java.util.List;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
@@ -44,6 +46,7 @@ class StorageRangesRequestTest {
 
   private static final Bytes32 ACCOUNT = Bytes32.fromHexString("0x01");
   private static final Bytes32 OTHER_ACCOUNT = Bytes32.fromHexString("0x02");
+  private static final Hash STATE_ROOT = Hash.hash(Bytes.of(9));
   private final SimpleMerklePatriciaTrie<Bytes32, Bytes> storage =
       new SimpleMerklePatriciaTrie<>(Function.identity());
   private final SimpleMerklePatriciaTrie<Bytes32, Bytes> other =
@@ -56,6 +59,22 @@ class StorageRangesRequestTest {
     for (int i = 1; i <= 4; i++) {
       other.put(slot(i * 0x30), RLP.encodeOne(UInt256.valueOf(10 + i).trimLeadingZeros()));
     }
+  }
+
+  @Test
+  void asksForTheStoragesAtTheStateRootOfThePivot() {
+    final StorageRangesRequest request = twoStorages();
+
+    assertThat(request.message(peer()).getData())
+        .isEqualTo(
+            SnapMessages.getStorageRanges(
+                    Bytes32.wrap(STATE_ROOT.getBytes()),
+                    List.of(ACCOUNT, OTHER_ACCOUNT),
+                    RangeManager.MIN_RANGE,
+                    RangeManager.MAX_RANGE,
+                    4096)
+                .getData());
+    assertThat(request.minimumPeerHeight()).isEqualTo(1);
   }
 
   // a peer may answer a range without slots with no slot list, only the proof of the origin
@@ -101,19 +120,38 @@ class StorageRangesRequestTest {
   @Test
   void acceptsACompleteStorageThenOneCutShortWithItsProof() {
     final NavigableMap<Bytes32, Bytes> firstTwo = slots(other, 2);
-    final List<Bytes> proof =
-        Stream.of(RangeManager.MIN_RANGE, firstTwo.lastKey())
-            .flatMap(key -> other.getValueWithProof(key).getProofRelatedNodes().stream())
-            .distinct()
-            .toList();
+    final List<Bytes> proof = RangeProofs.proof(other, RangeManager.MIN_RANGE, firstTwo.lastKey());
 
     final StorageRangesRequest.Result result =
         twoStorages().decode(response(List.of(slots(storage, 3), firstTwo), proof), peer());
 
     assertThat(result.accounts()).hasSize(2);
     assertThat(result.accounts().get(0).complete()).isTrue();
+    assertThat(result.accounts().get(0).proof()).isEmpty();
     assertThat(result.accounts().get(1).hashes()).containsExactlyElementsOf(firstTwo.keySet());
     assertThat(result.accounts().get(1).complete()).isFalse();
+    assertThat(result.accounts().get(1).proof()).isEqualTo(proof);
+  }
+
+  // the root of a task can move on while its request is in flight
+  @Test
+  void verifiesALateAnswerAgainstTheRootItWasAskedAt() {
+    final StorageTask task = new StorageTask(ACCOUNT, storage.getRootHash());
+    final StorageRangesRequest request =
+        new StorageRangesRequest(
+            pivot(),
+            List.of(task),
+            RangeManager.MIN_RANGE,
+            RangeManager.MAX_RANGE,
+            4096,
+            "storage_ranges");
+    task.refreshRoot(other.getRootHash());
+
+    final StorageRangesRequest.Result result =
+        request.decode(response(List.of(slots(storage, 3)), List.of()), peer());
+
+    assertThat(result.accounts().getFirst().root()).isEqualTo(storage.getRootHash());
+    assertThat(result.accounts().getFirst().complete()).isTrue();
   }
 
   @Test
@@ -160,13 +198,12 @@ class StorageRangesRequestTest {
   }
 
   private static Pivot pivot() {
-    return new Pivot(0, new BlockHeaderTestFixture().number(1).buildHeader());
+    return new Pivot(0, new BlockHeaderTestFixture().number(1).stateRoot(STATE_ROOT).buildHeader());
   }
 
   private MessageData proofOnly(final Bytes32 origin) {
-    final ArrayDeque<NavigableMap<Bytes32, Bytes>> noSlots = new ArrayDeque<>();
     return StorageRangeMessage.create(
-            noSlots, storage.getValueWithProof(origin).getProofRelatedNodes())
+            new ArrayDeque<>(), RangeProofs.proof(storage, origin, origin))
         .wrapMessageData(BigInteger.ONE);
   }
 
