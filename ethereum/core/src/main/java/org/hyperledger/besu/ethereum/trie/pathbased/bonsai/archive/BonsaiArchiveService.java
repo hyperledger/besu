@@ -49,6 +49,7 @@ public final class BonsaiArchiveService implements Closeable {
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
   private final Blockchain blockchain;
   private final BonsaiFlatDbToArchiveMigrator migrator;
+  private final BonsaiArchiveTrailingSync trailingSync;
   private final long maxLayersToLoad;
   private final Optional<ProofCapture> proofCapture;
   private final List<ExecutorService> executors;
@@ -58,12 +59,14 @@ public final class BonsaiArchiveService implements Closeable {
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Blockchain blockchain,
       final BonsaiFlatDbToArchiveMigrator migrator,
+      final BonsaiArchiveTrailingSync trailingSync,
       final long maxLayersToLoad,
       final Optional<ProofCapture> proofCapture,
       final List<ExecutorService> executors) {
     this.worldStateStorage = worldStateStorage;
     this.blockchain = blockchain;
     this.migrator = migrator;
+    this.trailingSync = trailingSync;
     this.maxLayersToLoad = maxLayersToLoad;
     this.proofCapture = proofCapture;
     this.executors = List.copyOf(executors);
@@ -79,24 +82,26 @@ public final class BonsaiArchiveService implements Closeable {
     if (!started.compareAndSet(false, true)) {
       throw new IllegalStateException("Bonsai archive already started");
     }
+    trailingSync.start();
     proofCapture.ifPresent(
         capture -> {
           final ArchiveTrieNodeStrategy strategy = capture.strategy();
-          final TrailingTrieNodeArchiver archiver = capture.archiver();
           strategy.setHasFinalizedBlock(this::hasImportedFinalizedBlock);
-          strategy.setCatchUpTo(archiver::catchUpTo);
+          strategy.setCatchUpTo(trailingSync::catchUpProofsTo);
           synchronizer.subscribeInSync(strategy, maxLayersToLoad);
-          // The archiver runs only while the capture mode is trailing; the first block decides.
+          // The trailing archiver runs only while the capture mode is trailing; the first block
+          // decides.
           strategy.setCaptureModeListener(
-              mode -> {
-                if (mode == ArchiveTrieNodeStrategy.CaptureMode.TRAILING) {
-                  archiver.start();
-                } else {
-                  archiver.stop();
-                }
-              });
+              mode ->
+                  trailingSync.setProofsArchiving(
+                      mode == ArchiveTrieNodeStrategy.CaptureMode.TRAILING));
         });
     startMigration(synchronizer);
+  }
+
+  @VisibleForTesting
+  BonsaiArchiveTrailingSync trailingSync() {
+    return trailingSync;
   }
 
   /**
@@ -121,6 +126,7 @@ public final class BonsaiArchiveService implements Closeable {
                   LOG.info("Node is in sync, starting Bonsai archive migration");
                   migrator
                       .migrate()
+                      .thenRun(trailingSync::startFlatArchive)
                       .exceptionally(
                           error -> {
                             LOG.error(
@@ -132,18 +138,18 @@ public final class BonsaiArchiveService implements Closeable {
               },
               0));
     } else {
-      // Already in ARCHIVE mode (restart after migration): register ongoing migration
-      migrator.startOngoingMigration();
+      // Already in ARCHIVE mode (restart after migration): resume trailing the head
+      trailingSync.startFlatArchive();
     }
   }
 
   /** Stops background work and shuts down executors. Must run before the storage closes. */
   @Override
   public void close() {
-    // Archiver and migrator first so in-flight callbacks finish before storage closes, then the
+    // Coordinator and migrator first so in-flight callbacks finish before storage closes, then the
     // capture strategy (drains the trie-capture pool). shutdownNow afterwards is idempotent and
     // covers components that were never started.
-    proofCapture.ifPresent(capture -> capture.archiver().close());
+    trailingSync.close();
     migrator.close();
     proofCapture.ifPresent(capture -> capture.strategy().close());
     for (final ExecutorService executor : executors) {

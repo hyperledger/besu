@@ -149,13 +149,9 @@ public class BonsaiFlatDbToArchiveMigrator extends TrailingBlockWorker {
               }
               worldStateStorage.upgradeToArchiveFlatDbMode();
               logCompletion(startBlock, target.get(), migrationStartTime);
-              // Hand off observers without a gap: register the ongoing observer first, then
-              // remove the bulk observer. A block arriving mid-handoff still reaches the ongoing
-              // observer; removing the bulk one first would drop any event landing in between.
-              final OptionalLong bulkObserverId = blockObserverId;
+              // Ongoing catch-up belongs to the trailing sync coordinator; bulk just leaves.
+              blockObserverId.ifPresent(blockchain::removeObserver);
               blockObserverId = OptionalLong.empty();
-              startOngoingMigration();
-              bulkObserverId.ifPresent(blockchain::removeObserver);
             } catch (final RuntimeException ex) {
               blockObserverId.ifPresent(blockchain::removeObserver);
               blockObserverId = OptionalLong.empty();

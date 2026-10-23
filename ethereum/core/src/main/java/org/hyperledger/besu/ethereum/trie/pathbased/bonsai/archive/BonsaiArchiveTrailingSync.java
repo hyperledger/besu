@@ -413,6 +413,16 @@ public final class BonsaiArchiveTrailingSync implements Closeable {
   }
 
   /**
+   * Whether {@link #startFlatArchive} has been called.
+   *
+   * @return true once the flat-archive worker is enabled
+   */
+  @VisibleForTesting
+  boolean isFlatStarted() {
+    return flatEnabled;
+  }
+
+  /**
    * Whether the flat-archive worker has stopped for good.
    *
    * @return true once halted

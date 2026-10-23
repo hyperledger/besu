@@ -23,7 +23,6 @@ import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.Bonsai
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -63,7 +62,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tuweni.units.bigints.UInt256;
@@ -303,32 +301,18 @@ public class BonsaiFlatDbToArchiveMigratorTest {
   }
 
   @Test
-  public void migrateHandsOffObserversFromInitialToOngoingWithoutGap() throws Exception {
+  public void migrateRemovesItsObserverOnCompletion() throws Exception {
     appendBlocks(3);
     final MutableBlockchain spyBlockchain = spy(blockchain);
     final BonsaiFlatDbToArchiveMigrator migrator =
         createMigrator(spyBlockchain, /*boundaryDistance*/ 1);
 
-    final AtomicBoolean injected = new AtomicBoolean(false);
-    doAnswer(
-            invocation -> {
-              final Object result = invocation.callRealMethod();
-              if (injected.compareAndSet(false, true)) {
-                // Now the old observer has just been removed. Fire a canonical head event.
-                appendBlocks(1);
-              }
-              return result;
-            })
-        .when(spyBlockchain)
-        .removeObserver(anyLong());
-
     migrator.migrate().get(MIGRATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
-    // head after the injected block = 4; boundaryDistance=1 → archiveTarget = 3.
-    // Block 3 must be migrated via catch-up triggered by the injected block 4 event.
-    Awaitility.await()
-        .atMost(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(getArchivedAccountKey(3L)).isPresent());
+    // Bulk registers one observer and leaves no other behind: ongoing catch-up is the
+    // coordinator's.
+    verify(spyBlockchain, times(1)).observeBlockAdded(any());
+    verify(spyBlockchain, times(1)).removeObserver(anyLong());
   }
 
   @Test
@@ -429,6 +413,8 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     appendBlocks(3);
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator(3);
     migrator.migrate().get(MIGRATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    // Bulk no longer hands off; the ongoing observer is started separately.
+    migrator.startOngoingMigration();
     assertThat(getArchivedAccountKey(1L)).isEmpty();
 
     // block 4 arrives → observer submits migration of block 4-3=1
@@ -460,6 +446,8 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     appendBlocks(3);
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator(1);
     migrator.migrate().get(MIGRATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    // Bulk no longer hands off; the ongoing observer is started separately.
+    migrator.startOngoingMigration();
     assertThat(migrator.getMigrationProgress()).hasValue(2L);
 
     // blocks 4 and 5 arrive while executor is idle; block 6 triggers catch-up of 4-1=3 up to 5-1=4
@@ -517,6 +505,8 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     appendBlocks(3);
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator(1);
     migrator.migrate().get(MIGRATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    // Bulk no longer hands off; the ongoing observer is started separately.
+    migrator.startOngoingMigration();
     final long metricAfterMigration = migrator.migratedBlockNumber.get();
 
     // block 4 arrives → observer migrates block 3; metric should increment

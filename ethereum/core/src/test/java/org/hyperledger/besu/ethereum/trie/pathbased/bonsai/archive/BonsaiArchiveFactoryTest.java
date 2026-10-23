@@ -179,7 +179,7 @@ class BonsaiArchiveFactoryTest {
     storage.upgradeToArchiveFlatDbMode();
     archive = createArchive(config, storage);
     archive.start(synchronizer);
-    // Only the ongoing flat-DB migration follows the chain so far.
+    // Only the coordinator follows the chain so far; enabling proofs registers nothing.
     verify(blockchain, times(1)).observeBlockAdded(any());
 
     final ArchiveTrieNodeStrategy strategy =
@@ -197,7 +197,7 @@ class BonsaiArchiveFactoryTest {
     tx.commit();
 
     assertThat(strategy.getCaptureMode()).isEqualTo(ArchiveTrieNodeStrategy.CaptureMode.TRAILING);
-    verify(blockchain, times(2)).observeBlockAdded(any());
+    verify(blockchain, times(1)).observeBlockAdded(any());
     verify(synchronizer, never()).getBestPeerChainHead();
   }
 
@@ -232,6 +232,24 @@ class BonsaiArchiveFactoryTest {
     verify(synchronizer, never())
         .subscribeInSync(any(Synchronizer.InSyncListener.class), anyLong());
     verify(blockchain).observeBlockAdded(any());
+  }
+
+  @Test
+  void bulkMigrationCompletionStartsFlatArchive() {
+    final DataStorageConfiguration config = archiveConfig(false);
+    final BonsaiWorldStateKeyValueStorage storage = storage(config);
+    when(synchronizer.subscribeInSync(any(Synchronizer.InSyncListener.class), eq(0L)))
+        .thenReturn(7L);
+    archive = createArchive(config, storage);
+    archive.start(synchronizer);
+
+    final ArgumentCaptor<Synchronizer.InSyncListener> listener =
+        ArgumentCaptor.forClass(Synchronizer.InSyncListener.class);
+    verify(synchronizer).subscribeInSync(listener.capture(), eq(0L));
+    listener.getValue().onInSyncStatusChange(true);
+
+    await().until(() -> archive.trailingSync().isFlatStarted());
+    assertThat(storage.getFlatDbMode()).isEqualTo(FlatDbMode.ARCHIVE);
   }
 
   @Test

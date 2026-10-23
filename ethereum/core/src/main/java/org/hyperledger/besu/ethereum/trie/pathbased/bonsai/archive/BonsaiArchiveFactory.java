@@ -77,18 +77,18 @@ public final class BonsaiArchiveFactory {
 
     final List<ExecutorService> executors = new ArrayList<>();
     final ScheduledExecutorService migrationExecutor =
-        Executors.newScheduledThreadPool(1, namedThreads("archive-migrator"));
-    executors.add(migrationExecutor);
+        Executors.newSingleThreadScheduledExecutor(namedThreads("archive-migrator"));
+    final ScheduledExecutorService trailingExecutor =
+        Executors.newSingleThreadScheduledExecutor(namedThreads("bonsai-archive-trailing"));
+    executors.addAll(List.of(migrationExecutor, trailingExecutor));
 
     Optional<BonsaiArchiveService.ProofCapture> proofCapture = Optional.empty();
     if (unstable.getBonsaiArchiveStateProofsEnabled()) {
       final ExecutorService trieCapturePool =
           Executors.newFixedThreadPool(captureParallelism, namedThreads("trie-capture"));
-      final ScheduledExecutorService archiverExecutor =
-          Executors.newScheduledThreadPool(1, namedThreads("trailing-trienode-archiver"));
       final ExecutorService archiverCapturePool =
           Executors.newFixedThreadPool(captureParallelism, namedThreads("trie-capture-trailing"));
-      executors.addAll(List.of(trieCapturePool, archiverExecutor, archiverCapturePool));
+      executors.addAll(List.of(trieCapturePool, archiverCapturePool));
       final ArchiveTrieNodeStrategy strategy =
           ArchiveTrieNodeStrategy.createArchiveStrategy(
               worldStateStorage.getComposedWorldStateStorage(),
@@ -106,7 +106,7 @@ public final class BonsaiArchiveFactory {
                       provider,
                       provider.getTrieLogManager(),
                       blockchain,
-                      archiverExecutor,
+                      trailingExecutor,
                       archiverCapturePool,
                       unstable.getBonsaiArchiveShallowCheckpointInterval(),
                       unstable.getBonsaiArchiveDeepCheckpointInterval())));
@@ -122,11 +122,19 @@ public final class BonsaiArchiveFactory {
             new BonsaiArchiveFlatDbStrategy(
                 metricsSystem, worldStateStorage.getFlatDbStrategy().getCodeStorageStrategy()));
     provider.setArchiveMigrationProgressSupplier(migrator::getMigratedBlockNumber);
+    final BonsaiArchiveTrailingSync trailingSync =
+        new BonsaiArchiveTrailingSync(
+            blockchain,
+            extraStorage.getMaxLayersToLoad(),
+            migrator,
+            proofCapture.map(BonsaiArchiveService.ProofCapture::archiver),
+            trailingExecutor);
 
     return new BonsaiArchiveService(
         worldStateStorage,
         blockchain,
         migrator,
+        trailingSync,
         extraStorage.getMaxLayersToLoad(),
         proofCapture,
         executors);
