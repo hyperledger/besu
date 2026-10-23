@@ -40,10 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 
@@ -240,47 +238,6 @@ class HeaderBackfillTest {
     @Override
     public Executor workers() {
       return Runnable::run;
-    }
-  }
-
-  /** Keeps what the pipeline submits, to run it on the test thread when the test says. */
-  private static final class QueuedExecutor extends AbstractExecutorService {
-    private final List<Runnable> tasks = new ArrayList<>();
-
-    private void runAll() {
-      for (final Runnable task : tasks) {
-        task.run();
-        // a stage interrupts its thread, this one here, as operations complete or on an abort
-        Thread.interrupted();
-      }
-    }
-
-    @Override
-    public void execute(final Runnable command) {
-      tasks.add(command);
-    }
-
-    @Override
-    public void shutdown() {}
-
-    @Override
-    public List<Runnable> shutdownNow() {
-      return List.of();
-    }
-
-    @Override
-    public boolean isShutdown() {
-      return false;
-    }
-
-    @Override
-    public boolean isTerminated() {
-      return false;
-    }
-
-    @Override
-    public boolean awaitTermination(final long timeout, final TimeUnit unit) {
-      return true;
     }
   }
 }

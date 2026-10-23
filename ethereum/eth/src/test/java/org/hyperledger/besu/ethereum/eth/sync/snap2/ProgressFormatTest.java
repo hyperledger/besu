@@ -51,4 +51,32 @@ class ProgressFormatTest {
     assertThat(ProgressFormat.duration(Duration.ofHours(26))).isEqualTo("1d 2h");
     assertThat(ProgressFormat.duration(Duration.ofDays(400))).isEqualTo("400d");
   }
+
+  @Test
+  void boundsPercentages() {
+    assertThat(ProgressFormat.percent(3_908_579, 10_450_698)).isEqualTo("37.4%");
+    assertThat(ProgressFormat.percent(7, 5)).isEqualTo("100.0%");
+    assertThat(ProgressFormat.percent(-1, 5)).isEqualTo("0.0%");
+    // no total, no share
+    assertThat(ProgressFormat.percent(5, 0)).isEqualTo("0.0%");
+  }
+
+  @Test
+  void writesRatesInMebibytes() {
+    assertThat(ProgressFormat.mibPerSecond(11.8 * 1024 * 1024)).isEqualTo("11.8 MiB/s");
+    assertThat(ProgressFormat.mibPerSecond(-1)).isEqualTo("0.0 MiB/s");
+  }
+
+  @Test
+  void estimatesTheTimeLeftAtTheAverageRateSinceTheStart() {
+    assertThat(ProgressFormat.eta(10, 30, Duration.ofSeconds(10))).contains("~30s");
+    // a minute or more is rounded to the minute
+    assertThat(ProgressFormat.eta(1, 190, Duration.ofSeconds(1))).contains("~3m");
+    assertThat(ProgressFormat.eta(116, 8_200_000, Duration.ofSeconds(1))).contains("~19h 38m");
+    // nothing left, no rate, or more than a year to go give no time left
+    assertThat(ProgressFormat.eta(10, 0, Duration.ofSeconds(10))).isEmpty();
+    assertThat(ProgressFormat.eta(0, 30, Duration.ofSeconds(10))).isEmpty();
+    assertThat(ProgressFormat.eta(10, 30, Duration.ZERO)).isEmpty();
+    assertThat(ProgressFormat.eta(1, 400 * 86_400, Duration.ofSeconds(1))).isEmpty();
+  }
 }

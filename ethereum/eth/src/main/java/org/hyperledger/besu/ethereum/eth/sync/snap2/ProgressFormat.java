@@ -16,9 +16,12 @@ package org.hyperledger.besu.ethereum.eth.sync.snap2;
 
 import java.time.Duration;
 import java.util.Locale;
+import java.util.Optional;
 
-/** Formats the figures of the SNAP2 logs: counts, block numbers and durations. */
+/** Formats the figures of the SNAP2 logs: counts, block numbers, shares, rates and durations. */
 public final class ProgressFormat {
+
+  private static final Duration LONGEST_ETA = Duration.ofDays(365);
 
   private ProgressFormat() {}
 
@@ -67,5 +70,38 @@ public final class ProgressFormat {
       return minutes + "m" + (rest > 0 ? " " + rest + "s" : "");
     }
     return rest + "s";
+  }
+
+  /** Returns the share of a total as a percentage, as in 37.4%, 0.0% without a total. */
+  public static String percent(final long done, final long total) {
+    final double share = total <= 0 ? 0 : Math.max(0, Math.min(1, (double) done / total));
+    return String.format(Locale.ROOT, "%.1f%%", 100 * share);
+  }
+
+  /** Returns a rate in mebibytes per second, as in 11.8 MiB/s. */
+  public static String mibPerSecond(final double bytesPerSecond) {
+    return String.format(Locale.ROOT, "%.1f MiB/s", Math.max(0, bytesPerSecond) / (1024 * 1024));
+  }
+
+  /**
+   * Returns the time left to do what remains at the average rate since the start, as in ~45m or ~2h
+   * 31m, or empty without a rate, with nothing left, or beyond a year.
+   */
+  public static Optional<String> eta(
+      final double done, final double remaining, final Duration elapsed) {
+    final double perSecond = done / (elapsed.toMillis() / 1000.0);
+    if (remaining <= 0 || perSecond <= 0 || !Double.isFinite(perSecond)) {
+      return Optional.empty();
+    }
+    final double seconds = Math.ceil(remaining / perSecond);
+    if (seconds > LONGEST_ETA.toSeconds()) {
+      return Optional.empty();
+    }
+    // a minute or more reads without its seconds
+    final Duration rounded =
+        seconds >= 60
+            ? Duration.ofMinutes(Math.round(seconds / 60))
+            : Duration.ofSeconds((long) seconds);
+    return Optional.of("~" + duration(rounded));
   }
 }
