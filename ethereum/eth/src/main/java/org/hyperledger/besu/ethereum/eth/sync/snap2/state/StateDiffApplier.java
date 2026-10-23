@@ -68,72 +68,77 @@ public final class StateDiffApplier {
     int deleted = 0;
     long slots = 0;
     int stale = 0;
-    for (final AccountChange change : diff.accounts().values()) {
-      if (writes >= WRITES_PER_COMMIT) {
-        batch.commit();
-        batch = storage.batch();
-        writes = 0;
-      }
-      final Bytes32 accountHash = change.accountHash();
-      if (!coverage.accounts().contains(accountHash)) {
-        skipped++;
-        continue;
-      }
-      final Optional<PatriciaTrieAccountValue> existing =
-          storage.getAccount(accountHash).map(Accounts::decode);
-      final StorageTask task = coverage.storageTask(accountHash);
-      PatriciaTrieAccountValue updated = updated(existing, change);
-      final boolean downloadedStorage = !change.storage().isEmpty() && task == null;
-      if (downloadedStorage) {
-        // unknown until its trie gets the change, or the final build makes it
-        updated = Accounts.withStorageRoot(updated, Accounts.UNKNOWN_STORAGE_ROOT);
-      }
+    try {
+      for (final AccountChange change : diff.accounts().values()) {
+        if (writes >= WRITES_PER_COMMIT) {
+          batch.commit();
+          batch = storage.batch();
+          writes = 0;
+        }
+        final Bytes32 accountHash = change.accountHash();
+        if (!coverage.accounts().contains(accountHash)) {
+          skipped++;
+          continue;
+        }
+        final Optional<PatriciaTrieAccountValue> existing =
+            storage.getAccount(accountHash).map(Accounts::decode);
+        final StorageTask task = coverage.storageTask(accountHash);
+        PatriciaTrieAccountValue updated = updated(existing, change);
+        final boolean downloadedStorage = !change.storage().isEmpty() && task == null;
+        if (downloadedStorage) {
+          // unknown until its trie gets the change, or the final build makes it
+          updated = Accounts.withStorageRoot(updated, Accounts.UNKNOWN_STORAGE_ROOT);
+        }
 
-      if (change.code().isPresent() && !change.code().get().isEmpty()) {
-        batch.putCode(Bytes32.wrap(updated.getCodeHash().getBytes()), change.code().get());
-      }
-      if (Accounts.isEmpty(updated)) {
-        // EIP-161 and EIP-7523: an empty account does not exist
-        if (existing.isPresent()) {
-          batch.removeAccount(accountHash);
-          storage.deleteStorage(accountHash);
-          deleted++;
-          writes++;
+        if (change.code().isPresent() && !change.code().get().isEmpty()) {
+          batch.putCode(Bytes32.wrap(updated.getCodeHash().getBytes()), change.code().get());
         }
-        coverage.removeStorageTask(accountHash);
-        continue;
-      }
-      batch.putAccount(accountHash, Accounts.encode(updated));
-      applied++;
-      writes++;
-      if (downloadedStorage) {
-        storageChanges.changed(
-            accountHash,
-            existing.map(PatriciaTrieAccountValue::getStorageRoot).orElse(Hash.EMPTY_TRIE_HASH),
-            change.storage());
-      }
+        if (Accounts.isEmpty(updated)) {
+          // EIP-161 and EIP-7523: an empty account does not exist
+          if (existing.isPresent()) {
+            batch.removeAccount(accountHash);
+            storage.deleteStorage(accountHash);
+            deleted++;
+            writes++;
+          }
+          coverage.removeStorageTask(accountHash);
+          continue;
+        }
+        batch.putAccount(accountHash, Accounts.encode(updated));
+        applied++;
+        writes++;
+        if (downloadedStorage) {
+          storageChanges.changed(
+              accountHash,
+              existing.map(PatriciaTrieAccountValue::getStorageRoot).orElse(Hash.EMPTY_TRIE_HASH),
+              change.storage());
+        }
 
-      if (!change.storage().isEmpty()) {
-        if (task != null) {
-          task.markRootStale();
-          stale++;
-        }
-        for (final Map.Entry<Bytes32, UInt256> slot : change.storage().entrySet()) {
-          // a new account or a fully downloaded storage holds every slot
-          if (existing.isPresent() && task != null && !task.covers(slot.getKey())) {
-            continue;
+        if (!change.storage().isEmpty()) {
+          if (task != null) {
+            task.markRootStale();
+            stale++;
           }
-          if (slot.getValue().isZero()) {
-            batch.removeStorage(accountHash, slot.getKey());
-          } else {
-            batch.putStorage(accountHash, slot.getKey(), slot.getValue());
+          for (final Map.Entry<Bytes32, UInt256> slot : change.storage().entrySet()) {
+            // a storage still downloading holds only the slots of its stored ranges
+            if (task != null && !task.covers(slot.getKey())) {
+              continue;
+            }
+            if (slot.getValue().isZero()) {
+              batch.removeStorage(accountHash, slot.getKey());
+            } else {
+              batch.putStorage(accountHash, slot.getKey(), slot.getValue());
+            }
+            slots++;
+            writes++;
           }
-          slots++;
-          writes++;
         }
       }
+      batch.commit();
+    } catch (final RuntimeException e) {
+      batch.abort();
+      throw e;
     }
-    batch.commit();
     return new Outcome(applied, skipped, deleted, slots, stale);
   }
 

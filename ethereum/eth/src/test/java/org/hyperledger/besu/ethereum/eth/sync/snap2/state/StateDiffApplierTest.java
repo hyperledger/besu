@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.C
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.NonceChange;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.SlotChanges;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.StorageChange;
-import org.hyperledger.besu.ethereum.trie.RangeManager;
 import org.hyperledger.besu.ethereum.trie.common.PatriciaTrieAccountValue;
 
 import java.util.HashMap;
@@ -63,24 +62,21 @@ class StateDiffApplierTest {
   void appliesOnlyWhatTheFlatStateHolds(final Format format) {
     final SyncStateStorage storage = SyncStorageFixture.create(format).sync();
     final StateCoverage coverage = new StateCoverage();
+    final Bytes32 s1 = slotHash(S1);
     final SyncStateStorage.Batch batch = storage.batch();
     batch.putAccount(hash(A), account(1, 100, Hash.EMPTY));
     batch.putAccount(hash(B), account(1, 100, Hash.hash(CODE)));
     batch.putAccount(hash(D), account(0, 5, Hash.EMPTY));
+    batch.putStorage(hash(D), s1, UInt256.valueOf(5));
     batch.commit();
-    for (Address covered : List.of(A, B, D, N)) {
+    for (final Address covered : List.of(A, B, D, N)) {
       coverage.accounts().add(hash(covered), hash(covered));
     }
-    // B's storage is half downloaded: only the range holding S1 is persisted
+    // B's storage is still downloading, only the key of S1 in a stored range, and D's too
     final StorageTask task = new StorageTask(hash(B), Bytes32.ZERO);
-    final Bytes32 s1 = slotHash(S1);
-    final Bytes32 s2 = slotHash(S2);
-    if (s1.compareTo(s2) < 0) {
-      task.cover(RangeManager.MIN_RANGE, s1, 0);
-    } else {
-      task.cover(s1, RangeManager.MAX_RANGE, 0);
-    }
+    task.cover(s1, s1, 0);
     coverage.addStorageTask(task);
+    coverage.addStorageTask(new StorageTask(hash(D), Bytes32.ZERO));
 
     final StateDiff diff = new StateDiff();
     diff.add(
@@ -110,8 +106,10 @@ class StateDiffApplierTest {
                     List.of(),
                     List.of()))));
 
+    final Map<Bytes32, Hash> previousRoots = new HashMap<>();
     final StateDiffApplier.Outcome outcome =
-        StateDiffApplier.apply(diff, storage, coverage, (account, root, slots) -> {});
+        StateDiffApplier.apply(
+            diff, storage, coverage, (account, root, slots) -> previousRoots.put(account, root));
 
     // A, B and N written, C outside the ranges, D emptied, S1 of B and N, B's storage stale
     assertThat(outcome).isEqualTo(new StateDiffApplier.Outcome(3, 1, 1, 2, 1));
@@ -121,9 +119,13 @@ class StateDiffApplierTest {
     assertThat(task.isRootStale()).isTrue();
     assertThat(storage.getAccount(hash(C))).isEmpty();
     assertThat(storage.getAccount(hash(D))).isEmpty();
+    assertThat(slots(storage, hash(D))).isEmpty();
+    assertThat(coverage.storageTask(hash(D))).isNull();
     assertThat(read(storage, N).getCodeHash()).isEqualTo(Hash.hash(CODE));
     assertThat(slots(storage, hash(N))).containsExactly(entry(s1, UInt256.valueOf(3)));
     assertThat(storage.hasCode(Bytes32.wrap(Hash.hash(CODE).getBytes()))).isTrue();
+    // the trie of a new account starts from the empty root
+    assertThat(previousRoots).containsExactly(entry(hash(N), Hash.EMPTY_TRIE_HASH));
   }
 
   @ParameterizedTest
@@ -134,6 +136,7 @@ class StateDiffApplierTest {
     final Hash builtRoot = Hash.hash(Bytes.of(1));
     final SyncStateStorage.Batch batch = storage.batch();
     batch.putAccount(hash(A), account(1, 100, builtRoot, Hash.EMPTY));
+    batch.putStorage(hash(A), slotHash(S2), UInt256.valueOf(8));
     batch.putAccount(hash(B), account(1, 100, builtRoot, Hash.EMPTY));
     batch.commit();
     coverage.accounts().add(hash(A), hash(A));
@@ -145,7 +148,7 @@ class StateDiffApplierTest {
     diff.add(
         new BlockAccessList(
             List.of(
-                changes(A, List.of(slot(S1, 7)), List.of(), List.of(), List.of()),
+                changes(A, List.of(slot(S1, 7), slot(S2, 0)), List.of(), List.of(), List.of()),
                 changes(B, List.of(slot(S1, 7)), List.of(), List.of(), List.of()))));
     final Map<Bytes32, Hash> previousRoots = new HashMap<>();
     final Map<Bytes32, Map<Bytes32, UInt256>> changedSlots = new HashMap<>();
@@ -161,7 +164,10 @@ class StateDiffApplierTest {
     // A's trie gets the changed slots, its root being unknown until then
     assertThat(read(storage, A).getStorageRoot()).isEqualTo(Accounts.UNKNOWN_STORAGE_ROOT);
     assertThat(previousRoots).containsOnlyKeys(hash(A)).containsEntry(hash(A), builtRoot);
-    assertThat(changedSlots.get(hash(A))).containsExactly(entry(slotHash(S1), UInt256.valueOf(7)));
+    assertThat(changedSlots.get(hash(A)))
+        .containsOnly(entry(slotHash(S1), UInt256.valueOf(7)), entry(slotHash(S2), UInt256.ZERO));
+    // the slot set to zero is removed from the flat state
+    assertThat(slots(storage, hash(A))).containsExactly(entry(slotHash(S1), UInt256.valueOf(7)));
     // the download learns B's new root instead
     assertThat(read(storage, B).getStorageRoot()).isEqualTo(builtRoot);
   }
