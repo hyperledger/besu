@@ -39,6 +39,7 @@ import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -179,14 +180,14 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
     startProofsSync(archiver);
 
     appendBlocks(50);
-    final long target = blockchain.getChainHeadBlockNumber() - TARGET_LAG;
-    awaitArchived(archiver, target);
+    awaitArchived(archiver, blockchain.getChainHeadBlockNumber() - TARGET_LAG);
 
-    // Sub-batch head movement raises the target without starting a run.
+    // More head movement may start another run; no run may go above the target at its time.
     appendBlocks(3);
     Thread.sleep(200);
-    assertThat(archiver.highestToInclusive.get()).isLessThanOrEqualTo(target);
-    assertThat(archiver.getArchivedBlockNumber()).isLessThanOrEqualTo(target);
+    assertThat(archiver.targetViolations).isEmpty();
+    assertThat(archiver.getArchivedBlockNumber())
+        .isLessThanOrEqualTo(blockchain.getChainHeadBlockNumber() - TARGET_LAG);
   }
 
   /** After close, the coordinator ignores new heads and the archiver is not run again. */
@@ -282,7 +283,9 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
     final AtomicInteger archiveBlocksCalls = new AtomicInteger();
     // -1 until the first call.
     final AtomicLong firstFromExclusive = new AtomicLong(-1L);
-    final AtomicLong highestToInclusive = new AtomicLong(0L);
+    // Calls whose toInclusive was above the shared target for the chain head at call time.
+    final List<String> targetViolations = new CopyOnWriteArrayList<>();
+    private final Blockchain chain;
     private final PausedCapture paused;
     private final SegmentedInMemoryKeyValueStorage persistStorage;
 
@@ -304,6 +307,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
           trieCapturePool,
           shallowCheckpointInterval,
           deepCheckpointInterval);
+      this.chain = blockchain;
       this.paused = paused;
       this.persistStorage = persistStorage;
     }
@@ -313,7 +317,10 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
         final long fromExclusive, final long toInclusive, final BooleanSupplier keepGoing) {
       archiveBlocksCalls.incrementAndGet();
       firstFromExclusive.compareAndSet(-1L, fromExclusive);
-      highestToInclusive.accumulateAndGet(toInclusive, Math::max);
+      final long sharedTarget = chain.getChainHeadBlockNumber() - TARGET_LAG;
+      if (toInclusive > sharedTarget) {
+        targetViolations.add("archive to " + toInclusive + " above target " + sharedTarget);
+      }
       if (paused != null) {
         paused.started.countDown();
         paused.awaitRelease();
