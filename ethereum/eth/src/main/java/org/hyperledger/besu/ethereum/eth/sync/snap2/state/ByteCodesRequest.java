@@ -36,7 +36,7 @@ final class ByteCodesRequest implements SyncRequest<Map<Bytes32, Bytes>> {
   private final long bytes;
 
   ByteCodesRequest(final List<Bytes32> codeHashes, final long bytes) {
-    this.codeHashes = codeHashes;
+    this.codeHashes = List.copyOf(codeHashes);
     this.bytes = bytes;
   }
 

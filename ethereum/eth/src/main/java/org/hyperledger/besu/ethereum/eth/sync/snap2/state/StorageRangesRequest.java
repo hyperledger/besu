@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snap2.state;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.net.SnapMessages;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.net.SyncRequest;
@@ -57,6 +59,7 @@ final class StorageRangesRequest implements SyncRequest<StorageRangesRequest.Res
 
   final Pivot pivot;
   final List<StorageTask> tasks;
+  private final List<Bytes32> accountHashes;
   private final List<Bytes32> storageRoots;
   final Bytes32 origin;
   final Bytes32 limit;
@@ -70,8 +73,11 @@ final class StorageRangesRequest implements SyncRequest<StorageRangesRequest.Res
       final Bytes32 limit,
       final long bytes,
       final String name) {
+    // servers apply an origin differently to several storages, so only one may have it
+    checkArgument(tasks.size() == 1 || origin.isZero(), "an origin for several storages");
     this.pivot = pivot;
-    this.tasks = tasks;
+    this.tasks = List.copyOf(tasks);
+    this.accountHashes = tasks.stream().map(StorageTask::accountHash).toList();
     this.storageRoots = tasks.stream().map(StorageTask::storageRoot).toList();
     this.origin = origin;
     this.limit = limit;
@@ -101,8 +107,7 @@ final class StorageRangesRequest implements SyncRequest<StorageRangesRequest.Res
 
   @Override
   public MessageData message(final EthPeer peer) {
-    return SnapMessages.getStorageRanges(
-        pivot.root(), tasks.stream().map(StorageTask::accountHash).toList(), origin, limit, bytes);
+    return SnapMessages.getStorageRanges(pivot.root(), accountHashes, origin, limit, bytes);
   }
 
   @Override

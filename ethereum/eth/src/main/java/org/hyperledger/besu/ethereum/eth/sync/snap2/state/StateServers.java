@@ -39,9 +39,13 @@ final class StateServers {
   void served(final EthPeer peer, final int epoch) {
     final Answers record = answers.computeIfAbsent(peer, p -> new Answers());
     record.servedEpoch = Math.max(record.servedEpoch, epoch);
+    lastServedEpoch = Math.max(lastServedEpoch, epoch);
+    // a late answer for an older pivot does not take back a peer left out at a newer one
+    if (epoch < record.emptyEpoch) {
+      return;
+    }
     record.strikes = 0;
     record.excludedUntil = 0;
-    lastServedEpoch = Math.max(lastServedEpoch, epoch);
     peer.setIsServingSnap(true);
   }
 
@@ -61,6 +65,10 @@ final class StateServers {
         record.previousEmptyEpoch == epoch - 1 && record.servedEpoch < epoch - 1;
     if (!othersServe && !twoPivots) {
       return false;
+    }
+    // requests sent together come back empty together: a peer left out takes no more strikes
+    if (record.excludedUntil > now) {
+      return true;
     }
     record.strikes++;
     record.excludedUntil =

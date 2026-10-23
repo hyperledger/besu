@@ -73,6 +73,18 @@ class StateServersTest {
   }
 
   @Test
+  void countsTheEmptyAnswersOfALeftOutPeerAsOneStrike() {
+    servers.served(serving, 0);
+
+    // the answers to requests sent together
+    assertThat(servers.empty(lazy, 0, 0)).isTrue();
+    assertThat(servers.empty(lazy, 0, SECOND)).isTrue();
+    assertThat(servers.empty(lazy, 0, 2 * SECOND)).isTrue();
+
+    assertThat(servers.excluded(31 * SECOND)).isEmpty();
+  }
+
+  @Test
   void takesBackAPeerThatServesAgain() {
     servers.served(serving, 0);
     servers.empty(lazy, 0, 0);
@@ -83,15 +95,30 @@ class StateServersTest {
   }
 
   @Test
+  void keepsOutAPeerWhoseLateAnswerServesAnOlderPivot() {
+    servers.served(serving, 1);
+    servers.empty(lazy, 1, 0);
+
+    servers.served(lazy, 0);
+
+    assertThat(servers.excluded(0)).containsExactly(lazy);
+  }
+
+  @Test
   void leavesOutAPeerTenMinutesAtMost() {
     servers.served(serving, 0);
-    // the sixth strike would double the wait to 16 minutes
-    for (int strike = 0; strike < 6; strike++) {
-      servers.empty(lazy, 0, 0);
+    // five strikes, each once the last one ended: 30 s, then 1, 2, 4 and 8 minutes
+    long now = 0;
+    for (int strike = 0; strike < 5; strike++) {
+      servers.empty(lazy, 0, now);
+      now += (30 * SECOND) << strike;
     }
 
-    assertThat(servers.excluded(599 * SECOND)).contains(lazy);
-    assertThat(servers.excluded(601 * SECOND)).isEmpty();
+    // the sixth would double the wait to 16 minutes
+    servers.empty(lazy, 0, now);
+
+    assertThat(servers.excluded(now + 599 * SECOND)).contains(lazy);
+    assertThat(servers.excluded(now + 601 * SECOND)).isEmpty();
   }
 
   @Test

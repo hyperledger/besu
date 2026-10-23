@@ -38,17 +38,15 @@ class ByteCodesRequestTest {
   private static final Bytes FIRST = Bytes.of(1, 2, 3);
   private static final Bytes SECOND = Bytes.of(4, 5);
   private static final Bytes THIRD = Bytes.of(6);
+  private static final List<Bytes32> HASHES = List.of(hash(FIRST), hash(SECOND), hash(THIRD));
 
-  private final ByteCodesRequest request =
-      new ByteCodesRequest(List.of(hash(FIRST), hash(SECOND), hash(THIRD)), 4096);
+  private final ByteCodesRequest request = new ByteCodesRequest(HASHES, 4096);
   private final EthPeer peer = mock(EthPeer.class);
 
   @Test
   void asksForTheCodesByHash() {
     assertThat(request.message(peer).getData())
-        .isEqualTo(
-            SnapMessages.getByteCodes(List.of(hash(FIRST), hash(SECOND), hash(THIRD)), 4096)
-                .getData());
+        .isEqualTo(SnapMessages.getByteCodes(HASHES, 4096).getData());
   }
 
   @Test

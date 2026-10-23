@@ -63,7 +63,7 @@ class StorageRangesRequestTest {
 
   @Test
   void asksForTheStoragesAtTheStateRootOfThePivot() {
-    final StorageRangesRequest request = twoStorages();
+    final StorageRangesRequest request = twoStorages(RangeManager.MIN_RANGE);
 
     assertThat(request.message(peer()).getData())
         .isEqualTo(
@@ -116,6 +116,11 @@ class StorageRangesRequestTest {
         .hasMessageContaining("more storage ranges than requested");
   }
 
+  @Test
+  void rejectsAnOriginForSeveralStorages() {
+    assertThatThrownBy(() -> twoStorages(slot(0x40))).isInstanceOf(IllegalArgumentException.class);
+  }
+
   // the proof covers only the last storage, which the response cuts short
   @Test
   void acceptsACompleteStorageThenOneCutShortWithItsProof() {
@@ -123,7 +128,8 @@ class StorageRangesRequestTest {
     final List<Bytes> proof = RangeProofs.proof(other, RangeManager.MIN_RANGE, firstTwo.lastKey());
 
     final StorageRangesRequest.Result result =
-        twoStorages().decode(response(List.of(slots(storage, 3), firstTwo), proof), peer());
+        twoStorages(RangeManager.MIN_RANGE)
+            .decode(response(List.of(slots(storage, 3), firstTwo), proof), peer());
 
     assertThat(result.accounts()).hasSize(2);
     assertThat(result.accounts().get(0).complete()).isTrue();
@@ -158,18 +164,18 @@ class StorageRangesRequestTest {
   void rejectsAStorageCutShortWithoutItsProof() {
     final MessageData cutShort = response(List.of(slots(storage, 3), slots(other, 2)), List.of());
 
-    assertThatThrownBy(() -> twoStorages().decode(cutShort, peer()))
+    assertThatThrownBy(() -> twoStorages(RangeManager.MIN_RANGE).decode(cutShort, peer()))
         .isInstanceOf(SyncRequest.InvalidResponseException.class);
   }
 
-  // the whole storages of two accounts, as a batch asks them
-  private StorageRangesRequest twoStorages() {
+  // the storages of two accounts from an origin, as a batch asks them from the first key
+  private StorageRangesRequest twoStorages(final Bytes32 origin) {
     return new StorageRangesRequest(
         pivot(),
         List.of(
             new StorageTask(ACCOUNT, storage.getRootHash()),
             new StorageTask(OTHER_ACCOUNT, other.getRootHash())),
-        RangeManager.MIN_RANGE,
+        origin,
         RangeManager.MAX_RANGE,
         4096,
         "storage_ranges");
