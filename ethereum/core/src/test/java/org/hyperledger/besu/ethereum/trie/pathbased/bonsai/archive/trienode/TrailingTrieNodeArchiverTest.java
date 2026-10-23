@@ -63,6 +63,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -273,7 +274,7 @@ class TrailingTrieNodeArchiverTest {
 
     final TrailingTrieNodeArchiver archiver = createRealArchiver();
     archiver.archivedBlockNumber.set(0L);
-    archiver.archiveBlocks(0L, 2L);
+    archiver.archiveBlocks(0L, 2L, () -> true);
 
     assertThat(archiver.archivedBlockNumber.get()).isEqualTo(2L);
     verify(archiverWorldState).close();
@@ -289,8 +290,8 @@ class TrailingTrieNodeArchiverTest {
 
     final TrailingTrieNodeArchiver archiver = createRealArchiver();
     archiver.archivedBlockNumber.set(0L);
-    archiver.archiveBlocks(0L, 2L); // retention-gap advance, state positioned at 2
-    archiver.archiveBlocks(2L, 3L); // new state, rolls forward to 3
+    archiver.archiveBlocks(0L, 2L, () -> true); // retention-gap advance, state positioned at 2
+    archiver.archiveBlocks(2L, 3L, () -> true); // new state, rolls forward to 3
 
     assertThat(archiver.archivedBlockNumber.get()).isEqualTo(3L);
     verify(cacheManager, times(2)).getHeadWorldState(any());
@@ -306,7 +307,7 @@ class TrailingTrieNodeArchiverTest {
 
     final TrailingTrieNodeArchiver archiver = createRealArchiver();
     archiver.archivedBlockNumber.set(2L);
-    archiver.archiveBlocks(2L, 3L);
+    archiver.archiveBlocks(2L, 3L, () -> true);
 
     assertThat(archiver.archivedBlockNumber.get()).isEqualTo(3L);
   }
@@ -319,7 +320,8 @@ class TrailingTrieNodeArchiverTest {
 
     final TrailingTrieNodeArchiver archiver = createRealArchiver();
     archiver.archivedBlockNumber.set(1L);
-    archiver.archiveBlocks(1L, 2L); // maxLayers=1: position at 1 from the state's head, then 2
+    archiver.archiveBlocks(
+        1L, 2L, () -> true); // maxLayers=1: position at 1 from the state's head, then 2
 
     verify(trieLogManager, never()).getTrieLogLayer(hashOf(3L));
     final InOrder inOrder = inOrder(worldStateProvider);
@@ -389,7 +391,7 @@ class TrailingTrieNodeArchiverTest {
 
     final TrailingTrieNodeArchiver archiver = createRealArchiver();
     archiver.archivedBlockNumber.set(2L);
-    assertThatThrownBy(() -> archiver.archiveBlocks(2L, 3L))
+    assertThatThrownBy(() -> archiver.archiveBlocks(2L, 3L, () -> true))
         .isInstanceOf(IllegalStateException.class);
 
     assertThat(openedTx.get()).isNotNull();
@@ -460,7 +462,8 @@ class TrailingTrieNodeArchiverTest {
     // window.
     appendBlocks(2);
     archiver.archivedBlockNumber.set(8L);
-    archiver.archiveBlocks(8L, archiver.archiveTarget(blockchain.getChainHeadBlockNumber()));
+    archiver.archiveBlocks(
+        8L, archiver.archiveTarget(blockchain.getChainHeadBlockNumber()), () -> true);
 
     assertThat(archiver.archivedBlockNumber.get()).isEqualTo(10L);
     verify(worldStateProvider).rollFullWorldStateToBlockHash(archiverWorldState, hashOf(9L), WARN);
@@ -588,7 +591,7 @@ class TrailingTrieNodeArchiverTest {
 
     final TrailingTrieNodeArchiver archiver = createRealArchiver();
     archiver.archivedBlockNumber.set(5L);
-    archiver.archiveBlocks(5L, 10L);
+    archiver.archiveBlocks(5L, 10L, () -> true);
 
     assertThat(archiver.archivedBlockNumber.get()).isEqualTo(10L);
     final InOrder inOrder = inOrder(worldStateProvider);
@@ -694,10 +697,11 @@ class TrailingTrieNodeArchiverTest {
 
     final TrailingTrieNodeArchiver archiver = createRealArchiver();
     archiver.archivedBlockNumber.set(7L);
-    archiver.archiveBlocks(7L, 9L);
+    archiver.archiveBlocks(7L, 9L, () -> true);
     verify(archiverWorldState, times(1)).close();
 
-    archiver.archiveBlocks(9L, 10L); // repositions from a fresh snapshot, nothing is skipped
+    archiver.archiveBlocks(
+        9L, 10L, () -> true); // repositions from a fresh snapshot, nothing is skipped
     assertThat(archiver.archivedBlockNumber.get()).isEqualTo(10L);
     verify(archiverWorldState, times(2)).close();
     verify(cacheManager, times(2)).getHeadWorldState(any());
@@ -754,7 +758,7 @@ class TrailingTrieNodeArchiverTest {
     final TrailingTrieNodeArchiver archiver = createRealArchiver();
     archiver.archivedBlockNumber.set(2L);
 
-    assertThatThrownBy(() -> archiver.archiveBlocks(2L, 3L))
+    assertThatThrownBy(() -> archiver.archiveBlocks(2L, 3L, () -> true))
         .isInstanceOf(IllegalStateException.class)
         .isNotInstanceOf(TrailingTrieNodeArchiver.ArchiveGapException.class)
         .hasMessageContaining("is unknown");
@@ -771,7 +775,7 @@ class TrailingTrieNodeArchiverTest {
     final TrailingTrieNodeArchiver archiver = createRealArchiver();
     archiver.archivedBlockNumber.set(2L);
 
-    assertThatThrownBy(() -> archiver.archiveBlocks(2L, 3L))
+    assertThatThrownBy(() -> archiver.archiveBlocks(2L, 3L, () -> true))
         .isInstanceOf(IllegalStateException.class)
         .isNotInstanceOf(TrailingTrieNodeArchiver.ArchiveGapException.class)
         .hasMessageContaining("behind the archiver position");
@@ -786,11 +790,80 @@ class TrailingTrieNodeArchiverTest {
     final TrailingTrieNodeArchiver archiver = createRealArchiver();
     archiver.archivedBlockNumber.set(2L);
 
-    assertThatThrownBy(() -> archiver.archiveBlocks(2L, 3L))
+    assertThatThrownBy(() -> archiver.archiveBlocks(2L, 3L, () -> true))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("trie disabled");
     verify(worldStateProvider, never()).rollFullWorldStateToBlockHash(any(), any(), any());
     verify(archiverWorldState).close();
+  }
+
+  @Test
+  void archiveToArchivesFromCoverage() {
+    when(trieLogManager.getMaxLayersToLoad()).thenReturn(4L);
+    appendBlocks(10);
+    when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.of(mockTrieLog));
+    recordCoverage(6L);
+
+    final TrailingTrieNodeArchiver archiver = createRealArchiver();
+    archiver.archiveTo(9L, () -> true);
+
+    assertThat(archiver.getArchivedBlockNumber()).isEqualTo(9L);
+    final InOrder inOrder = inOrder(worldStateProvider);
+    inOrder.verify(worldStateProvider).rollFullWorldStateToBlockHash(any(), eq(hashOf(7L)), any());
+    inOrder.verify(worldStateProvider).rollFullWorldStateToBlockHash(any(), eq(hashOf(8L)), any());
+    inOrder.verify(worldStateProvider).rollFullWorldStateToBlockHash(any(), eq(hashOf(9L)), any());
+  }
+
+  @Test
+  void archiveToStopsBetweenBlocksWhenKeepGoingTurnsFalse() {
+    when(trieLogManager.getMaxLayersToLoad()).thenReturn(4L);
+    appendBlocks(10);
+    when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.of(mockTrieLog));
+    recordCoverage(6L);
+
+    final TrailingTrieNodeArchiver archiver = createRealArchiver();
+    final AtomicInteger checks = new AtomicInteger();
+    archiver.archiveTo(9L, () -> checks.incrementAndGet() <= 1);
+
+    assertThat(archiver.getArchivedBlockNumber()).isEqualTo(7L);
+    verify(archiverWorldState, times(1)).close();
+  }
+
+  @Test
+  void archiveToPropagatesGapOnMissingTrieLog() {
+    when(trieLogManager.getMaxLayersToLoad()).thenReturn(4L);
+    appendBlocks(10);
+    when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.of(mockTrieLog));
+    when(trieLogManager.getTrieLogLayer(hashOf(7L))).thenReturn(Optional.empty());
+    recordCoverage(6L);
+
+    final TrailingTrieNodeArchiver archiver = createRealArchiver();
+
+    assertThatThrownBy(() -> archiver.archiveTo(9L, () -> true))
+        .isInstanceOf(TrailingTrieNodeArchiver.ArchiveGapException.class);
+    assertThat(archiver.getArchivedBlockNumber()).isEqualTo(6L);
+  }
+
+  @Test
+  void catchUpToBlockingWithoutExecutor() {
+    when(trieLogManager.getMaxLayersToLoad()).thenReturn(4L);
+    appendBlocks(10);
+    when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.of(mockTrieLog));
+    recordCoverage(8L);
+
+    final TrailingTrieNodeArchiver archiver = createRealArchiver();
+
+    assertThat(archiver.catchUpTo(10L, () -> true)).isTrue();
+    assertThat(archiver.getArchivedBlockNumber()).isEqualTo(10L);
+  }
+
+  @Test
+  void coverageEndReflectsInlineCapture() {
+    final TrailingTrieNodeArchiver archiver = createRealArchiver();
+    assertThat(archiver.coverageEnd()).isEmpty();
+
+    recordCoverage(12L);
+    assertThat(archiver.coverageEnd()).isEqualTo(OptionalLong.of(12L));
   }
 
   private Hash hashOf(final long blockNumber) {
@@ -968,7 +1041,8 @@ class TrailingTrieNodeArchiverTest {
     }
 
     @Override
-    void archiveBlocks(final long fromExclusive, final long toInclusive) {
+    void archiveBlocks(
+        final long fromExclusive, final long toInclusive, final BooleanSupplier keepGoing) {
       archiveBlocksCalls.incrementAndGet();
       if (paused != null) {
         paused.started.countDown();

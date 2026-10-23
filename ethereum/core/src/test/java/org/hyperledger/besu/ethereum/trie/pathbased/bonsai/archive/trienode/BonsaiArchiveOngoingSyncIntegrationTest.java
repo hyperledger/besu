@@ -42,6 +42,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
 
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
@@ -325,7 +326,8 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
     }
 
     @Override
-    void archiveBlocks(final long fromExclusive, final long toInclusive) {
+    void archiveBlocks(
+        final long fromExclusive, final long toInclusive, final BooleanSupplier keepGoing) {
       archiveBlocksCalls.incrementAndGet();
       if (paused != null) {
         paused.started.countDown();

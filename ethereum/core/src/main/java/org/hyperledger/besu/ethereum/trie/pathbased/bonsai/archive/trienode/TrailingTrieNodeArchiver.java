@@ -27,10 +27,12 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import org.hyperledger.besu.util.log.LogUtil;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BooleanSupplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -173,14 +175,58 @@ public class TrailingTrieNodeArchiver extends TrailingBlockWorker {
    * @return true if the archive now reaches the target or has no coverage to extend
    */
   public boolean catchUpTo(final long target) {
-    return runAndWait(
-        () -> {
-          if (advanceToArchiveProgress().isEmpty()) {
-            return true;
-          }
-          archiveBlocks(archivedBlockNumber.get(), target);
-          return archivedBlockNumber.get() >= target;
-        });
+    return runAndWait(() -> catchUpTo(target, () -> !closed));
+  }
+
+  /**
+   * Archives every block from the end of coverage up to the target on the calling thread. Does
+   * nothing if the archive has no coverage to extend.
+   *
+   * @param target the last block to archive; must be final
+   * @param keepGoing checked before each block; archiving stops between blocks once it is false
+   * @return true if the archive now reaches the target or has no coverage to extend
+   * @throws ArchiveGapException if a block's trie log is missing
+   */
+  public boolean catchUpTo(final long target, final BooleanSupplier keepGoing) {
+    if (advanceToArchiveProgress().isEmpty()) {
+      return true;
+    }
+    archiveBlocks(archivedBlockNumber.get(), target, keepGoing);
+    return archivedBlockNumber.get() >= target;
+  }
+
+  /**
+   * Archives blocks from the end of the archive's coverage up to the target on the calling thread.
+   *
+   * @param target the last block to archive; must be final
+   * @param keepGoing checked before each block; archiving stops between blocks once it is false
+   * @throws ArchiveGapException if a block's trie log is missing
+   */
+  public void archiveTo(final long target, final BooleanSupplier keepGoing) {
+    advanceToArchiveProgress();
+    archiveBlocks(archivedBlockNumber.get(), target, keepGoing);
+  }
+
+  /**
+   * Returns the last block the archiver has archived.
+   *
+   * @return the archived block number
+   */
+  public long getArchivedBlockNumber() {
+    return archivedBlockNumber.get();
+  }
+
+  /**
+   * Returns the last block covered by the archive, which inline capture can extend while the
+   * archiver is idle.
+   *
+   * @return the end of coverage, or empty if the archive has no coverage
+   */
+  public OptionalLong coverageEnd() {
+    return coverage
+        .getCoverage()
+        .map(c -> OptionalLong.of(c.lastBlock()))
+        .orElseGet(OptionalLong::empty);
   }
 
   @Override
@@ -193,7 +239,7 @@ public class TrailingTrieNodeArchiver extends TrailingBlockWorker {
     final long from = archivedBlockNumber.get();
     final long target = targetBlock.get();
     try {
-      archiveBlocks(from, target);
+      archiveBlocks(from, target, () -> !closed);
     } catch (final ArchiveGapException e) {
       halt();
       LOG.error(e.getMessage());
@@ -208,7 +254,8 @@ public class TrailingTrieNodeArchiver extends TrailingBlockWorker {
   }
 
   @VisibleForTesting
-  void archiveBlocks(final long fromExclusive, final long toInclusive) {
+  void archiveBlocks(
+      final long fromExclusive, final long toInclusive, final BooleanSupplier keepGoing) {
     if (toInclusive <= fromExclusive) {
       return;
     }
@@ -219,7 +266,7 @@ public class TrailingTrieNodeArchiver extends TrailingBlockWorker {
     try {
       // Opening the state can move the archived block number forward past fromExclusive.
       for (long blockNumber = archivedBlockNumber.get() + 1;
-          blockNumber <= toInclusive && !closed;
+          blockNumber <= toInclusive && keepGoing.getAsBoolean();
           blockNumber++) {
         archiveBlock(state, strategy.getTrieNodeWriter(), blockNumber);
         if (shouldLog) {
@@ -367,8 +414,14 @@ public class TrailingTrieNodeArchiver extends TrailingBlockWorker {
         LOG_INTERVAL_SECONDS);
   }
 
-  static final class ArchiveGapException extends IllegalStateException {
-    ArchiveGapException(final String reason) {
+  /** Thrown when a block's trie log is missing, so archiving cannot continue without a gap. */
+  public static final class ArchiveGapException extends IllegalStateException {
+    /**
+     * Creates the exception.
+     *
+     * @param reason why the archiver cannot continue
+     */
+    public ArchiveGapException(final String reason) {
       super(
           "Trailing trie-node archiver stopping: "
               + reason
