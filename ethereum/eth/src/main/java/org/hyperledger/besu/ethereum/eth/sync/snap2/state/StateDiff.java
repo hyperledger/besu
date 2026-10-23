@@ -48,7 +48,8 @@ public final class StateDiff {
       final AccountChange account = accounts.computeIfAbsent(accountHash, AccountChange::new);
       changes.nonce().ifPresent(nonce -> account.nonce = nonce);
       changes.balance().ifPresent(balance -> account.balance = balance);
-      changes.code().ifPresent(code -> account.code = code);
+      // a copy, as the decoded code slices the whole block access list
+      changes.code().ifPresent(code -> account.code = code.copy());
       for (final StorageFinalChange slot : changes.storageChanges()) {
         account.storage.put(Bytes32.wrap(slot.slot().getSlotHash().getBytes()), slot.value());
       }

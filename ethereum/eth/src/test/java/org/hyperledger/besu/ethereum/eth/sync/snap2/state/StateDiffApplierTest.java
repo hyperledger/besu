@@ -15,8 +15,16 @@
 package org.hyperledger.besu.ethereum.eth.sync.snap2.state;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 import static org.hyperledger.besu.ethereum.eth.sync.snap2.storage.SyncStorageFixture.slots;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -38,10 +46,12 @@ import org.hyperledger.besu.ethereum.trie.common.PatriciaTrieAccountValue;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -170,6 +180,61 @@ class StateDiffApplierTest {
     assertThat(slots(storage, hash(A))).containsExactly(entry(slotHash(S1), UInt256.valueOf(7)));
     // the download learns B's new root instead
     assertThat(read(storage, B).getStorageRoot()).isEqualTo(builtRoot);
+  }
+
+  @Test
+  void abortsTheBatchOfAFailedWriteButNotOneWhoseCommitFailed() {
+    final SyncStateStorage storage = mock(SyncStateStorage.class);
+    final SyncStateStorage.Batch batch = mock(SyncStateStorage.Batch.class);
+    when(storage.batch()).thenReturn(batch);
+    final StateCoverage coverage = new StateCoverage();
+    coverage.accounts().add(hash(N), hash(N));
+    final StateDiff diff = new StateDiff();
+    diff.add(
+        new BlockAccessList(
+            List.of(
+                changes(
+                    N,
+                    List.of(),
+                    List.of(new BalanceChange(1, Wei.of(1))),
+                    List.of(),
+                    List.of()))));
+
+    // the commit of the transaction has started, it cannot be rolled back
+    doThrow(new IllegalStateException("disk full")).when(batch).commit();
+    assertThatThrownBy(() -> StateDiffApplier.apply(diff, storage, coverage, (a, r, s) -> {}))
+        .hasMessage("disk full");
+    verify(batch, never()).abort();
+
+    doThrow(new IllegalStateException("write failed")).when(batch).putAccount(any(), any());
+    assertThatThrownBy(() -> StateDiffApplier.apply(diff, storage, coverage, (a, r, s) -> {}))
+        .hasMessage("write failed");
+    verify(batch).abort();
+  }
+
+  @Test
+  void commitsAFullBatchEvenWithinTheSlotsOfAnAccount() {
+    final SyncStateStorage storage = mock(SyncStateStorage.class);
+    final SyncStateStorage.Batch batch = mock(SyncStateStorage.Batch.class);
+    when(storage.batch()).thenReturn(batch);
+    final StateCoverage coverage = new StateCoverage();
+    coverage.accounts().add(hash(N), hash(N));
+    final List<SlotChanges> slots =
+        IntStream.range(0, StateDiffApplier.WRITES_PER_COMMIT)
+            .mapToObj(i -> slot(UInt256.valueOf(i + 1), 1))
+            .toList();
+    final StateDiff diff = new StateDiff();
+    diff.add(
+        new BlockAccessList(
+            List.of(
+                changes(
+                    N, slots, List.of(new BalanceChange(1, Wei.of(1))), List.of(), List.of()))));
+
+    StateDiffApplier.apply(diff, storage, coverage, (a, r, s) -> {});
+
+    // the account and its slots are one write more than a batch takes
+    verify(storage, times(2)).batch();
+    verify(batch, times(2)).commit();
   }
 
   private static PatriciaTrieAccountValue read(final SyncStateStorage storage, final Address a) {

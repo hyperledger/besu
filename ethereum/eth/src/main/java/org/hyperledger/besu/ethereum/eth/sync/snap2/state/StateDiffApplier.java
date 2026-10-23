@@ -34,7 +34,7 @@ import org.apache.tuweni.units.bigints.UInt256;
  */
 public final class StateDiffApplier {
 
-  private static final int WRITES_PER_COMMIT = 50_000;
+  static final int WRITES_PER_COMMIT = 50_000;
 
   private StateDiffApplier() {}
 
@@ -51,18 +51,20 @@ public final class StateDiffApplier {
 
   /** Receives the slots a move changed in a downloaded storage, with the root before. */
   @FunctionalInterface
-  public interface StorageChanges {
+  interface StorageChanges {
     void changed(Bytes32 accountHash, Hash previousRoot, Map<Bytes32, UInt256> slots);
   }
 
-  /** Applies the diff and commits it. */
-  public static Outcome apply(
+  /**
+   * Applies the diff and commits it. A failure leaves it partly applied, to the flat state and to
+   * the coverage: the download must then stop rather than apply it again.
+   */
+  static Outcome apply(
       final StateDiff diff,
       final SyncStateStorage storage,
       final StateCoverage coverage,
       final StorageChanges storageChanges) {
-    SyncStateStorage.Batch batch = storage.batch();
-    long writes = 0;
+    final Writes writes = new Writes(storage);
     int applied = 0;
     int skipped = 0;
     int deleted = 0;
@@ -70,11 +72,6 @@ public final class StateDiffApplier {
     int stale = 0;
     try {
       for (final AccountChange change : diff.accounts().values()) {
-        if (writes >= WRITES_PER_COMMIT) {
-          batch.commit();
-          batch = storage.batch();
-          writes = 0;
-        }
         final Bytes32 accountHash = change.accountHash();
         if (!coverage.accounts().contains(accountHash)) {
           skipped++;
@@ -91,22 +88,22 @@ public final class StateDiffApplier {
         }
 
         if (change.code().isPresent() && !change.code().get().isEmpty()) {
-          batch.putCode(Bytes32.wrap(updated.getCodeHash().getBytes()), change.code().get());
+          writes
+              .batch()
+              .putCode(Bytes32.wrap(updated.getCodeHash().getBytes()), change.code().get());
         }
         if (Accounts.isEmpty(updated)) {
           // EIP-161 and EIP-7523: an empty account does not exist
           if (existing.isPresent()) {
-            batch.removeAccount(accountHash);
+            writes.batch().removeAccount(accountHash);
             storage.deleteStorage(accountHash);
             deleted++;
-            writes++;
           }
           coverage.removeStorageTask(accountHash);
           continue;
         }
-        batch.putAccount(accountHash, Accounts.encode(updated));
+        writes.batch().putAccount(accountHash, Accounts.encode(updated));
         applied++;
-        writes++;
         if (downloadedStorage) {
           storageChanges.changed(
               accountHash,
@@ -125,21 +122,56 @@ public final class StateDiffApplier {
               continue;
             }
             if (slot.getValue().isZero()) {
-              batch.removeStorage(accountHash, slot.getKey());
+              writes.batch().removeStorage(accountHash, slot.getKey());
             } else {
-              batch.putStorage(accountHash, slot.getKey(), slot.getValue());
+              writes.batch().putStorage(accountHash, slot.getKey(), slot.getValue());
             }
             slots++;
-            writes++;
           }
         }
       }
-      batch.commit();
+      writes.commit();
     } catch (final RuntimeException e) {
-      batch.abort();
+      writes.abort();
       throw e;
     }
     return new Outcome(applied, skipped, deleted, slots, stale);
+  }
+
+  // a batch committed every WRITES_PER_COMMIT writes, dropped before its commit so that a commit
+  // that fails leaves nothing to abort
+  private static final class Writes {
+    private final SyncStateStorage storage;
+    private SyncStateStorage.Batch batch;
+    private int count;
+
+    private Writes(final SyncStateStorage storage) {
+      this.storage = storage;
+      this.batch = storage.batch();
+    }
+
+    // the batch of the next write, a new one once the last is full
+    private SyncStateStorage.Batch batch() {
+      if (count == WRITES_PER_COMMIT) {
+        commit();
+        batch = storage.batch();
+        count = 0;
+      }
+      count++;
+      return batch;
+    }
+
+    private void commit() {
+      final SyncStateStorage.Batch full = batch;
+      batch = null;
+      full.commit();
+    }
+
+    private void abort() {
+      if (batch != null) {
+        batch.abort();
+      }
+    }
   }
 
   // the changed fields of an account; the storage root is left as it was
