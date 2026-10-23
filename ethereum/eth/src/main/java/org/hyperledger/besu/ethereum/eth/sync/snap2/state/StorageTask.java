@@ -59,6 +59,7 @@ final class StorageTask {
     rootStale = true;
   }
 
+  /** Sets a root fetched at the current pivot, never one fetched before a pivot move. */
   public synchronized void refreshRoot(final Bytes32 root) {
     storageRoot = root.copy();
     rootStale = false;
@@ -71,7 +72,8 @@ final class StorageTask {
 
   /** Covers a slot range holding some slots; returns true for the call that completes it. */
   public synchronized boolean cover(final Bytes32 from, final Bytes32 to, final int slots) {
-    if (covered.isFull()) {
+    // a range covered already, as a retried request's is, counts nothing more
+    if (covered.encloses(from, to)) {
       return false;
     }
     covered.add(from, to);

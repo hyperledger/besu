@@ -68,6 +68,9 @@ class KeyRangeSetTest {
     assertThat(set.contains(key(40))).isTrue();
     assertThat(set.contains(key(41))).isFalse();
     assertThat(set.contains(key(9))).isFalse();
+    assertThat(set.encloses(key(15), key(40))).isTrue();
+    // the keys from 41 to 49 are missing
+    assertThat(set.encloses(key(35), key(50))).isFalse();
 
     set.add(key(41), key(49));
     assertThat(set.snapshot()).containsExactly(entry(key(10), key(60)));

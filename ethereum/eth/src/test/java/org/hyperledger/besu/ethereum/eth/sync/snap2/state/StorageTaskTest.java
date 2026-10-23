@@ -36,8 +36,9 @@ class StorageTaskTest {
     final StorageTask task = new StorageTask(Bytes32.ZERO, Bytes32.ZERO);
 
     assertThat(task.cover(MIDDLE, RangeManager.MAX_RANGE, 3)).isFalse();
+    // a range covered again, as a retried request's is, counts nothing more
+    assertThat(task.cover(MIDDLE, RangeManager.MAX_RANGE, 3)).isFalse();
     assertThat(task.cover(RangeManager.MIN_RANGE, MIDDLE, 2)).isTrue();
-    // a range covered again, as a retried chunk does, completes and counts nothing more
     assertThat(task.cover(RangeManager.MIN_RANGE, MIDDLE, 2)).isFalse();
     assertThat(task.covers(MIDDLE)).isTrue();
     assertThat(task.slots()).isEqualTo(5);

@@ -79,8 +79,13 @@ final class KeyRangeSet {
 
   /** Returns whether {@code key} is in the set. */
   public synchronized boolean contains(final Bytes32 key) {
-    final Map.Entry<Bytes32, Bytes32> floor = ranges.floorEntry(key);
-    return floor != null && floor.getValue().compareTo(key) >= 0;
+    return encloses(key, key);
+  }
+
+  /** Returns whether every key of {@code [start, end]} is in the set. */
+  public synchronized boolean encloses(final Bytes32 start, final Bytes32 end) {
+    final Map.Entry<Bytes32, Bytes32> floor = ranges.floorEntry(start);
+    return floor != null && floor.getValue().compareTo(end) >= 0;
   }
 
   /** Returns whether the whole key space is covered. */
