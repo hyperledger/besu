@@ -1,0 +1,21 @@
+{
+  "request": "{ pending { account { balance } } }",
+  "response": {
+    "errors": [
+      {
+        "message": "Validation error (MissingFieldArgument@[pending/account]) : Missing field argument 'address'",
+        "locations": [
+          {
+            "line": 1,
+            "column": 13
+          }
+        ],
+        "extensions": {
+          "classification": "ValidationError"
+        }
+      }
+    ]
+  },
+  "statusCode": 400
+}
+

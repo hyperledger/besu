@@ -1,0 +1,11 @@
+{
+  "request": "{ block { number } }",
+  "response": {
+    "data": {
+      "block": {
+        "number": "0x22"
+      }
+    }
+  },
+  "statusCode": 200
+}

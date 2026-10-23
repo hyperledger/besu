@@ -1,0 +1,37 @@
+{
+  "request": "{block (number : 33) { baseFeePerGas difficulty extraData miner { address } mixHash nonce stateRoot totalDifficulty transactions { r s v yParity } withdrawalsRoot withdrawals { address amount index validator } }} ",
+  "response": {
+    "data": {
+      "block": {
+        "baseFeePerGas": "0x3b9aca00",
+        "difficulty": "0x0",
+        "extraData": "0x",
+        "miner": {
+          "address": "0x0000000000000000000000000000000000000000"
+        },
+        "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "nonce": "0x0000000000000000",
+        "stateRoot": "0x0d3c456bb68669bad05da3a1a766daab236c9df1da8f74edf5ebe9383f00084c",
+        "totalDifficulty": "0x427c00",
+        "transactions": [
+          {
+            "r": "0x8abbfbd4c5f2a13a8d5ed394ac50bac7d678f83a23f645818492f76e8ee17ab3",
+            "s": "0x7bd38c6929235f775d68b45bd7dea7981264f9a265b6bea97b070e15be88389c",
+            "v": "0x0",
+            "yParity": "0x0"
+          }
+        ],
+        "withdrawalsRoot": "0x37945ab58d2712a26df2a38d217e822694927e29b30d5993d7a53ccea618d1f3",
+        "withdrawals": [
+          {
+            "address": "0x0000000000000000000000000000000000000dad",
+            "amount": "0x2540be400",
+            "index": "0x0",
+            "validator": "0xa"
+          }
+        ]
+      }
+    }
+  },
+  "statusCode": 200
+}

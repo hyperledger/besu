@@ -1,0 +1,14 @@
+{
+  "request" : "{ block(number: 8) { ommerCount ommers { hash } ommerAt(index: 0) { hash } ommerHash } }",
+  "response" : {
+    "data" : {
+      "block" : {
+        "ommerCount" : "0x0",
+        "ommers" : [ ],
+        "ommerAt" : null,
+        "ommerHash" : "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+      }
+    }
+  },
+  "statusCode" : 200
+}

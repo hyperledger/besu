@@ -1,0 +1,16 @@
+{
+  "request" : "{ pending { account(address: \"0x6295ee1b4f6dd65047762f924ecd367c17eabf8f\") { address balance transactionCount storage(slot: \"0x0000000000000000000000000000000000000000000000000000000000000004\") } } }",
+  "response" : {
+    "data" : {
+      "pending" : {
+        "account" : {
+          "address" : "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+          "balance" : "0x140",
+          "transactionCount" : "0x0",
+          "storage" : "0xaabbccffffffffffffffffffffffffffffffffffffffffffffffffffffffffee"
+        }
+      }
+    }
+  },
+  "statusCode" : 200
+}

@@ -1,0 +1,14 @@
+{
+  "request": "{ __schema { types { fields { type { fields { name }}}}}}",
+  "response": {
+    "errors": [
+      {
+        "message": "maximum query complexity exceeded 204 > 200",
+        "extensions": {
+          "classification": "ExecutionAborted"
+        }
+      }
+    ]
+  },
+  "statusCode": 400
+}

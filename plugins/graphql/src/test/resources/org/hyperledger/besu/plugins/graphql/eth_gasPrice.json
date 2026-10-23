@@ -1,0 +1,10 @@
+{
+  "request": "{ gasPrice maxPriorityFeePerGas }",
+  "response": {
+    "data": {
+      "gasPrice": "0x2dbc88c1",
+      "maxPriorityFeePerGas": "0x3b9aca00"
+    }
+  },
+  "statusCode": 200
+}

@@ -1,0 +1,11 @@
+{
+  "request": "{block{ estimateGas(data:{}) }}",
+  "response": {
+    "data": {
+      "block": {
+        "estimateGas": "0xcf08"
+      }
+    }
+  },
+  "statusCode": 200
+}

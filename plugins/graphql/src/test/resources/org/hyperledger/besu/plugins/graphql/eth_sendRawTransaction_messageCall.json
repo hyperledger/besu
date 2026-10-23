@@ -1,0 +1,9 @@
+{
+  "request": "mutation { sendRawTransaction(data: \"0xf8690885174876e800830fffff94450b61224a7df4d8a70f3e20d4fd6a6380b920d180843bdab8bf1ba0efcd6b9df2054a4e8599c0967f8e1e45bca79e2998ed7e8bafb4d29aba7dd5c2a01097184ba24f20dc097f1915fbb5f6ac955bbfc014f181df4d80bf04f4a1cfa5\") }",
+  "response": {
+    "data": {
+      "sendRawTransaction": "0xaa6e6646456c576edcd712dbb3f30bf46c3d8310b203960c1e675534553b2daf"
+    }
+  },
+  "statusCode": 200
+}
