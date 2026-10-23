@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.LogTopic;
 import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.ethereum.core.FrameReceipt;
 import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -27,13 +28,16 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 public class SyncTransactionReceiptDecoderTest {
@@ -147,6 +151,53 @@ public class SyncTransactionReceiptDecoderTest {
                     transactionReceipt, rlpOut, TransactionReceiptEncodingConfiguration.DEFAULT));
 
     SyncTransactionReceipt syncTransactionReceipt =
+        syncTransactionReceiptDecoder.decode(encodedReceipt);
+
+    Assertions.assertEquals(encodedReceipt, syncTransactionReceipt.getRlpBytes());
+    Assertions.assertTrue(syncTransactionReceipt.isFormattedForRootCalculation());
+    Assertions.assertNull(syncTransactionReceipt.getTransactionTypeCode());
+    Assertions.assertNull(syncTransactionReceipt.getStatusOrStateRoot());
+    Assertions.assertNull(syncTransactionReceipt.getCumulativeGasUsed());
+    Assertions.assertNull(syncTransactionReceipt.getBloomFilter());
+  }
+
+  private static Stream<Arguments> networkReceiptEncodings() {
+    return Stream.of(
+        Arguments.of(
+            "eth/68", TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION),
+        Arguments.of(
+            "eth/69", TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION));
+  }
+
+  /**
+   * EIP-8141 frame receipts have their own payload, with no status and no bloom, so they are not
+   * split into components. They travel in the typed envelope under every network encoding, eth/69
+   * included, which is already the trie-root form, so they are returned raw.
+   */
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("networkReceiptEncodings")
+  public void frameReceiptIsReturnedRaw(
+      final String name, final TransactionReceiptEncodingConfiguration configuration) {
+    final TransactionReceipt frameReceipt =
+        new TransactionReceipt(
+            Address.fromHexString("0x1111111111111111111111111111111111111111"),
+            2,
+            List.of(
+                new FrameReceipt(
+                    FrameReceipt.STATUS_SUCCESS,
+                    1,
+                    0,
+                    List.of(
+                        new Log(
+                            Address.fromHexString("03"),
+                            Bytes.fromHexStringLenient("04"),
+                            List.of(LogTopic.fromHexString("05")))))));
+
+    final Bytes encodedReceipt =
+        RLP.encode(
+            (rlpOut) -> TransactionReceiptEncoder.writeTo(frameReceipt, rlpOut, configuration));
+
+    final SyncTransactionReceipt syncTransactionReceipt =
         syncTransactionReceiptDecoder.decode(encodedReceipt);
 
     Assertions.assertEquals(encodedReceipt, syncTransactionReceipt.getRlpBytes());
