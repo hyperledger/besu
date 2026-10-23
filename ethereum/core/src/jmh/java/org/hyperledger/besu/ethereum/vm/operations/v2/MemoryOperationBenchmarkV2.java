@@ -22,6 +22,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -51,7 +52,11 @@ import org.openjdk.jmh.annotations.Warmup;
 public class MemoryOperationBenchmarkV2 {
 
   private static final int REPETITIONS = 1_000;
-  private static final Bytes SOURCE_DATA = Bytes.repeat((byte) 0x5a, 128);
+  private static final byte[] RAW = pattern(16 + 260);
+  // A selector and eight words. A transaction's call data is a slice of its RLP, so not at offset 0
+  private static final Bytes CALL_DATA = Bytes.wrap(RAW, 16, 260);
+  // A child's output is a whole array, as memory hands it out
+  private static final Bytes RETURN_DATA = Bytes.wrap(Arrays.copyOf(RAW, 128));
 
   /** One step per operation: its arguments, the operation, and a POP for what it pushes. */
   public enum Program {
@@ -63,12 +68,22 @@ public class MemoryOperationBenchmarkV2 {
     MSTORE8("602a600053"),
     // PUSH1 96 PUSH1 0 PUSH1 0 CALLDATACOPY
     CALLDATACOPY("606060006000" + "37"),
+    // CALLDATASIZE PUSH1 0 PUSH1 0 CALLDATACOPY, all of it, as a proxy forwards it
+    CALLDATACOPY_ALL("3660006000" + "37"),
+    // PUSH1 96 CALLDATASIZE PUSH1 0 CALLDATACOPY, past its end, to zero memory
+    CALLDATACOPY_ZERO("6060" + "36" + "6000" + "37"),
     // PUSH1 96 PUSH1 0 PUSH1 0 CODECOPY
     CODECOPY("606060006000" + "39"),
+    // PUSH2 1024 PUSH1 0 PUSH1 0 CODECOPY
+    CODECOPY_1K("610400" + "6000" + "6000" + "39"),
     // PUSH1 96 PUSH1 0 PUSH1 0 RETURNDATACOPY
     RETURNDATACOPY("606060006000" + "3e"),
+    // RETURNDATASIZE PUSH1 0 PUSH1 0 RETURNDATACOPY, all of it, as a proxy returns it
+    RETURNDATACOPY_ALL("3d60006000" + "3e"),
     // PUSH1 96 PUSH1 0 PUSH1 0x80 MCOPY, between ranges that don't overlap
-    MCOPY("606060006080" + "5e");
+    MCOPY("606060006080" + "5e"),
+    // PUSH2 1024 PUSH1 0 PUSH2 1024 MCOPY, between ranges that don't overlap
+    MCOPY_1K("610400" + "6000" + "610400" + "5e");
 
     private final Bytes code;
 
@@ -101,9 +116,17 @@ public class MemoryOperationBenchmarkV2 {
     frame =
         BenchmarkHelperV2.messageCallFrameBuilder()
             .code(new Code(program.code))
-            .inputData(SOURCE_DATA)
+            .inputData(CALL_DATA)
             .build();
-    frame.setReturnData(SOURCE_DATA);
+    frame.setReturnData(RETURN_DATA);
+  }
+
+  private static byte[] pattern(final int size) {
+    final byte[] bytes = new byte[size];
+    for (int i = 0; i < size; i++) {
+      bytes[i] = (byte) (i * 31 + 7);
+    }
+    return bytes;
   }
 
   @Benchmark
