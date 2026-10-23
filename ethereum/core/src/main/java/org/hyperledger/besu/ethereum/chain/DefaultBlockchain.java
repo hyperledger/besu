@@ -63,11 +63,22 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DefaultBlockchain implements MutableBlockchain {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultBlockchain.class);
+
+  /**
+   * The default number of recently imported blocks whose bodies, receipts and block access lists
+   * are cached. It is the snap serving window: peers and the consensus client mostly ask for blocks
+   * within it.
+   */
+  public static final int DEFAULT_RECENT_BLOCKS_TO_CACHE = 128;
+
+  /** The default number of bytes each of the recent blocks caches may hold. */
+  public static final long DEFAULT_RECENT_BLOCKS_CACHE_MAX_CAPACITY = 128L * 1024 * 1024;
 
   private final Comparator<BlockHeader> heaviestChainBlockChoiceRule =
       Comparator.comparing(this::calculateTotalDifficulty);
@@ -88,10 +99,11 @@ public class DefaultBlockchain implements MutableBlockchain {
   private boolean senderNonceIndexing = false;
 
   private Optional<Cache<Hash, BlockHeader>> blockHeadersCache;
-  private Optional<Cache<Hash, BlockBody>> blockBodiesCache;
-  private Optional<Cache<Hash, List<TransactionReceipt>>> transactionReceiptsCache;
-  private Optional<Cache<Hash, Difficulty>> totalDifficultyCache;
-  private Optional<Cache<Hash, BlockAccessList>> blockAccessListCache;
+  // Hold the RLP of imported blocks, bounded by size as well: one block access list can hold tens
+  // of thousands of accounts.
+  private final RecentBlocksRlpCache blockBodiesCache;
+  private final RecentBlocksRlpCache transactionReceiptsCache;
+  private final RecentBlocksRlpCache blockAccessListsCache;
 
   private Counter gasUsedCounter = NoOpMetricsSystem.NO_OP_COUNTER;
   private Counter numberOfTransactionsCounter = NoOpMetricsSystem.NO_OP_COUNTER;
@@ -103,7 +115,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final BlockchainStorage blockchainStorage,
       final MetricsSystem metricsSystem,
       final long reorgLoggingThreshold) {
-    this(genesisBlock, blockchainStorage, metricsSystem, reorgLoggingThreshold, null, 0, 0, false);
+    this(genesisBlock, blockchainStorage, metricsSystem, reorgLoggingThreshold, null);
   }
 
   private DefaultBlockchain(
@@ -111,17 +123,16 @@ public class DefaultBlockchain implements MutableBlockchain {
       final BlockchainStorage blockchainStorage,
       final MetricsSystem metricsSystem,
       final long reorgLoggingThreshold,
-      final String dataDirectory,
-      final int numberOfBlocksToCache,
-      final int numberOfBlockHeadersToCache) {
+      final String dataDirectory) {
     this(
         genesisBlock,
         blockchainStorage,
         metricsSystem,
         reorgLoggingThreshold,
         dataDirectory,
-        numberOfBlocksToCache,
-        numberOfBlockHeadersToCache,
+        DEFAULT_RECENT_BLOCKS_TO_CACHE,
+        DEFAULT_RECENT_BLOCKS_CACHE_MAX_CAPACITY,
+        0,
         false);
   }
 
@@ -131,7 +142,8 @@ public class DefaultBlockchain implements MutableBlockchain {
       final MetricsSystem metricsSystem,
       final long reorgLoggingThreshold,
       final String dataDirectory,
-      final int numberOfBlocksToCache,
+      final int recentBlocksToCache,
+      final long recentBlocksCacheMaxCapacity,
       final int numberOfBlockHeadersToCache,
       final boolean senderNonceIndexingEnabled) {
     checkNotNull(genesisBlock);
@@ -155,62 +167,53 @@ public class DefaultBlockchain implements MutableBlockchain {
     this.blockChoiceRule = heaviestChainBlockChoiceRule;
     this.senderNonceIndexing = senderNonceIndexingEnabled;
 
-    initializeCaches(metricsSystem, numberOfBlockHeadersToCache, numberOfBlocksToCache);
+    initializeHeadersCache(metricsSystem, numberOfBlockHeadersToCache);
+    blockBodiesCache = new RecentBlocksRlpCache(recentBlocksToCache, recentBlocksCacheMaxCapacity);
+    transactionReceiptsCache =
+        new RecentBlocksRlpCache(recentBlocksToCache, recentBlocksCacheMaxCapacity);
+    blockAccessListsCache =
+        new RecentBlocksRlpCache(recentBlocksToCache, recentBlocksCacheMaxCapacity);
+    registerRecentBlocksCacheMetrics(metricsSystem);
     createCounters(metricsSystem);
     createGauges(metricsSystem);
   }
 
-  private void initializeCaches(
-      final MetricsSystem metricsSystem, final int headersCacheSize, final int blocksCacheSize) {
-    if (headersCacheSize == 0 && blocksCacheSize == 0) {
-      setAllCachesEmpty();
+  private void initializeHeadersCache(
+      final MetricsSystem metricsSystem, final int headersCacheSize) {
+    if (headersCacheSize == 0) {
+      blockHeadersCache = Optional.empty();
       return;
     }
-
-    final int headersSize = Math.max(headersCacheSize, blocksCacheSize);
     blockHeadersCache =
-        Optional.of(CacheBuilder.newBuilder().recordStats().maximumSize(headersSize).build());
-
-    if (blocksCacheSize != 0) {
-      blockBodiesCache =
-          Optional.of(CacheBuilder.newBuilder().recordStats().maximumSize(blocksCacheSize).build());
-      transactionReceiptsCache =
-          Optional.of(CacheBuilder.newBuilder().recordStats().maximumSize(blocksCacheSize).build());
-      totalDifficultyCache =
-          Optional.of(CacheBuilder.newBuilder().recordStats().maximumSize(blocksCacheSize).build());
-      blockAccessListCache =
-          Optional.of(CacheBuilder.newBuilder().recordStats().maximumSize(blocksCacheSize).build());
-      registerCacheMetrics(metricsSystem);
-    } else {
-      // Only headers cache is created, rest are empty
-      setBlockCachesEmpty();
-      registerHeadersCacheMetrics(metricsSystem);
-    }
-  }
-
-  private void setAllCachesEmpty() {
-    blockHeadersCache = Optional.empty();
-    setBlockCachesEmpty();
-  }
-
-  private void setBlockCachesEmpty() {
-    blockBodiesCache = Optional.empty();
-    transactionReceiptsCache = Optional.empty();
-    totalDifficultyCache = Optional.empty();
-    blockAccessListCache = Optional.empty();
-  }
-
-  private void registerCacheMetrics(final MetricsSystem metricsSystem) {
-    registerHeadersCacheMetrics(metricsSystem);
-    metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "blockBodies", blockBodiesCache.get());
-    metricsSystem.createGuavaCacheCollector(
-        BLOCKCHAIN, "transactionReceipts", transactionReceiptsCache.get());
-    metricsSystem.createGuavaCacheCollector(
-        BLOCKCHAIN, "totalDifficulty", totalDifficultyCache.get());
-  }
-
-  private void registerHeadersCacheMetrics(final MetricsSystem metricsSystem) {
+        Optional.of(CacheBuilder.newBuilder().recordStats().maximumSize(headersCacheSize).build());
     metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "blockHeaders", blockHeadersCache.get());
+  }
+
+  private void registerRecentBlocksCacheMetrics(final MetricsSystem metricsSystem) {
+    registerRecentBlocksCacheMetrics(
+        metricsSystem, "blockBodies", "block_bodies", blockBodiesCache);
+    registerRecentBlocksCacheMetrics(
+        metricsSystem, "transactionReceipts", "transaction_receipts", transactionReceiptsCache);
+    registerRecentBlocksCacheMetrics(
+        metricsSystem, "blockAccessLists", "block_access_lists", blockAccessListsCache);
+  }
+
+  private static void registerRecentBlocksCacheMetrics(
+      final MetricsSystem metricsSystem,
+      final String cacheName,
+      final String metricPrefix,
+      final RecentBlocksRlpCache cache) {
+    metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, cacheName, cache.cache());
+    metricsSystem.createLongGauge(
+        BLOCKCHAIN,
+        metricPrefix + "_cache_bytes",
+        "Bytes held by the " + cacheName + " cache of recently imported blocks",
+        cache::weight);
+    metricsSystem.createCounter(
+        BLOCKCHAIN,
+        metricPrefix + "_cache_evictions",
+        "Blocks evicted from the " + cacheName + " cache of recently imported blocks",
+        cache::evictionCount);
   }
 
   private void createCounters(final MetricsSystem metricsSystem) {
@@ -282,13 +285,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final long reorgLoggingThreshold) {
     checkNotNull(genesisBlock);
     return new DefaultBlockchain(
-        Optional.of(genesisBlock),
-        blockchainStorage,
-        metricsSystem,
-        reorgLoggingThreshold,
-        null,
-        0,
-        0);
+        Optional.of(genesisBlock), blockchainStorage, metricsSystem, reorgLoggingThreshold);
   }
 
   public static MutableBlockchain createMutable(
@@ -303,9 +300,7 @@ public class DefaultBlockchain implements MutableBlockchain {
         blockchainStorage,
         metricsSystem,
         reorgLoggingThreshold,
-        dataDirectory,
-        0,
-        0);
+        dataDirectory);
   }
 
   public static MutableBlockchain createMutable(
@@ -314,27 +309,8 @@ public class DefaultBlockchain implements MutableBlockchain {
       final MetricsSystem metricsSystem,
       final long reorgLoggingThreshold,
       final String dataDirectory,
-      final int numberOfBlocksToCache,
-      final int numberOfBlockHeadersToCache) {
-    checkNotNull(genesisBlock);
-    return new DefaultBlockchain(
-        Optional.of(genesisBlock),
-        blockchainStorage,
-        metricsSystem,
-        reorgLoggingThreshold,
-        dataDirectory,
-        numberOfBlocksToCache,
-        numberOfBlockHeadersToCache,
-        false);
-  }
-
-  public static MutableBlockchain createMutable(
-      final Block genesisBlock,
-      final BlockchainStorage blockchainStorage,
-      final MetricsSystem metricsSystem,
-      final long reorgLoggingThreshold,
-      final String dataDirectory,
-      final int numberOfBlocksToCache,
+      final int recentBlocksToCache,
+      final long recentBlocksCacheMaxCapacity,
       final int numberOfBlockHeadersToCache,
       final boolean senderNonceIndexingEnabled) {
     checkNotNull(genesisBlock);
@@ -344,7 +320,8 @@ public class DefaultBlockchain implements MutableBlockchain {
         metricsSystem,
         reorgLoggingThreshold,
         dataDirectory,
-        numberOfBlocksToCache,
+        recentBlocksToCache,
+        recentBlocksCacheMaxCapacity,
         numberOfBlockHeadersToCache,
         senderNonceIndexingEnabled);
   }
@@ -479,7 +456,17 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public Optional<BlockBody> getBlockBody(final Hash blockHeaderHash) {
-    return getCached(blockBodiesCache, blockHeaderHash, blockchainStorage::getBlockBody);
+    return blockBodiesCache
+        .get(blockHeaderHash)
+        .map(blockchainStorage::decodeBlockBody)
+        .or(() -> blockchainStorage.getBlockBody(blockHeaderHash));
+  }
+
+  @Override
+  public Optional<Bytes> getBlockBodyRlp(final Hash blockHeaderHash) {
+    return blockBodiesCache
+        .get(blockHeaderHash)
+        .or(() -> blockchainStorage.getBlockBodyRlp(blockHeaderHash));
   }
 
   @Override
@@ -489,8 +476,10 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public Optional<List<TransactionReceipt>> getTxReceipts(final Hash blockHeaderHash) {
-    return getCached(
-        transactionReceiptsCache, blockHeaderHash, blockchainStorage::getTransactionReceipts);
+    return transactionReceiptsCache
+        .get(blockHeaderHash)
+        .map(blockchainStorage::decodeTransactionReceipts)
+        .or(() -> blockchainStorage.getTransactionReceipts(blockHeaderHash));
   }
 
   private <T> Optional<T> getCached(
@@ -517,12 +506,17 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public Optional<BlockAccessList> getBlockAccessList(final Hash blockHash) {
-    return blockAccessListCache
-        .map(
-            cache ->
-                Optional.ofNullable(cache.getIfPresent(blockHash))
-                    .or(() -> blockchainStorage.getBlockAccessList(blockHash)))
-        .orElseGet(() -> blockchainStorage.getBlockAccessList(blockHash));
+    return blockAccessListsCache
+        .get(blockHash)
+        .map(blockchainStorage::decodeBlockAccessList)
+        .or(() -> blockchainStorage.getBlockAccessList(blockHash));
+  }
+
+  @Override
+  public Optional<Bytes> getBlockAccessListRlp(final Hash blockHash) {
+    return blockAccessListsCache
+        .get(blockHash)
+        .or(() -> blockchainStorage.getBlockAccessListRlp(blockHash));
   }
 
   @Override
@@ -532,12 +526,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public Optional<Difficulty> getTotalDifficultyByHash(final Hash blockHeaderHash) {
-    return totalDifficultyCache
-        .map(
-            cache ->
-                Optional.ofNullable(cache.getIfPresent(blockHeaderHash))
-                    .or(() -> blockchainStorage.getTotalDifficulty(blockHeaderHash)))
-        .orElseGet(() -> blockchainStorage.getTotalDifficulty(blockHeaderHash));
+    return blockchainStorage.getTotalDifficulty(blockHeaderHash);
   }
 
   @Override
@@ -576,7 +565,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final Block block,
       final List<TransactionReceipt> receipts,
       final Optional<BlockAccessList> blockAccessList) {
-    cacheBlockData(block, receipts, blockAccessList);
+    cacheBlockHeader(block.getHeader());
     appendBlockHelper(new BlockWithReceipts(block, receipts), blockAccessList, false, true);
   }
 
@@ -585,7 +574,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final Block block,
       final List<TransactionReceipt> receipts,
       final Optional<BlockAccessList> blockAccessList) {
-    cacheBlockData(block, receipts, blockAccessList);
+    cacheBlockHeader(block.getHeader());
     appendBlockHelper(new BlockWithReceipts(block, receipts), blockAccessList, false, false);
   }
 
@@ -594,7 +583,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final Block block,
       final List<TransactionReceipt> receipts,
       final Optional<BlockAccessList> blockAccessList) {
-    cacheBlockData(block, receipts, blockAccessList);
+    cacheBlockHeader(block.getHeader());
     appendBlockHelper(new BlockWithReceipts(block, receipts), blockAccessList, true, true);
   }
 
@@ -633,19 +622,6 @@ public class DefaultBlockchain implements MutableBlockchain {
     updater.commit();
   }
 
-  private void cacheBlockData(
-      final Block block,
-      final List<TransactionReceipt> receipts,
-      final Optional<BlockAccessList> blockAccessList) {
-    cacheBlockHeader(block.getHeader());
-    blockBodiesCache.ifPresent(cache -> cache.put(block.getHash(), block.getBody()));
-    transactionReceiptsCache.ifPresent(cache -> cache.put(block.getHash(), receipts));
-    totalDifficultyCache.ifPresent(
-        cache -> cache.put(block.getHash(), block.getHeader().getDifficulty()));
-    blockAccessListCache.ifPresent(
-        cache -> blockAccessList.ifPresent(t -> cache.put(block.getHash(), t)));
-  }
-
   private void cacheBlockHeader(final BlockHeader blockHeader) {
     blockHeadersCache.ifPresent(cache -> cache.put(blockHeader.getHash(), blockHeader));
   }
@@ -680,9 +656,10 @@ public class DefaultBlockchain implements MutableBlockchain {
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
 
     updater.putBlockHeader(hash, block.getHeader());
-    updater.putBlockBody(hash, block.getBody());
-    blockAccessList.ifPresent(bal -> updater.putBlockAccessList(hash, bal));
-    updater.putTransactionReceipts(hash, receipts);
+    final Bytes bodyRlp = updater.putBlockBody(hash, block.getBody());
+    final Optional<Bytes> blockAccessListRlp =
+        blockAccessList.map(bal -> updater.putBlockAccessList(hash, bal));
+    final Bytes receiptsRlp = updater.putTransactionReceipts(hash, receipts);
     updater.putTotalDifficulty(hash, td);
 
     final BlockAddedEvent blockAddedEvent;
@@ -696,6 +673,9 @@ public class DefaultBlockchain implements MutableBlockchain {
     }
 
     updater.commit();
+    blockBodiesCache.put(hash, bodyRlp);
+    transactionReceiptsCache.put(hash, receiptsRlp);
+    blockAccessListRlp.ifPresent(rlp -> blockAccessListsCache.put(hash, rlp));
     blockAddedObservers.forEach(observer -> observer.onBlockAdded(blockAddedEvent));
   }
 
@@ -704,17 +684,19 @@ public class DefaultBlockchain implements MutableBlockchain {
       final Block block,
       final List<TransactionReceipt> transactionReceipts,
       final Optional<Difficulty> maybeTotalDifficulty) {
-    cacheBlockData(block, transactionReceipts, Optional.empty());
+    cacheBlockHeader(block.getHeader());
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
     final Hash blockHash = block.getHash();
     updater.putBlockHeader(blockHash, block.getHeader());
     updater.putBlockHash(block.getHeader().getNumber(), blockHash);
-    updater.putBlockBody(blockHash, block.getBody());
+    final Bytes bodyRlp = updater.putBlockBody(blockHash, block.getBody());
     indexTransactionsForBlock(updater, blockHash, block.getBody().getTransactions());
-    updater.putTransactionReceipts(blockHash, transactionReceipts);
+    final Bytes receiptsRlp = updater.putTransactionReceipts(blockHash, transactionReceipts);
     maybeTotalDifficulty.ifPresent(
         totalDifficulty -> updater.putTotalDifficulty(blockHash, totalDifficulty));
     updater.commit();
+    blockBodiesCache.put(blockHash, bodyRlp);
+    transactionReceiptsCache.put(blockHash, receiptsRlp);
   }
 
   @Override
@@ -1234,22 +1216,6 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   public Optional<Cache<Hash, BlockHeader>> getBlockHeadersCache() {
     return blockHeadersCache;
-  }
-
-  public Optional<Cache<Hash, BlockBody>> getBlockBodiesCache() {
-    return blockBodiesCache;
-  }
-
-  public Optional<Cache<Hash, List<TransactionReceipt>>> getTransactionReceiptsCache() {
-    return transactionReceiptsCache;
-  }
-
-  public Optional<Cache<Hash, BlockAccessList>> getBlockAccessListCache() {
-    return blockAccessListCache;
-  }
-
-  public Optional<Cache<Hash, Difficulty>> getTotalDifficultyCache() {
-    return totalDifficultyCache;
   }
 
   /**

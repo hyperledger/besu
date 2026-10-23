@@ -8,6 +8,9 @@
 - `trace_filter` now matches a block reward's author against `toAddress` in range queries, as it already did for a single block, so a filter on an author's address returns its reward traces. [#11436](https://github.com/besu-eth/besu/pull/11436)
 - `eth_simulateV1` now rejects unknown account overrides [#11695](https://github.com/besu-eth/besu/pull/11695)
 
+### Upcoming Breaking Changes
+- `--cache-last-blocks` is deprecated and will be removed in a future release; it now only sizes the block header cache, use `--cache-last-block-headers` instead. [#11455](https://github.com/besu-eth/besu/pull/11455)
+
 ### Bug fixes
 - Block propagation now retries a block that peers do not serve with a delay that grows from 250 ms to 30 s and stops after 10 retries, releasing the block number for a later announcement. Previously it rescheduled the retrieval immediately and without a limit for as long as the number stayed in the propagation range. Block propagation stops once a finalized forkchoice is received, so this only affects networks that do not send one (Clique/PoA) and tests, not mainnet. [#11674](https://github.com/besu-eth/besu/pull/11674)
 - `eth_call`, `eth_estimateGas`, `eth_createAccessList` and `debug_traceCall` now reject an invalid state override with the error declared for it instead of `Internal error` (`-32603`). An account override that sets both `state` and `stateDiff` returns `Invalid call params` (`-32602`) and is no longer logged at `ERROR`, and `movePrecompileToAddress` on an address that is not a precompile returns `-32000`, as `eth_simulateV1` does. [#11590](https://github.com/besu-eth/besu/issues/11590)
@@ -34,6 +37,8 @@
 - A peer that answers a header, body or sync block body request with malformed RLP is now disconnected for breach of protocol, as it already was for pooled transactions, receipts and block access lists. Previously the decoding failure was logged at ERROR as a server error and the peer stayed connected. [#11451](https://github.com/besu-eth/besu/pull/11451)
 - The layered transaction pool notifies a transaction as added before the evictions that make space for it. Previously, when the pool was full after adding a transaction and the eviction dropped the transaction itself, it was notified as dropped before it was notified as added. [#11688](https://github.com/besu-eth/besu/pull/11688)
 - The sequenced transaction pool notifies transaction added and dropped events in the order they happen. Previously a transaction could be notified as dropped before it was notified as added, when another thread replaced it right after it was added, or when it was evicted because the pool was full after adding it. A transaction removed by the timed eviction after it had already been dropped is no longer notified as dropped a second time. [#11685](https://github.com/besu-eth/besu/pull/11685)
+- Bodies, receipts and block access lists of recently imported blocks are now cached as RLP, by default for the last 128 blocks and at most 128 MiB per type, set with `--cache-recent-blocks` and `--cache-recent-blocks-max-capacity`. [#11455](https://github.com/besu-eth/besu/pull/11455)
+- The derived RocksDB max open files no longer counts the heap the JVM has not committed yet as free memory. [#11455](https://github.com/besu-eth/besu/pull/11455)
 
 ### Additions and Improvements
 - `trace_filter` accepts `mode`: `intersection`, the default, or `union`, which matches a trace in either `fromAddress` or `toAddress`. An unknown value is rejected with `-32602`. [#11436](https://github.com/besu-eth/besu/pull/11436)

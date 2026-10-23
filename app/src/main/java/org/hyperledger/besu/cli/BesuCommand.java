@@ -21,6 +21,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.config.NetworkDefinition.EPHEMERY;
 import static org.hyperledger.besu.config.NetworkDefinition.MAINNET;
@@ -122,6 +123,7 @@ import org.hyperledger.besu.ethereum.api.pluginadapter.RpcEndpointServiceImpl;
 import org.hyperledger.besu.ethereum.blockcreation.pluginadapter.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner.ChainPruningStrategy;
+import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.pluginadapter.BlockchainServiceImpl;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParametersMetrics;
@@ -665,8 +667,28 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @CommandLine.Option(
       names = {"--cache-last-blocks"},
-      description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
+      description =
+          "DEPRECATED: use --cache-last-block-headers. Specifies the number of last block headers to"
+              + " cache, if higher than --cache-last-block-headers (default: ${DEFAULT-VALUE})")
   private final Integer numberOfBlocksToCache = 0;
+
+  @CommandLine.Option(
+      names = {"--cache-recent-blocks"},
+      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+      description =
+          "Specifies the number of recently imported blocks whose bodies, receipts and block access"
+              + " lists to cache, 0 to disable (default: ${DEFAULT-VALUE})")
+  private final Integer numberOfRecentBlocksToCache =
+      DefaultBlockchain.DEFAULT_RECENT_BLOCKS_TO_CACHE;
+
+  @CommandLine.Option(
+      names = {"--cache-recent-blocks-max-capacity"},
+      paramLabel = MANDATORY_LONG_FORMAT_HELP,
+      description =
+          "Max amount of memory, in bytes, that each of the recent block bodies, receipts and block"
+              + " access lists caches could occupy (default: ${DEFAULT-VALUE})")
+  private final Long recentBlocksCacheMaxCapacity =
+      DefaultBlockchain.DEFAULT_RECENT_BLOCKS_CACHE_MAX_CAPACITY;
 
   @CommandLine.Option(
       names = {"--cache-last-block-headers"},
@@ -2029,6 +2051,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "--node-private-key-file",
           "--security-module=" + DEFAULT_SECURITY_MODULE);
     }
+
+    if (isOptionSet(commandLine, "--cache-last-blocks")) {
+      logger.warn(DEPRECATION_WARNING_MSG, "--cache-last-blocks", "--cache-last-block-headers");
+    }
   }
 
   private void configure() throws Exception {
@@ -2197,8 +2223,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .maxRemotelyInitiatedPeers(maxRemoteInitiatedPeers)
             .randomPeerPriority(p2PDiscoveryOptions.randomPeerPriority)
             .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
-            .cacheLastBlocks(numberOfBlocksToCache)
-            .cacheLastBlockHeaders(numberOfBlockHeadersToCache)
+            .cacheRecentBlocks(numberOfRecentBlocksToCache)
+            .cacheRecentBlocksMaxCapacity(recentBlocksCacheMaxCapacity)
+            .cacheLastBlockHeaders(Math.max(numberOfBlockHeadersToCache, numberOfBlocksToCache))
             .isCacheLastBlockHeadersPreloadEnabled(isCacheLastBlockHeadersPreloadEnabled)
             .senderNonceIndexingEnabled(txSenderNonceIndexEnabled)
             .p2pEnabled(p2PDiscoveryOptions.p2pEnabled)

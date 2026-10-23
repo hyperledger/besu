@@ -1578,6 +1578,10 @@ public class ChainDataPrunerTest {
             genesisBlock, blockchainStorage, new NoOpMetricsSystem(), 0);
     gen.blockSequence(genesisBlock, 20)
         .forEach((block) -> blockchain.appendBlock(block, gen.receipts(block)));
+    // reads what the pruner left in storage, without the recently imported blocks cached
+    final Blockchain storedBlockchain =
+        DefaultBlockchain.createMutable(
+            genesisBlock, blockchainStorage, new NoOpMetricsSystem(), 0);
     final int mergeBlock = 11;
     final int pruningQuantity = 6;
     // Chain now has 20 blocks, including the genesis block
@@ -1601,15 +1605,19 @@ public class ChainDataPrunerTest {
     // On the first prune, we're expecting blocks 1 to 6 to be removed (full pruning batch size)
     pruner.onBlockAdded(blockAddedEvent);
 
-    checkBlocks(blockchain, 1, pruningQuantity, Optional::isEmpty);
+    checkBlocks(storedBlockchain, 1, pruningQuantity, Optional::isEmpty);
     checkBlocks(
-        blockchain, pruningQuantity + 1, blockchain.getChainHeadBlockNumber(), Optional::isPresent);
+        storedBlockchain,
+        pruningQuantity + 1,
+        blockchain.getChainHeadBlockNumber(),
+        Optional::isPresent);
 
     // On the second prune, we're expecting blocks 7 to 10 to be removed (limited by merge block)
     pruner.onBlockAdded(blockAddedEvent);
 
-    checkBlocks(blockchain, 1, mergeBlock - 1, Optional::isEmpty);
-    checkBlocks(blockchain, mergeBlock, blockchain.getChainHeadBlockNumber(), Optional::isPresent);
+    checkBlocks(storedBlockchain, 1, mergeBlock - 1, Optional::isEmpty);
+    checkBlocks(
+        storedBlockchain, mergeBlock, blockchain.getChainHeadBlockNumber(), Optional::isPresent);
   }
 
   @Test

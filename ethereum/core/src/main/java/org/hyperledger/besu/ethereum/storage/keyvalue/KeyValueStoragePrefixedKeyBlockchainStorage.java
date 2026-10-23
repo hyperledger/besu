@@ -148,19 +148,43 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
   @Override
   public Optional<BlockBody> getBlockBody(final Hash blockHash) {
-    return get(BLOCK_BODY_PREFIX, blockHash.getBytes())
-        .map(bytes -> BlockBody.readWrappedBodyFrom(RLP.input(bytes), blockHeaderFunctions));
+    return get(BLOCK_BODY_PREFIX, blockHash.getBytes()).map(this::decodeBlockBody);
+  }
+
+  @Override
+  public Optional<Bytes> getBlockBodyRlp(final Hash blockHash) {
+    return get(BLOCK_BODY_PREFIX, blockHash.getBytes());
   }
 
   @Override
   public Optional<BlockAccessList> getBlockAccessList(final Hash blockHash) {
-    return get(BLOCK_ACCESS_LIST_PREFIX, blockHash.getBytes()).map(this::rlpDecodeBlockAccessList);
+    return get(BLOCK_ACCESS_LIST_PREFIX, blockHash.getBytes()).map(this::decodeBlockAccessList);
+  }
+
+  @Override
+  public Optional<Bytes> getBlockAccessListRlp(final Hash blockHash) {
+    return get(BLOCK_ACCESS_LIST_PREFIX, blockHash.getBytes());
   }
 
   @Override
   public Optional<List<TransactionReceipt>> getTransactionReceipts(final Hash blockHash) {
     return get(TRANSACTION_RECEIPTS_PREFIX, blockHash.getBytes())
-        .map(this::rlpDecodeTransactionReceipts);
+        .map(this::decodeTransactionReceipts);
+  }
+
+  @Override
+  public BlockBody decodeBlockBody(final Bytes rlp) {
+    return BlockBody.readWrappedBodyFrom(RLP.input(rlp), blockHeaderFunctions);
+  }
+
+  @Override
+  public List<TransactionReceipt> decodeTransactionReceipts(final Bytes rlp) {
+    return RLP.input(rlp).readList(in -> TransactionReceiptDecoder.readFrom(in, true));
+  }
+
+  @Override
+  public BlockAccessList decodeBlockAccessList(final Bytes rlp) {
+    return BlockAccessListDecoder.decode(RLP.input(rlp));
   }
 
   @Override
@@ -194,14 +218,6 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   public Updater updater() {
     return new Updater(
         blockchainStorage.startTransaction(), variablesStorage.updater(), receiptCompaction);
-  }
-
-  private List<TransactionReceipt> rlpDecodeTransactionReceipts(final Bytes bytes) {
-    return RLP.input(bytes).readList(in -> TransactionReceiptDecoder.readFrom(in, true));
-  }
-
-  private BlockAccessList rlpDecodeBlockAccessList(final Bytes bytes) {
-    return BlockAccessListDecoder.decode(RLP.input(bytes));
   }
 
   private Hash bytesToHash(final Bytes bytes) {
@@ -342,8 +358,10 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     }
 
     @Override
-    public void putBlockBody(final Hash blockHash, final BlockBody blockBody) {
-      set(BLOCK_BODY_PREFIX, blockHash.getBytes(), RLP.encode(blockBody::writeWrappedBodyTo));
+    public Bytes putBlockBody(final Hash blockHash, final BlockBody blockBody) {
+      final Bytes rlp = RLP.encode(blockBody::writeWrappedBodyTo);
+      set(BLOCK_BODY_PREFIX, blockHash.getBytes(), rlp);
+      return rlp;
     }
 
     @Override
@@ -352,8 +370,10 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     }
 
     @Override
-    public void putBlockAccessList(final Hash blockHash, final BlockAccessList blockAccessList) {
-      set(BLOCK_ACCESS_LIST_PREFIX, blockHash.getBytes(), rlpEncode(blockAccessList));
+    public Bytes putBlockAccessList(final Hash blockHash, final BlockAccessList blockAccessList) {
+      final Bytes rlp = rlpEncode(blockAccessList);
+      set(BLOCK_ACCESS_LIST_PREFIX, blockHash.getBytes(), rlp);
+      return rlp;
     }
 
     @Override
@@ -372,9 +392,11 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     }
 
     @Override
-    public void putTransactionReceipts(
+    public Bytes putTransactionReceipts(
         final Hash blockHash, final List<TransactionReceipt> transactionReceipts) {
-      set(TRANSACTION_RECEIPTS_PREFIX, blockHash.getBytes(), rlpEncode(transactionReceipts));
+      final Bytes rlp = rlpEncode(transactionReceipts);
+      set(TRANSACTION_RECEIPTS_PREFIX, blockHash.getBytes(), rlp);
+      return rlp;
     }
 
     @Override
