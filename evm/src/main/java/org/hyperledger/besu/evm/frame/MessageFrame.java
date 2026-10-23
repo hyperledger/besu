@@ -258,6 +258,9 @@ public class MessageFrame {
 
   private Optional<Eip7928AccessList> eip7928AccessList = Optional.empty();
 
+  // Receives the code accesses the operations of this frame observe, such as a code read.
+  private final CodeAccessTracer codeAccessTracer;
+
   /** The mark of the undoable collections at the creation of this message frame */
   private long undoMark;
 
@@ -287,7 +290,8 @@ public class MessageFrame {
       final Map<String, Object> contextVariables,
       final Optional<Bytes> revertReason,
       final TxValues txValues,
-      final Optional<Eip7928AccessList> eip7928AccessList) {
+      final Optional<Eip7928AccessList> eip7928AccessList,
+      final CodeAccessTracer codeAccessTracer) {
 
     this.txValues = txValues;
     this.type = type;
@@ -312,6 +316,7 @@ public class MessageFrame {
     this.contextVariables = contextVariables;
     this.revertReason = revertReason;
     this.eip7928AccessList = eip7928AccessList;
+    this.codeAccessTracer = codeAccessTracer;
     this.undoMark = txValues.transientStorage().mark();
   }
 
@@ -1597,6 +1602,16 @@ public class MessageFrame {
     return eip7928AccessList;
   }
 
+  /**
+   * Returns the tracer the operations of this frame report code accesses to. See {@link
+   * Builder#codeAccessTracer(CodeAccessTracer)}.
+   *
+   * @return the code access tracer
+   */
+  public CodeAccessTracer getCodeAccessTracer() {
+    return codeAccessTracer;
+  }
+
   /** Reset. */
   public void reset() {
     maybeUpdatedMemory = Optional.empty();
@@ -1637,6 +1652,8 @@ public class MessageFrame {
     private long initialStateGasReservoir = 0L;
 
     private boolean enableEvmV2 = false;
+
+    private CodeAccessTracer codeAccessTracer = CodeAccessTracer.NONE;
 
     /** Instantiates a new Builder. */
     public Builder() {
@@ -1921,6 +1938,19 @@ public class MessageFrame {
     }
 
     /**
+     * Sets the tracer the operations report code accesses to, normally the operation tracer the
+     * frame is then processed with. A child frame takes its parent's code access tracer and ignores
+     * this one. {@link CodeAccessTracer#NONE} by default.
+     *
+     * @param codeAccessTracer the code access tracer
+     * @return the builder
+     */
+    public Builder codeAccessTracer(final CodeAccessTracer codeAccessTracer) {
+      this.codeAccessTracer = codeAccessTracer;
+      return this;
+    }
+
+    /**
      * Sets versioned hashes list.
      *
      * @param versionedHashes the Optional list of versioned hashes
@@ -1989,6 +2019,7 @@ public class MessageFrame {
       WorldUpdater updater;
       boolean newStatic;
       TxValues newTxValues;
+      CodeAccessTracer newCodeAccessTracer;
 
       if (parentMessageFrame == null) {
         HashSet<Address> warmedUpAddresses = new HashSet<>();
@@ -2007,10 +2038,12 @@ public class MessageFrame {
                 initialStateGasReservoir);
         updater = worldUpdater;
         newStatic = isStatic;
+        newCodeAccessTracer = codeAccessTracer;
       } else {
         newTxValues = parentMessageFrame.txValues;
         updater = parentMessageFrame.getWorldUpdater().updater();
         newStatic = isStatic || parentMessageFrame.isStatic;
+        newCodeAccessTracer = parentMessageFrame.codeAccessTracer;
         parentMessageFrame.warmUpAddress(contract);
       }
 
@@ -2032,7 +2065,8 @@ public class MessageFrame {
               contextVariables == null ? Map.of() : contextVariables,
               reason,
               newTxValues,
-              eip7928AccessList);
+              eip7928AccessList,
+              newCodeAccessTracer);
       newTxValues.messageFrameStack().addFirst(messageFrame);
       messageFrame.warmUpAddress(sender);
       for (Address a : eip2930AccessListWarmAddresses) {
