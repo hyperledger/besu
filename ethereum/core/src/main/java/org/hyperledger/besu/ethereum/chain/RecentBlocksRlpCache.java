@@ -52,7 +52,7 @@ final class RecentBlocksRlpCache {
   synchronized void put(final Hash blockHash, final Bytes rlp) {
     final long weight = weigh(rlp);
     // a single entry over the limit would otherwise evict every other block
-    if (weight > maxBytes || cache.asMap().containsKey(blockHash)) {
+    if (maxBlocks == 0 || weight > maxBytes || cache.asMap().containsKey(blockHash)) {
       return;
     }
     cache.put(blockHash, rlp);

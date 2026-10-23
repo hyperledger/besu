@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.hyperledger.besu.cli.options.ChainPruningOptions.CHAIN_DATA_PRUNING_RETAINED_MINIMUM;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.config.NetworkDefinition.EPHEMERY;
 import static org.hyperledger.besu.config.NetworkDefinition.EXPERIMENTAL_EIPS;
 import static org.hyperledger.besu.config.NetworkDefinition.FUTURE_EIPS;
@@ -2895,15 +2896,48 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void cacheLastBlocksOptionShouldWork() {
+  public void deprecatedCacheLastBlocksOptionSizesBlockHeadersCache() {
     int numberOfBlocksToCache = 512;
     parseCommand("--cache-last-blocks", String.valueOf(numberOfBlocksToCache));
-    verify(mockControllerBuilder).cacheLastBlocks(intArgumentCaptor.capture());
+    verify(mockControllerBuilder).cacheLastBlockHeaders(intArgumentCaptor.capture());
     verify(mockControllerBuilder).build();
 
     assertThat(intArgumentCaptor.getValue()).isEqualTo(numberOfBlocksToCache);
+    verify(mockLogger)
+        .warn(DEPRECATION_WARNING_MSG, "--cache-last-blocks", "--cache-last-block-headers");
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void cacheLastBlockHeadersOptionWinsWhenHigherThanDeprecatedCacheLastBlocks() {
+    parseCommand("--cache-last-blocks", "512", "--cache-last-block-headers", "5000");
+    verify(mockControllerBuilder).cacheLastBlockHeaders(intArgumentCaptor.capture());
+
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(5000);
+  }
+
+  @Test
+  public void cacheRecentBlocksOptionsShouldWork() {
+    parseCommand("--cache-recent-blocks", "64", "--cache-recent-blocks-max-capacity", "1048576");
+    verify(mockControllerBuilder).cacheRecentBlocks(intArgumentCaptor.capture());
+    verify(mockControllerBuilder).cacheRecentBlocksMaxCapacity(longArgumentCaptor.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(64);
+    assertThat(longArgumentCaptor.getValue()).isEqualTo(1048576L);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void cacheRecentBlocksOptionsDefaultToSnapServingWindowAnd128MiB() {
+    parseCommand();
+    verify(mockControllerBuilder).cacheRecentBlocks(intArgumentCaptor.capture());
+    verify(mockControllerBuilder).cacheRecentBlocksMaxCapacity(longArgumentCaptor.capture());
+
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(128);
+    assertThat(longArgumentCaptor.getValue()).isEqualTo(128L * 1024 * 1024);
   }
 
   @Test

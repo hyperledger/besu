@@ -74,6 +74,17 @@ class RecentBlocksRlpCacheTest {
   }
 
   @Test
+  void cachesNothingWithoutBlocks() {
+    final RecentBlocksRlpCache cache = new RecentBlocksRlpCache(0, Long.MAX_VALUE);
+
+    cache.put(hash(0), rlp(0, 10));
+
+    assertThat(cache.get(hash(0))).isEmpty();
+    assertThat(cache.evictionCount()).isZero();
+    assertThat(cache.weight()).isZero();
+  }
+
+  @Test
   void keepsFirstRlpOfBlockAlreadyCached() {
     final RecentBlocksRlpCache cache = new RecentBlocksRlpCache(10, Long.MAX_VALUE);
     cache.put(hash(0), rlp(0, 100));
