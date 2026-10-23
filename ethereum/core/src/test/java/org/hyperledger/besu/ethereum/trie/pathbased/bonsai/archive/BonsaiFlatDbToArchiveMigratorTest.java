@@ -381,6 +381,49 @@ public class BonsaiFlatDbToArchiveMigratorTest {
   }
 
   @Test
+  public void closeStopsBulkMigrationWithoutUpgradingToArchiveMode() throws Exception {
+    appendBlocks(3);
+    final CountDownLatch started = new CountDownLatch(1);
+    final CountDownLatch proceed = new CountDownLatch(1);
+    // Ignores the interrupt from close() so the loop itself must notice the closed flag.
+    when(trieLogManager.getTrieLogLayer(any()))
+        .thenAnswer(
+            invocation -> {
+              started.countDown();
+              boolean released = false;
+              while (!released) {
+                try {
+                  released = proceed.await(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                  if (!released) {
+                    throw new AssertionError("release was not called in time");
+                  }
+                } catch (final InterruptedException e) {
+                  // keep waiting
+                }
+              }
+              return Optional.of(createAccountTrieLog(Wei.ONE));
+            });
+
+    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator(BOUNDARY_DISABLED);
+    final CompletableFuture<Void> future = migrator.migrate();
+    assertThat(started.await(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)).isTrue();
+
+    final Thread closer = new Thread(migrator::close);
+    closer.start();
+    // close() sets the closed flag before waiting for the executor
+    while (!migrator.closed) {
+      Thread.sleep(10);
+    }
+    proceed.countDown();
+    closer.join(TimeUnit.SECONDS.toMillis(AWAIT_TIMEOUT_SECONDS));
+
+    future.get(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    assertThat(migrator.getMigratedBlockNumber()).isLessThan(3L);
+    verify(worldStateStorage, never()).upgradeToArchiveFlatDbMode();
+    assertThat(migrator.blockObserverId).isEmpty();
+  }
+
+  @Test
   public void blockObserverPersistsAndMigratesBlockAtBoundary() throws Exception {
     // head=3, boundaryDistance=3 → initial target=0, nothing migrated initially
     appendBlocks(3);

@@ -142,6 +142,11 @@ public class BonsaiFlatDbToArchiveMigrator extends TrailingBlockWorker {
           () -> {
             try {
               migrateBlocks(startBlock, target::get, true, () -> !closed);
+              if (closed) {
+                // Stopped early on close: blocks are unmigrated, so do not upgrade or hand off.
+                LOG.debug("Bonsai archive migration stopped on close before completing");
+                return;
+              }
               worldStateStorage.upgradeToArchiveFlatDbMode();
               logCompletion(startBlock, target.get(), migrationStartTime);
               // Hand off observers without a gap: register the ongoing observer first, then
