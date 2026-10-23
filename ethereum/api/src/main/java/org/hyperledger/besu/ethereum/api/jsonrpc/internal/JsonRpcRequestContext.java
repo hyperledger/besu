@@ -20,6 +20,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcPara
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.SequencedSet;
+import java.util.Set;
+import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
 import io.vertx.ext.auth.User;
@@ -101,6 +104,74 @@ public class JsonRpcRequestContext {
       final int index, final Class<T> listOf, final JsonRpcParameter.Configuration configuration)
       throws JsonRpcParameterException {
     return jsonRpcRequest.getRequiredList(index, listOf, configuration);
+  }
+
+  /**
+   * Retrieves a required list parameter, skipping the elements that fail deserialization. See
+   * {@link JsonRpcParameter#requiredLenientList}.
+   *
+   * @param index the index of the parameter
+   * @param elementClass the type of the elements
+   * @param configuration the deserialization configuration of each element
+   * @param <T> the type of the elements
+   * @return the list of the elements that were successfully deserialized, possibly empty
+   * @throws JsonRpcParameterException if the parameter is missing or is not a list
+   */
+  public <T> List<T> getRequiredLenientList(
+      final int index,
+      final Class<T> elementClass,
+      final JsonRpcParameter.Configuration configuration)
+      throws JsonRpcParameterException {
+    return jsonRpcRequest.getRequiredLenientList(index, elementClass, configuration);
+  }
+
+  /**
+   * Retrieves a required list parameter as a set that keeps the order of the elements in the list,
+   * skipping the elements that fail deserialization. See {@link
+   * JsonRpcParameter#requiredLenientSequencedSet}.
+   *
+   * @param index the index of the parameter
+   * @param elementClass the type of the elements
+   * @param configuration the deserialization configuration of each element
+   * @param <T> the type of the elements
+   * @return the set of the elements that were successfully deserialized, possibly empty
+   * @throws JsonRpcParameterException if the parameter is missing or is not a list
+   */
+  public <T> SequencedSet<T> getRequiredLenientSequencedSet(
+      final int index,
+      final Class<T> elementClass,
+      final JsonRpcParameter.Configuration configuration)
+      throws JsonRpcParameterException {
+    return jsonRpcRequest.getRequiredLenientSequencedSet(index, elementClass, configuration);
+  }
+
+  /**
+   * Retrieves a required list parameter as a set, without any guarantee on the order of its
+   * elements, skipping the elements that fail deserialization. See {@link
+   * JsonRpcParameter#requiredLenientSet}.
+   *
+   * @param index the index of the parameter
+   * @param elementClass the type of the elements
+   * @param configuration the deserialization configuration of each element
+   * @param <T> the type of the elements
+   * @return the set of the elements that were successfully deserialized, possibly empty
+   * @throws JsonRpcParameterException if the parameter is missing or is not a list
+   */
+  public <T> Set<T> getRequiredLenientSet(
+      final int index,
+      final Class<T> elementClass,
+      final JsonRpcParameter.Configuration configuration)
+      throws JsonRpcParameterException {
+    return jsonRpcRequest.getRequiredLenientSet(index, elementClass, configuration);
+  }
+
+  public <T> Set<T> getRequiredLenientSet(
+      final int index,
+      final Class<T> elementClass,
+      final IntFunction<Set<T>> setFactory,
+      final JsonRpcParameter.Configuration configuration)
+      throws JsonRpcParameterException {
+    return jsonRpcRequest.getRequiredLenientSet(index, elementClass, setFactory, configuration);
   }
 
   public <T> Optional<List<T>> getOptionalList(final int index, final Class<T> listOf)

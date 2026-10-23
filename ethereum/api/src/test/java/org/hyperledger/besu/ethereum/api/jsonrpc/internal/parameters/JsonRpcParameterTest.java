@@ -20,19 +20,32 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.Json
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.Configuration.FAIL_ON_UNKNOWN_BUT_EMPTY;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.Configuration.FAIL_ON_UNKNOWN_BUT_NULL;
 
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcMissingParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
 class JsonRpcParameterTest {
+
+  private static final KeyPair SIGNATURE_KEY_PAIR =
+      SignatureAlgorithmFactory.getInstance().generateKeyPair();
 
   private final JsonRpcParameter parameterAccessor = new JsonRpcParameter();
 
@@ -331,6 +344,147 @@ class JsonRpcParameterTest {
             new Object[] {raw}, 0, KnownOnly.class, FAIL_ON_UNKNOWN_BUT_NULL);
     assertThat(result).isPresent();
     assertThat(result.get().known).isEqualTo("value");
+  }
+
+  // ---- requiredLenientList / requiredLenientSequencedSet / requiredLenientSet ----
+
+  @Test
+  void requiredLenientList_skipsInvalidElementsAndKeepsOrderAndDuplicates() throws Exception {
+    final List<Object> rawList = new ArrayList<>();
+    rawList.add("0x02");
+    rawList.add(null);
+    rawList.add(List.of("not", "a", "string"));
+    rawList.add("0x01");
+    rawList.add("0x02");
+
+    final List<Bytes> result =
+        parameterAccessor.requiredLenientList(new Object[] {rawList}, 0, Bytes.class, DEFAULT);
+
+    assertThat(result)
+        .containsExactly(
+            Bytes.fromHexString("0x02"), Bytes.fromHexString("0x01"), Bytes.fromHexString("0x02"));
+  }
+
+  @Test
+  void requiredLenientList_throws_whenValueAtIndexIsMissingOrNotAList() {
+    assertThatExceptionOfType(JsonRpcMissingParameterException.class)
+        .isThrownBy(
+            () -> parameterAccessor.requiredLenientList(new Object[] {}, 0, Bytes.class, DEFAULT));
+    assertThatExceptionOfType(JsonRpcParameterException.class)
+        .isThrownBy(
+            () ->
+                parameterAccessor.requiredLenientList(
+                    new Object[] {"0x01"}, 0, Bytes.class, DEFAULT))
+        .isNotInstanceOf(JsonRpcMissingParameterException.class);
+  }
+
+  @Test
+  void requiredLenientSequencedSet_throwsMissing_whenValueAtIndexIsMissingOrNull() {
+    assertThatExceptionOfType(JsonRpcMissingParameterException.class)
+        .isThrownBy(
+            () -> parameterAccessor.requiredLenientSequencedSet(null, 0, String.class, DEFAULT));
+    assertThatExceptionOfType(JsonRpcMissingParameterException.class)
+        .isThrownBy(
+            () ->
+                parameterAccessor.requiredLenientSequencedSet(
+                    new Object[] {}, 0, String.class, DEFAULT));
+    assertThatExceptionOfType(JsonRpcMissingParameterException.class)
+        .isThrownBy(
+            () ->
+                parameterAccessor.requiredLenientSequencedSet(
+                    new Object[] {null}, 0, String.class, DEFAULT));
+  }
+
+  @Test
+  void requiredLenientSequencedSet_throws_whenValueAtIndexIsNotAList() {
+    assertThatExceptionOfType(JsonRpcParameterException.class)
+        .isThrownBy(
+            () ->
+                parameterAccessor.requiredLenientSequencedSet(
+                    new Object[] {"0x01"}, 0, String.class, DEFAULT))
+        .isNotInstanceOf(JsonRpcMissingParameterException.class);
+  }
+
+  @Test
+  void requiredLenientSequencedSet_returnsEmptySet_whenListIsEmpty() throws Exception {
+    assertThat(
+            parameterAccessor.requiredLenientSequencedSet(
+                new Object[] {List.of()}, 0, String.class, DEFAULT))
+        .isEmpty();
+  }
+
+  @Test
+  void requiredLenientSequencedSet_skipsElementsThatFailDeserialization() throws Exception {
+    final List<Object> rawList = new ArrayList<>();
+    rawList.add(Map.of("known", "first"));
+    // unknown non-null property is rejected by FAIL_ON_UNKNOWN_BUT_NULL
+    rawList.add(Map.of("known", "rejected", "unknown", "value"));
+    rawList.add(null);
+    rawList.add(List.of("not", "an", "object"));
+    rawList.add(Map.of("known", "second"));
+
+    final Set<KnownOnly> result =
+        parameterAccessor.requiredLenientSequencedSet(
+            new Object[] {rawList}, 0, KnownOnly.class, FAIL_ON_UNKNOWN_BUT_NULL);
+
+    assertThat(result).extracting(knownOnly -> knownOnly.known).containsExactly("first", "second");
+  }
+
+  @Test
+  void requiredLenientSequencedSet_skipsInvalidTransactionsAndDeduplicates() throws Exception {
+    final Transaction tx1 =
+        new TransactionTestFixture().nonce(0).createTransaction(SIGNATURE_KEY_PAIR);
+    final Transaction tx2 =
+        new TransactionTestFixture().nonce(1).createTransaction(SIGNATURE_KEY_PAIR);
+    final String encodedTx1 =
+        TransactionEncoder.encodeOpaqueBytes(tx1, EncodingContext.BLOCK_BODY).toHexString();
+    final String encodedTx2 =
+        TransactionEncoder.encodeOpaqueBytes(tx2, EncodingContext.BLOCK_BODY).toHexString();
+
+    final List<String> rawList =
+        List.of(
+            encodedTx2,
+            "0xnot-hex",
+            // truncated encoding of a valid transaction
+            encodedTx1.substring(0, encodedTx1.length() - 10),
+            encodedTx1,
+            encodedTx2);
+
+    final Set<Transaction> result =
+        parameterAccessor.requiredLenientSequencedSet(
+            new Object[] {rawList}, 0, Transaction.class, FAIL_ON_UNKNOWN_BUT_NULL);
+
+    assertThat(result).containsExactly(tx2, tx1);
+  }
+
+  @Test
+  void requiredLenientSet_skipsInvalidElementsAndDeduplicates() throws Exception {
+    final List<Object> rawList = new ArrayList<>();
+    rawList.add("0x02");
+    rawList.add(null);
+    rawList.add(List.of("not", "a", "string"));
+    rawList.add("0x01");
+    rawList.add("0x02");
+
+    final Set<Bytes> result =
+        parameterAccessor.requiredLenientSet(new Object[] {rawList}, 0, Bytes.class, DEFAULT);
+
+    assertThat(result)
+        .containsExactlyInAnyOrder(Bytes.fromHexString("0x01"), Bytes.fromHexString("0x02"));
+  }
+
+  @Test
+  void requiredLenientSet_throws_whenValueAtIndexIsMissingOrNotAList() {
+    assertThatExceptionOfType(JsonRpcMissingParameterException.class)
+        .isThrownBy(
+            () ->
+                parameterAccessor.requiredLenientSet(new Object[] {null}, 0, Bytes.class, DEFAULT));
+    assertThatExceptionOfType(JsonRpcParameterException.class)
+        .isThrownBy(
+            () ->
+                parameterAccessor.requiredLenientSet(
+                    new Object[] {"0x01"}, 0, Bytes.class, DEFAULT))
+        .isNotInstanceOf(JsonRpcMissingParameterException.class);
   }
 
   /** Test POJO with a single known property; strict, no @JsonIgnoreProperties opt-out. */

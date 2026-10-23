@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes32;
@@ -65,7 +66,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
       Optional<Bytes32> parentBeaconBlockRoot,
       Optional<Long> slotNumber,
       Optional<Long> targetGasLimit,
-      Optional<List<Transaction>> inclusionListTransactions) {}
+      Optional<Set<Transaction>> inclusionListTransactions) {}
 
   /**
    * Prepare payload identifier.
@@ -95,8 +96,23 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
    * @param blockAccessList optional block access list
    * @return the block processing result
    */
+  default BlockProcessingResult rememberBlock(
+      final Block block, final Optional<BlockAccessList> blockAccessList) {
+    return rememberBlock(block, blockAccessList, Set.of());
+  }
+
+  /**
+   * Remember block with optional block access list.
+   *
+   * @param block the block
+   * @param blockAccessList optional block access list
+   * @param inclusionListTransactions inclusion list transactions
+   * @return the block processing result
+   */
   BlockProcessingResult rememberBlock(
-      final Block block, final Optional<BlockAccessList> blockAccessList);
+      final Block block,
+      final Optional<BlockAccessList> blockAccessList,
+      final Set<Transaction> inclusionListTransactions);
 
   /**
    * Validate block.

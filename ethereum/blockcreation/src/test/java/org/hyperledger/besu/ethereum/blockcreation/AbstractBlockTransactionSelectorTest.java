@@ -102,6 +102,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -1753,7 +1754,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             ethScheduler,
             selectorsStateManager,
             maybeBalBuilder,
-            inclusionListTransactions);
+            new LinkedHashSet<>(inclusionListTransactions));
 
     return selector;
   }

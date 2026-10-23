@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /** The Transition coordinator. */
@@ -140,7 +141,9 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
 
   @Override
   public BlockProcessingResult rememberBlock(
-      final Block block, final Optional<BlockAccessList> blockAccessList) {
+      final Block block,
+      final Optional<BlockAccessList> blockAccessList,
+      final Set<Transaction> inclusionListTransactions) {
     return mergeCoordinator.rememberBlock(block, blockAccessList);
   }
 

@@ -23,6 +23,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.SequencedSet;
+import java.util.Set;
+import java.util.function.IntFunction;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -173,6 +176,40 @@ public class JsonRpcRequest {
       final JsonRpcParameter.Configuration configuration)
       throws JsonRpcParameterException {
     return parameterAccessor.requiredList(params, index, paramClass, configuration);
+  }
+
+  public <T> List<T> getRequiredLenientList(
+      final int index,
+      final Class<T> paramClass,
+      final JsonRpcParameter.Configuration configuration)
+      throws JsonRpcParameterException {
+    return parameterAccessor.requiredLenientList(params, index, paramClass, configuration);
+  }
+
+  public <T> SequencedSet<T> getRequiredLenientSequencedSet(
+      final int index,
+      final Class<T> paramClass,
+      final JsonRpcParameter.Configuration configuration)
+      throws JsonRpcParameterException {
+    return parameterAccessor.requiredLenientSequencedSet(params, index, paramClass, configuration);
+  }
+
+  public <T> Set<T> getRequiredLenientSet(
+      final int index,
+      final Class<T> paramClass,
+      final JsonRpcParameter.Configuration configuration)
+      throws JsonRpcParameterException {
+    return parameterAccessor.requiredLenientSet(params, index, paramClass, configuration);
+  }
+
+  public <T> Set<T> getRequiredLenientSet(
+      final int index,
+      final Class<T> paramClass,
+      final IntFunction<Set<T>> setFactory,
+      final JsonRpcParameter.Configuration configuration)
+      throws JsonRpcParameterException {
+    return parameterAccessor.requiredLenientSet(
+        params, index, paramClass, setFactory, configuration);
   }
 
   public <T> Optional<List<T>> getOptionalList(final int index, final Class<T> paramClass)

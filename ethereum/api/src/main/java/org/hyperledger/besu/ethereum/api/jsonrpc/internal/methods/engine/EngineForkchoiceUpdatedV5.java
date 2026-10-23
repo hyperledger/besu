@@ -33,16 +33,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PayloadStatusV
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,8 +109,9 @@ public final class EngineForkchoiceUpdatedV5<
   protected void setPreparePayloadArgs(
       final PreparePayloadArgsBuilder preparePayloadArgsBuilder, final PA attrs) {
     super.setPreparePayloadArgs(preparePayloadArgsBuilder, attrs);
-    final List<Transaction> inclusionListTransactions =
-        decodeInclusionListTransactions(attrs.getInclusionListTransactions());
+    final Set<Transaction> inclusionListTransactions = attrs.getInclusionListTransactions();
+    logger()
+        .info("Received {} unique inclusion list transactions", inclusionListTransactions.size());
     preparePayloadArgsBuilder.inclusionListTransactions(inclusionListTransactions);
     CompletableFuture.runAsync(
         () -> {
@@ -125,28 +122,29 @@ public final class EngineForkchoiceUpdatedV5<
         });
   }
 
-  private List<Transaction> decodeInclusionListTransactions(final List<Bytes> rawTransactions) {
-    final List<Transaction> ilTxs = new ArrayList<>(rawTransactions.size());
-    for (final Bytes rawTransaction : rawTransactions) {
-      try {
-        ilTxs.add(TransactionDecoder.decodeOpaqueBytes(rawTransaction, EncodingContext.BLOCK_BODY));
-      } catch (final Exception e) {
-        logger()
-            .atInfo()
-            .setMessage("Ignoring invalid IL tx bytes {}")
-            .addArgument(rawTransaction::toHexString)
-            .log();
-      }
-    }
-
-    logger()
-        .atInfo()
-        .setMessage("Received {} inclusion list transactions")
-        .addArgument(ilTxs.size())
-        .log();
-
-    return ilTxs;
-  }
+  //  private List<Transaction> decodeInclusionListTransactions(final List<Bytes> rawTransactions) {
+  //    final List<Transaction> ilTxs = new ArrayList<>(rawTransactions.size());
+  //    for (final Bytes rawTransaction : rawTransactions) {
+  //      try {
+  //        ilTxs.add(TransactionDecoder.decodeOpaqueBytes(rawTransaction,
+  // EncodingContext.BLOCK_BODY));
+  //      } catch (final Exception e) {
+  //        logger()
+  //            .atInfo()
+  //            .setMessage("Ignoring invalid IL tx bytes {}")
+  //            .addArgument(rawTransaction::toHexString)
+  //            .log();
+  //      }
+  //    }
+  //
+  //    logger()
+  //        .atInfo()
+  //        .setMessage("Received {} inclusion list transactions")
+  //        .addArgument(ilTxs.size())
+  //        .log();
+  //
+  //    return ilTxs;
+  //  }
 
   @Override
   protected ForkchoiceUpdatedResultV1 createInvalidBlockResult(final ForkchoiceStateV1 forkChoice) {

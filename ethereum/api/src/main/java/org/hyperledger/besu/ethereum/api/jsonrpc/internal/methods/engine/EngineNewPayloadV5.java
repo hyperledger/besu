@@ -93,9 +93,9 @@ public sealed class EngineNewPayloadV5<
   }
 
   @Override
-  protected BlockProcessingResult rememberBlock(final Block block, final EP executionPayload) {
+  protected BlockProcessingResult rememberBlock(final Block block, final NPRP requestParameters) {
     return mergeCoordinator.rememberBlock(
-        block, Optional.of(executionPayload.getBlockAccessList()));
+        block, Optional.of(requestParameters.payloadParameter().getBlockAccessList()));
   }
 
   @Override

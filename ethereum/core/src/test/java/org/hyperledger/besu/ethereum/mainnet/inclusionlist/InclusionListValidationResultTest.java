@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.transactions.inclusionlist;
+package org.hyperledger.besu.ethereum.mainnet.inclusionlist;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,15 +29,6 @@ public class InclusionListValidationResultTest {
   }
 
   @Test
-  public void invalidResultHasInvalidStatus() {
-    final InclusionListValidationResult result =
-        InclusionListValidationResult.invalid("bad encoding");
-    assertThat(result.getStatus()).isEqualTo(InclusionListValidationResult.Status.INVALID);
-    assertThat(result.isValid()).isFalse();
-    assertThat(result.getErrorMessage()).contains("bad encoding");
-  }
-
-  @Test
   public void unsatisfiedResultHasUnsatisfiedStatus() {
     final InclusionListValidationResult result =
         InclusionListValidationResult.unsatisfied("missing transaction 0xaabb");
@@ -47,12 +38,10 @@ public class InclusionListValidationResultTest {
   }
 
   @Test
-  public void statusEnumHasThreeValues() {
-    assertThat(InclusionListValidationResult.Status.values()).hasSize(3);
+  public void statusEnumHasTwoValues() {
     assertThat(InclusionListValidationResult.Status.values())
         .containsExactly(
             InclusionListValidationResult.Status.VALID,
-            InclusionListValidationResult.Status.INVALID,
             InclusionListValidationResult.Status.UNSATISFIED);
   }
 }

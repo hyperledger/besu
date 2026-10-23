@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -87,7 +88,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
       final Optional<Long> slotNumber,
       final Optional<Long> targetGasLimit,
       final BlockHeader parentHeader,
-      final List<Transaction> inclusionListTransactions) {
+      final Set<Transaction> inclusionListTransactions) {
 
     return createBlock(
         maybeTransactions,

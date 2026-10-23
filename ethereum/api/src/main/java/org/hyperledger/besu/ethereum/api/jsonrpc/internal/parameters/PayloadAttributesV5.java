@@ -14,18 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.tuweni.bytes.Bytes;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 public final class PayloadAttributesV5 extends PayloadAttributesV4 {
 
-  private final List<Bytes> inclusionListTransactions;
+  private final Set<Transaction> inclusionListTransactions;
 
   @JsonCreator
   public PayloadAttributesV5(
@@ -36,7 +37,9 @@ public final class PayloadAttributesV5 extends PayloadAttributesV4 {
       @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot,
       @JsonProperty("slotNumber") final String slotNumber,
       @JsonProperty("targetGasLimit") final String targetGasLimit,
-      @JsonProperty("inclusionListTransactions") final List<String> inclusionListTransactions) {
+      @JsonProperty("inclusionListTransactions")
+          @JsonDeserialize(using = LenientTransactionSetDeserializer.class)
+          final Set<Transaction> inclusionListTransactions) {
     super(
         timestamp,
         prevRandao,
@@ -45,29 +48,10 @@ public final class PayloadAttributesV5 extends PayloadAttributesV4 {
         parentBeaconBlockRoot,
         slotNumber,
         targetGasLimit);
-    this.inclusionListTransactions = parseInclusionListTransactions(inclusionListTransactions);
+    this.inclusionListTransactions = inclusionListTransactions;
   }
 
-  private static List<Bytes> parseInclusionListTransactions(final List<String> hexTransactions) {
-    if (hexTransactions == null) {
-      return null;
-    }
-
-    final List<Bytes> txBytes = new ArrayList<>(hexTransactions.size());
-    for (final String hexTransaction : hexTransactions) {
-      if (hexTransaction == null || hexTransaction.isEmpty()) {
-        throw new IllegalArgumentException("Inclusion list transaction cannot be null or empty");
-      }
-      try {
-        txBytes.add(Bytes.fromHexString(hexTransaction));
-      } catch (final IllegalArgumentException e) {
-        throw new IllegalArgumentException("Invalid inclusion list transaction format", e);
-      }
-    }
-    return txBytes;
-  }
-
-  public List<Bytes> getInclusionListTransactions() {
+  public Set<Transaction> getInclusionListTransactions() {
     return inclusionListTransactions;
   }
 }

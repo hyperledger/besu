@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PayloadPostExecutionValidationResultV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PayloadStatusV1;
 import org.hyperledger.besu.ethereum.chain.BadBlockCause;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -237,7 +236,7 @@ public sealed class EngineNewPayloadV1<
     mergeContext.get().fireNewPayloadEvent(newBlockHeader);
 
     // do we already have this payload?
-    if (protocolContext.getBlockchain().getBlockByHash(block.getHash()).isPresent()) {
+    if (isPayloadPresent(block, requestParameters)) {
       logger()
           .atDebug()
           .setMessage("block {} already present")
@@ -246,11 +245,7 @@ public sealed class EngineNewPayloadV1<
       // the block was validated when it was first received, but this request can carry data it was
       // not checked against (e.g. a different inclusion list), so the post-execution validation
       // runs again
-      return respondWithValidStatus(
-          reqId,
-          blockParam,
-          block.getHash(),
-          validatePostExecution(reqId, requestParameters, block));
+      return respondWithAlreadyExists(reqId, requestParameters, block.getHash());
     }
 
     if (needsSync) {
@@ -277,16 +272,15 @@ public sealed class EngineNewPayloadV1<
 
     // execute block and return result response
     final long startTimeNs = System.nanoTime();
-    final BlockProcessingResult executionResult = rememberBlock(block, blockParam);
+    final BlockProcessingResult executionResult = rememberBlock(block, requestParameters);
     if (executionResult.isSuccessful()) {
-      final PayloadPostExecutionValidationResultV1 postExecutionResult =
-          validatePostExecution(reqId, requestParameters, block);
+      //      final PayloadPostExecutionValidationResultV1 postExecutionResult =
+      //          validatePostExecution(reqId, requestParameters, block);
 
       lastExecutionTimeInNs = System.nanoTime() - startTimeNs;
       logImportedBlockInfo(
           block, lastExecutionTimeInNs, executionResult.getNbParallelizedTransactions());
-      return respondWithValid(
-          reqId, blockParam, newBlockHeader, executionResult, postExecutionResult);
+      return respondWithValid(reqId, requestParameters, newBlockHeader, executionResult);
     } else {
       logger().debug("New payload is invalid: {}", executionResult);
       if (executionResult.isWorldStateUnavailable()) {
@@ -306,6 +300,10 @@ public sealed class EngineNewPayloadV1<
           INVALID,
           executionResult.errorMessage.orElse("N/A"));
     }
+  }
+
+  protected boolean isPayloadPresent(final Block block, final NPRP requestParameters) {
+    return protocolContext.getBlockchain().getBlockByHash(block.getHash()).isPresent();
   }
 
   protected ExecutionPayloadV1 readPayloadParameter(final JsonRpcRequestContext requestContext) {
@@ -398,34 +396,42 @@ public sealed class EngineNewPayloadV1<
    * processing data for it.
    *
    * @param requestId the JSON-RPC request id
-   * @param param the execution payload parameter
+   * @param requestParameters the request parameter
    * @param newBlockHeader the header of the imported block
    * @param executionResult the result of processing the block
-   * @param postExecutionResult the post-execution validation result
    * @return the JSON-RPC response
    */
   protected JsonRpcResponse respondWithValid(
       final Object requestId,
-      final ExecutionPayloadV1 param,
+      final NPRP requestParameters,
       final BlockHeader newBlockHeader,
-      final BlockProcessingResult executionResult,
-      final PayloadPostExecutionValidationResultV1 postExecutionResult) {
-    return respondWithValidStatus(requestId, param, newBlockHeader.getHash(), postExecutionResult);
+      final BlockProcessingResult executionResult /*,
+      final PayloadPostExecutionValidationResultV1 postExecutionResult*/) {
+    return respondWithValidStatus(
+        requestId, requestParameters, newBlockHeader.getHash(), executionResult);
   }
 
   private JsonRpcResponse respondWithValidStatus(
       final Object requestId,
-      final ExecutionPayloadV1 param,
+      final NPRP requestParameters,
       final Hash validHash,
-      final PayloadPostExecutionValidationResultV1 postExecutionResult) {
-    logNewPayloadResponse(param, validHash, VALID);
+      final BlockProcessingResult executionResult) {
+    logNewPayloadResponse(requestParameters.payloadParameter(), validHash, VALID);
     return new JsonRpcSuccessResponse(
-        requestId, createValidPayloadStatus(validHash, postExecutionResult));
+        requestId, createValidPayloadStatus(validHash, executionResult, requestParameters));
+  }
+
+  protected JsonRpcResponse respondWithAlreadyExists(
+      final Object requestId, final NPRP requestParameters, final Hash validHash) {
+    logNewPayloadResponse(requestParameters.payloadParameter(), validHash, VALID);
+    return new JsonRpcSuccessResponse(
+        requestId, createValidPayloadStatus(validHash, null, requestParameters));
   }
 
   protected PayloadStatusV1 createValidPayloadStatus(
       final Hash latestValidHash,
-      final PayloadPostExecutionValidationResultV1 postExecutionResult) {
+      final BlockProcessingResult executionResult,
+      final NPRP requestParameters) {
     return new PayloadStatusV1(VALID, latestValidHash);
   }
 
@@ -501,23 +507,24 @@ public sealed class EngineNewPayloadV1<
     return ValidationResult.valid();
   }
 
-  /**
-   * Extension point for version-specific validation that requires a successfully processed block
-   * (e.g. inclusion list satisfaction, EIP-7805). The result is passed to {@link
-   * #createValidPayloadStatus} so that the VALID response can report it.
-   *
-   * <p>It is called both for a block that was just processed and for a block that was already
-   * present, since the request can carry data the block was not checked against yet.
-   *
-   * @param reqId the request id
-   * @param requestParameters the request parameters
-   * @param block the successfully processed block
-   * @return the post-execution validation result
-   */
-  protected PayloadPostExecutionValidationResultV1 validatePostExecution(
-      final Object reqId, final NPRP requestParameters, final Block block) {
-    return PayloadPostExecutionValidationResultV1.SUCCESS;
-  }
+  //  /**
+  //   * Extension point for version-specific validation that requires a successfully processed
+  // block
+  //   * (e.g. inclusion list satisfaction, EIP-7805). The result is passed to {@link
+  //   * #createValidPayloadStatus} so that the VALID response can report it.
+  //   *
+  //   * <p>It is called both for a block that was just processed and for a block that was already
+  //   * present, since the request can carry data the block was not checked against yet.
+  //   *
+  //   * @param reqId the request id
+  //   * @param requestParameters the request parameters
+  //   * @param block the successfully processed block
+  //   * @return the post-execution validation result
+  //   */
+  //  protected PayloadPostExecutionValidationResultV1 validatePostExecution(
+  //      final Object reqId, final NPRP requestParameters, final Block block) {
+  //    return PayloadPostExecutionValidationResultV1.SUCCESS;
+  //  }
 
   protected ValidationResult<RpcErrorType> validateNewBlock(
       final Block newBlock,
@@ -566,7 +573,7 @@ public sealed class EngineNewPayloadV1<
     return new BlockBody(executionPayload.getTransactions(), Collections.emptyList());
   }
 
-  protected BlockProcessingResult rememberBlock(final Block block, final EP executionPayload) {
+  protected BlockProcessingResult rememberBlock(final Block block, final NPRP requestParameters) {
     return mergeCoordinator.rememberBlock(block, Optional.empty());
   }
 

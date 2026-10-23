@@ -163,7 +163,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       final EthScheduler ethScheduler,
       final SelectorsStateManager selectorsStateManager,
       final Optional<BlockAccessList.BlockAccessListBuilder> maybeBlockAccessListBuilder,
-      final List<Transaction> inclusionListTransactions) {
+      final Set<Transaction> inclusionListTransactions) {
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
     this.worldState = worldState;

@@ -21,10 +21,10 @@ import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BOGOTA
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.SHANGHAI;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
-import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -45,7 +45,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.TransactionType;
-import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -79,7 +78,6 @@ import org.hyperledger.besu.ethereum.mainnet.CancunTargetingGasLimitCalculator;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.AccountChanges;
@@ -89,22 +87,22 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.N
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.SlotChanges;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.SlotRead;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.StorageChange;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.inclusionlist.InclusionListValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
-import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 
 import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -252,12 +250,6 @@ public class InclusionListWorkflowIntegrationTest {
     final BlockHeader childHeader = createChildBlockHeader(parentHeader);
     setupValidForkchoiceUpdate(childHeader, parentHeader);
 
-    final List<String> ilTxHexList =
-        ilTxList.stream()
-            .map(t -> TransactionEncoder.encodeOpaqueBytes(t, EncodingContext.POOLED_TRANSACTION))
-            .map(Bytes::toHexString)
-            .toList();
-
     final PayloadAttributesV5 payloadAttrs =
         new PayloadAttributesV5(
             String.valueOf(childHeader.getTimestamp() + 1),
@@ -267,7 +259,7 @@ public class InclusionListWorkflowIntegrationTest {
             MOCK_PBSR.toHexString(),
             "0x01",
             "0x1c9c380",
-            ilTxHexList);
+            new LinkedHashSet<>(ilTxList));
 
     final PayloadIdentifier mockPayloadId = new PayloadIdentifier(1L);
 
@@ -310,17 +302,16 @@ public class InclusionListWorkflowIntegrationTest {
   @Test
   public void forkchoiceUpdated_reportsUnsatisfiedInclusionListOfHead() {
     final BlockHeader payloadHeader = setupValidPayloadHeader();
-    setupInclusionListValidation();
-    // a blob transaction in the inclusion list can never be satisfied
-    final String blobTx =
-        TransactionEncoder.encodeOpaqueBytes(createBlobTransaction(), EncodingContext.BLOCK_BODY)
-            .toHexString();
+    stubBlockProcessingResult(InclusionListValidationResult.unsatisfied("unsatisfied"));
+    final Transaction ilTx = createLegacyTransaction(0, Wei.of(100));
 
     final PayloadStatusV2 newPayloadStatus =
         (PayloadStatusV2)
-            fromSuccessResp(callNewPayload(payloadHeader, emptyList(), List.of(blobTx)));
+            fromSuccessResp(callNewPayload(payloadHeader, emptyList(), List.of(encode(ilTx))));
     assertThat(newPayloadStatus.getStatus()).isEqualTo(VALID);
     assertThat(newPayloadStatus.getInclusionListSatisfied()).isFalse();
+    // the inclusion list transactions are validated during block processing
+    verify(mergeCoordinator).rememberBlock(any(), any(), eq(Set.of(ilTx)));
 
     final PayloadStatusV2 fcuStatus = callForkchoiceUpdatedWithoutAttributes(payloadHeader);
     assertThat(fcuStatus.getStatus()).isEqualTo(VALID);
@@ -417,13 +408,29 @@ public class InclusionListWorkflowIntegrationTest {
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(header.getHash()));
-    when(mergeCoordinator.rememberBlock(any(), any()))
+    stubBlockProcessingResult(InclusionListValidationResult.valid());
+
+    return header;
+  }
+
+  /**
+   * The inclusion list is validated during block processing, stub the processing result to report
+   * the given inclusion list validation result.
+   */
+  private void stubBlockProcessingResult(
+      final InclusionListValidationResult inclusionListValidationResult) {
+    when(mergeCoordinator.rememberBlock(any(), any(), any()))
         .thenReturn(
             new BlockProcessingResult(
                 Optional.of(
-                    new BlockProcessingOutputs(null, List.of(), Optional.of(VALID_REQUESTS)))));
-
-    return header;
+                    new BlockProcessingOutputs(
+                        null,
+                        List.of(),
+                        Optional.of(VALID_REQUESTS),
+                        Optional.empty(),
+                        0,
+                        Map.of(),
+                        inclusionListValidationResult))));
   }
 
   private void setupValidForkchoiceUpdate(final BlockHeader header, final BlockHeader parent) {
@@ -436,59 +443,59 @@ public class InclusionListWorkflowIntegrationTest {
   }
 
   @Test
-  public void newPayload_reEvaluatesInclusionListOfAlreadyPresentPayload() {
+  public void newPayload_reportsStoredInclusionListStatusOfAlreadyPresentPayload() {
     final BlockHeader payloadHeader = setupValidPayloadHeader();
-    setupInclusionListValidation();
-    // a blob transaction in the inclusion list can never be satisfied
-    final String blobTx =
-        TransactionEncoder.encodeOpaqueBytes(createBlobTransaction(), EncodingContext.BLOCK_BODY)
-            .toHexString();
+    stubBlockProcessingResult(InclusionListValidationResult.unsatisfied("unsatisfied"));
+    final String ilTx = encode(createLegacyTransaction(0, Wei.of(100)));
 
     final PayloadStatusV2 firstStatus =
         (PayloadStatusV2)
-            fromSuccessResp(callNewPayload(payloadHeader, emptyList(), List.of(blobTx)));
+            fromSuccessResp(callNewPayload(payloadHeader, emptyList(), List.of(ilTx)));
     assertThat(firstStatus.getInclusionListSatisfied()).isFalse();
 
     // the payload is now part of the chain
     when(blockchain.getBlockByHash(payloadHeader.getHash()))
         .thenReturn(Optional.of(mock(Block.class)));
 
-    // sent again with an inclusion list it satisfies
+    // the inclusion list can only be validated while processing the block, so a payload already
+    // present is answered with the stored status, even if it is sent with another inclusion list
     final PayloadStatusV2 resentStatus =
         (PayloadStatusV2) fromSuccessResp(callNewPayload(payloadHeader, emptyList(), emptyList()));
     assertThat(resentStatus.getStatus()).isEqualTo(VALID);
-    assertThat(resentStatus.getInclusionListSatisfied()).isTrue();
-    assertThat(callForkchoiceUpdatedWithoutAttributes(payloadHeader).getInclusionListSatisfied())
-        .isTrue();
-
-    // sent again with the unsatisfiable inclusion list
-    final PayloadStatusV2 resentAgainStatus =
-        (PayloadStatusV2)
-            fromSuccessResp(callNewPayload(payloadHeader, emptyList(), List.of(blobTx)));
-    assertThat(resentAgainStatus.getStatus()).isEqualTo(VALID);
-    assertThat(resentAgainStatus.getInclusionListSatisfied()).isFalse();
+    assertThat(resentStatus.getInclusionListSatisfied()).isFalse();
     assertThat(callForkchoiceUpdatedWithoutAttributes(payloadHeader).getInclusionListSatisfied())
         .isFalse();
 
     // the block was processed only the first time
-    verify(mergeCoordinator, times(1)).rememberBlock(any(), any());
+    verify(mergeCoordinator, times(1)).rememberBlock(any(), any(), any());
   }
 
-  private void setupInclusionListValidation() {
-    when(worldStateArchive.getWorldState(any(WorldStateQueryParams.class)))
-        .thenReturn(Optional.of(mock(MutableWorldState.class)));
-    when(protocolSpec.getTransactionValidatorFactory())
-        .thenReturn(mock(TransactionValidatorFactory.class, RETURNS_DEEP_STUBS));
-    when(protocolSpec.getPreExecutionProcessor()).thenReturn(mock(PreExecutionProcessor.class));
+  @Test
+  public void newPayload_processesAlreadyPresentPayloadWithoutInclusionListStatus() {
+    final BlockHeader payloadHeader = setupValidPayloadHeader();
+    // present in the chain, e.g. imported by sync, but never validated against an inclusion list
+    when(blockchain.getBlockByHash(payloadHeader.getHash()))
+        .thenReturn(Optional.of(mock(Block.class)));
+    stubBlockProcessingResult(InclusionListValidationResult.unsatisfied("unsatisfied"));
+
+    final PayloadStatusV2 status =
+        (PayloadStatusV2)
+            fromSuccessResp(
+                callNewPayload(
+                    payloadHeader,
+                    emptyList(),
+                    List.of(encode(createLegacyTransaction(0, Wei.of(100))))));
+    assertThat(status.getStatus()).isEqualTo(VALID);
+    assertThat(status.getInclusionListSatisfied()).isFalse();
+    assertThat(callForkchoiceUpdatedWithoutAttributes(payloadHeader).getInclusionListSatisfied())
+        .isFalse();
+
+    verify(mergeCoordinator, times(1)).rememberBlock(any(), any(), any());
   }
 
-  private Transaction createBlobTransaction() {
-    return new TransactionTestFixture()
-        .to(Optional.of(Address.ZERO))
-        .type(TransactionType.BLOB)
-        .chainId(Optional.of(BigInteger.valueOf(42)))
-        .versionedHashes(Optional.of(List.of(VersionedHash.DEFAULT_VERSIONED_HASH)))
-        .createTransaction(KEYS);
+  private static String encode(final Transaction transaction) {
+    return TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY)
+        .toHexString();
   }
 
   private Transaction createLegacyTransaction(final long nonce, final Wei gasPrice) {

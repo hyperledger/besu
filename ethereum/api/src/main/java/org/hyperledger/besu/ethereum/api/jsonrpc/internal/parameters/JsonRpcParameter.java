@@ -16,13 +16,23 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcObjectMapperFactory;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.SequencedSet;
+import java.util.Set;
+import java.util.function.IntFunction;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JsonRpcParameter {
+  private static final Logger LOG = LoggerFactory.getLogger(JsonRpcParameter.class);
 
   /**
    * Jackson's default {@link ObjectMapper}. Classes that need to tolerate unknown JSON properties
@@ -152,6 +162,143 @@ public class JsonRpcParameter {
     }
     throw new JsonRpcMissingParameterException(
         "Missing required json rpc parameter at index " + index);
+  }
+
+  /**
+   * Retrieves a required list parameter at the given index whose elements are interpreted as the
+   * given class. Unlike {@link #requiredList}, deserialization is lenient on single elements: an
+   * element that is {@code null} or fails deserialization is skipped, and does not prevent the
+   * other elements from being returned. The order of the elements in the list is kept.
+   *
+   * @param params the list of objects from which to extract a typed object.
+   * @param index Which index of the params array to access.
+   * @param elementClass What element type is expected at this index.
+   * @param configuration the {@link Configuration} controlling deserialization behaviour of each
+   *     element.
+   * @param <T> The element type of the list parameter.
+   * @return the list of the elements that were successfully deserialized, possibly empty
+   * @throws JsonRpcParameterException if the parameter is missing or is not a list
+   */
+  public <T> List<T> requiredLenientList(
+      final Object[] params,
+      final int index,
+      final Class<T> elementClass,
+      final Configuration configuration)
+      throws JsonRpcParameterException {
+    return requiredLenientCollection(params, index, elementClass, configuration, ArrayList::new);
+  }
+
+  /**
+   * Like {@link #requiredLenientList}, but returns the elements as a set that keeps the order of
+   * the elements in the list. Duplicate elements are returned once, at the position of their first
+   * occurrence.
+   *
+   * @param params the list of objects from which to extract a typed object.
+   * @param index Which index of the params array to access.
+   * @param elementClass What element type is expected at this index.
+   * @param configuration the {@link Configuration} controlling deserialization behaviour of each
+   *     element.
+   * @param <T> The element type of the list parameter.
+   * @return the set of the elements that were successfully deserialized, possibly empty
+   * @throws JsonRpcParameterException if the parameter is missing or is not a list
+   */
+  public <T> SequencedSet<T> requiredLenientSequencedSet(
+      final Object[] params,
+      final int index,
+      final Class<T> elementClass,
+      final Configuration configuration)
+      throws JsonRpcParameterException {
+    return requiredLenientCollection(
+        params, index, elementClass, configuration, LinkedHashSet::newLinkedHashSet);
+  }
+
+  /**
+   * Like {@link #requiredLenientList}, but returns the elements as a set, without any guarantee on
+   * their order. Duplicate elements are returned once. Use {@link #requiredLenientSequencedSet} if
+   * the order of the elements in the list must be kept.
+   *
+   * @param params the list of objects from which to extract a typed object.
+   * @param index Which index of the params array to access.
+   * @param elementClass What element type is expected at this index.
+   * @param configuration the {@link Configuration} controlling deserialization behaviour of each
+   *     element.
+   * @param <T> The element type of the list parameter.
+   * @return the set of the elements that were successfully deserialized, possibly empty
+   * @throws JsonRpcParameterException if the parameter is missing or is not a list
+   */
+  public <T> Set<T> requiredLenientSet(
+      final Object[] params,
+      final int index,
+      final Class<T> elementClass,
+      final Configuration configuration)
+      throws JsonRpcParameterException {
+    return requiredLenientCollection(
+        params, index, elementClass, configuration, HashSet::newHashSet);
+  }
+
+  public <T> Set<T> requiredLenientSet(
+      final Object[] params,
+      final int index,
+      final Class<T> elementClass,
+      final IntFunction<Set<T>> setFactory,
+      final Configuration configuration)
+      throws JsonRpcParameterException {
+    return requiredLenientCollection(params, index, elementClass, configuration, setFactory);
+  }
+
+  /**
+   * Deserializes the elements of the list parameter at the given index directly into the collection
+   * created by the given factory, skipping the elements that are {@code null} or fail
+   * deserialization.
+   *
+   * @param collectionFactory creates the collection to fill, given the number of raw elements
+   */
+  private <T, C extends Collection<T>> C requiredLenientCollection(
+      final Object[] params,
+      final int index,
+      final Class<T> elementClass,
+      final Configuration configuration,
+      final IntFunction<C> collectionFactory)
+      throws JsonRpcParameterException {
+    if (params == null || params.length <= index || params[index] == null) {
+      throw new JsonRpcMissingParameterException(
+          "Missing required json rpc parameter at index " + index);
+    }
+
+    final Object rawParam = params[index];
+    if (!(rawParam instanceof List<?> rawList)) {
+      throw new JsonRpcParameterException(
+          String.format(
+              "Invalid json rpc parameter at index %d. Supplied value was: '%s' of type: '%s' - expected a list of '%s'",
+              index, rawParam, rawParam.getClass().getName(), elementClass.getName()));
+    }
+
+    final C elements = collectionFactory.apply(rawList.size());
+    for (int i = 0; i < rawList.size(); i++) {
+      final Object rawElement = rawList.get(i);
+      if (rawElement == null) {
+        LOG.debug("Skipping null element {} of json rpc parameter at index {}", i, index);
+        continue;
+      }
+      try {
+        elements.add(
+            elementClass.isInstance(rawElement)
+                ? elementClass.cast(rawElement)
+                : configuration.mapper.convertValue(rawElement, elementClass));
+      } catch (final Exception e) {
+        // a custom deserializer can throw any exception (e.g. an RLP decoding error)
+        LOG.atDebug()
+            .setMessage(
+                "Skipping element {} of json rpc parameter at index {}, since it is not a valid '{}': '{}'")
+            .addArgument(i)
+            .addArgument(index)
+            .addArgument(elementClass::getName)
+            .addArgument(rawElement)
+            .setCause(e)
+            .log();
+      }
+    }
+    return elements;
   }
 
   /**

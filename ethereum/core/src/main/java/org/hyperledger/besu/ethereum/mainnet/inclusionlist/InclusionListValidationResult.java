@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.transactions.inclusionlist;
+package org.hyperledger.besu.ethereum.mainnet.inclusionlist;
 
 import java.util.Optional;
 
@@ -23,8 +23,6 @@ public class InclusionListValidationResult {
   public enum Status {
     /** The payload satisfies all inclusion list constraints. */
     VALID,
-    /** The inclusion list data itself is malformed or invalid. */
-    INVALID,
     /** The payload does not satisfy the inclusion list constraints. */
     UNSATISFIED
   }
@@ -39,10 +37,6 @@ public class InclusionListValidationResult {
 
   public static InclusionListValidationResult valid() {
     return new InclusionListValidationResult(Status.VALID, Optional.empty());
-  }
-
-  public static InclusionListValidationResult invalid(final String errorMessage) {
-    return new InclusionListValidationResult(Status.INVALID, Optional.of(errorMessage));
   }
 
   public static InclusionListValidationResult unsatisfied(final String errorMessage) {

@@ -14,20 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import java.util.List;
-
 public final class NewPayloadRequestParametersV4<EP extends ExecutionPayloadV3>
     extends NewPayloadRequestParametersV3<EP> {
-  private final List<String> inclusionListTransactions;
+  private final InclusionListTransactions inclusionListTransactions;
 
   public NewPayloadRequestParametersV4(
       final NewPayloadRequestParametersV3<? extends EP> requestParameters,
-      final List<String> inclusionListTransactions) {
+      final InclusionListTransactions inclusionListTransactions) {
     super(requestParameters, requestParameters.executionRequests());
     this.inclusionListTransactions = inclusionListTransactions;
   }
 
-  public List<String> inclusionListTransactions() {
+  public InclusionListTransactions inclusionListTransactions() {
     return inclusionListTransactions;
   }
 }

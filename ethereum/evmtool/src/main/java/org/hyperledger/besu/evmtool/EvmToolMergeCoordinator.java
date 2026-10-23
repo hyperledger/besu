@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -81,7 +82,9 @@ public class EvmToolMergeCoordinator implements MergeMiningCoordinator {
    */
   @Override
   public BlockProcessingResult rememberBlock(
-      final Block block, final Optional<BlockAccessList> blockAccessList) {
+      final Block block,
+      final Optional<BlockAccessList> blockAccessList,
+      final Set<Transaction> inclusionListTransactions) {
     final var result =
         protocolSchedule
             .getByBlockHeader(block.getHeader())
@@ -92,6 +95,7 @@ public class EvmToolMergeCoordinator implements MergeMiningCoordinator {
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE,
                 blockAccessList,
+                inclusionListTransactions,
                 false);
     result
         .getYield()

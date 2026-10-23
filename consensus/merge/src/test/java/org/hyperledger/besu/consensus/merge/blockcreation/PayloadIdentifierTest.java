@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import java.util.List;
+import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -327,7 +328,7 @@ public class PayloadIdentifierTest {
                 .timestamp(1337L)
                 .prevRandao(prevRandao)
                 .feeRecipient(Address.fromHexString("0x42"))
-                .inclusionListTransactions(List.of(tx1))
+                .inclusionListTransactions(Set.of(tx1))
                 .build());
     var idForList2 =
         PayloadIdentifier.forPayloadParams(
@@ -336,7 +337,7 @@ public class PayloadIdentifierTest {
                 .timestamp(1337L)
                 .prevRandao(prevRandao)
                 .feeRecipient(Address.fromHexString("0x42"))
-                .inclusionListTransactions(List.of(tx2))
+                .inclusionListTransactions(Set.of(tx2))
                 .build());
     assertThat(idForList1).isNotEqualTo(idForList2);
   }
@@ -353,7 +354,7 @@ public class PayloadIdentifierTest {
                 .timestamp(1337L)
                 .prevRandao(prevRandao)
                 .feeRecipient(Address.fromHexString("0x42"))
-                .inclusionListTransactions(List.of(tx1, tx2))
+                .inclusionListTransactions(Set.of(tx1, tx2))
                 .build());
     var idForList2 =
         PayloadIdentifier.forPayloadParams(
@@ -362,7 +363,7 @@ public class PayloadIdentifierTest {
                 .timestamp(1337L)
                 .prevRandao(prevRandao)
                 .feeRecipient(Address.fromHexString("0x42"))
-                .inclusionListTransactions(List.of(tx2, tx1))
+                .inclusionListTransactions(Set.of(tx2, tx1))
                 .build());
     assertThat(idForList1).isEqualTo(idForList2);
   }
@@ -385,7 +386,7 @@ public class PayloadIdentifierTest {
                 .timestamp(1337L)
                 .prevRandao(prevRandao)
                 .feeRecipient(Address.fromHexString("0x42"))
-                .inclusionListTransactions(List.of(createTx(0)))
+                .inclusionListTransactions(Set.of(createTx(0)))
                 .build());
     assertThat(idEmptyList).isNotEqualTo(idNonEmptyList);
   }

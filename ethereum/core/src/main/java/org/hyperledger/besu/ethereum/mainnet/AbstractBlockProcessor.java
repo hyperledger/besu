@@ -34,6 +34,8 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
+import org.hyperledger.besu.ethereum.mainnet.inclusionlist.InclusionListValidationResult;
+import org.hyperledger.besu.ethereum.mainnet.inclusionlist.InclusionListValidator;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.ParallelBlockTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
@@ -58,8 +60,10 @@ import org.hyperledger.besu.plugin.services.worldstate.StateRootCommitter;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -156,6 +160,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final Block block = context.getBlock();
     final Optional<BlockAccessList> blockAccessList = context.getBlockAccessList();
     final List<TransactionReceipt> receipts = new ArrayList<>();
+    final Set<Transaction> notConfirmedInclusionListTxs =
+        new HashSet<>(context.getInclusionListTransactions());
     // EIP-7778: Track two separate cumulative gas values
     // cumulativeExecutionGasUsed: For block gas limit enforcement (uses protocol-specific strategy)
     //   - Pre-Amsterdam: gasLimit - gasRemaining (post-refund)
@@ -341,7 +347,18 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         } else if (transactionProcessingResult.getIsProcessedInParallel().isPresent()) {
           nbParallelTx++;
         }
+        notConfirmedInclusionListTxs.remove(transaction);
       }
+
+      final InclusionListValidationResult inclusionListValidationResult =
+          InclusionListValidator.validate(
+              protocolSpec,
+              worldState.updater(),
+              blockHeader,
+              cumulativeExecutionGasUsed,
+              cumulativeStateGasUsed,
+              notConfirmedInclusionListTxs);
+
       final var optionalHeaderBlobGasUsed = blockHeader.getBlobGasUsed();
       if (optionalHeaderBlobGasUsed.isPresent()) {
         final long headerBlobGasUsed = optionalHeaderBlobGasUsed.get();
@@ -514,7 +531,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                   maybeRequests,
                   maybeBlockAccessList,
                   gasMetered,
-                  blockHashLookup.getAccessedAncestors())),
+                  blockHashLookup.getAccessedAncestors(),
+                  inclusionListValidationResult)),
           parallelizedTxFound ? Optional.of(nbParallelTx) : Optional.empty());
     } catch (final MerkleTrieException | MissingCodeException e) {
       // the block may be processed again on this world state, without the transactions before

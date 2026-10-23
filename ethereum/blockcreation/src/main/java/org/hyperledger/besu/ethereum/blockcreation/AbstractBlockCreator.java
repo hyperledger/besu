@@ -63,6 +63,7 @@ import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -211,7 +212,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         timestamp,
         rewardCoinbase,
         parentHeader,
-        List.of());
+        Set.of());
   }
 
   public BlockCreationResult createBlock(
@@ -225,7 +226,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final long timestamp,
       final boolean rewardCoinbase,
       final BlockHeader parentHeader,
-      final List<Transaction> inclusionListTransactions) {
+      final Set<Transaction> inclusionListTransactions) {
 
     final var timings = new BlockCreationTiming();
 
@@ -438,7 +439,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final SelectorsStateManager selectorsStateManager,
       final BlockHeader parentHeader,
       final Optional<BlockAccessListBuilder> blockAccessListBuilder,
-      final List<Transaction> inclusionListTransactions) {
+      final Set<Transaction> inclusionListTransactions) {
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
 
     final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
