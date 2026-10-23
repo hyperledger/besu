@@ -340,13 +340,16 @@ class AmsterdamBalBlockTransactionSelectorTest {
         .thenAnswer(
             inv -> {
               final int txIndex = evaluationOrder.getAndIncrement();
-              return TransactionProcessingResult.successful(
-                  List.of(),
-                  50_000L,
-                  50_000L,
-                  Bytes.EMPTY,
-                  Optional.of(balPartialAddingTwoEip7928Items(txIndex)),
-                  ValidationResult.valid());
+              final TransactionProcessingResult result =
+                  TransactionProcessingResult.successful(
+                      List.of(),
+                      50_000L,
+                      50_000L,
+                      Bytes.EMPTY,
+                      Optional.of(balPartialAddingTwoEip7928Items(txIndex)),
+                      ValidationResult.valid());
+              result.setExecutionGasUsedForBlock(50_000L);
+              return result;
             });
 
     transactionPool.addRemoteTransactions(List.of(tx1, tx2));
@@ -405,13 +408,16 @@ class AmsterdamBalBlockTransactionSelectorTest {
         .thenAnswer(
             inv -> {
               final int txIndex = evaluationOrder.getAndIncrement();
-              return TransactionProcessingResult.successful(
-                  List.of(),
-                  50_000L,
-                  50_000L,
-                  Bytes.EMPTY,
-                  Optional.of(balPartialAddingTwoEip7928Items(txIndex)),
-                  ValidationResult.valid());
+              final TransactionProcessingResult result =
+                  TransactionProcessingResult.successful(
+                      List.of(),
+                      50_000L,
+                      50_000L,
+                      Bytes.EMPTY,
+                      Optional.of(balPartialAddingTwoEip7928Items(txIndex)),
+                      ValidationResult.valid());
+              result.setExecutionGasUsedForBlock(50_000L);
+              return result;
             });
 
     transactionPool.addRemoteTransactions(List.of(tx1, tx2));
