@@ -30,6 +30,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -40,6 +41,7 @@ import org.hyperledger.besu.plugin.data.AddedBlockContext.EventType;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -126,6 +128,29 @@ class BonsaiArchiveTrailingSyncTest {
     when(event.getEventType()).thenReturn(EventType.HEAD_ADVANCED);
     when(event.getHeader()).thenReturn(header);
     observer.onBlockAdded(event);
+  }
+
+  private void reorg(final long newHead, final long ancestor, final boolean ancestorKnown) {
+    final Hash ancestorHash = Hash.fromHexStringLenient("0xabc");
+    final BlockAddedEvent event = mock(BlockAddedEvent.class);
+    final BlockHeader header = mock(BlockHeader.class);
+    when(header.getNumber()).thenReturn(newHead);
+    when(event.isNewCanonicalHead()).thenReturn(true);
+    when(event.getEventType()).thenReturn(EventType.CHAIN_REORG);
+    when(event.getHeader()).thenReturn(header);
+    when(event.getCommonAncestorHash()).thenReturn(ancestorHash);
+    if (ancestorKnown) {
+      final BlockHeader ancestorHeader = mock(BlockHeader.class);
+      when(ancestorHeader.getNumber()).thenReturn(ancestor);
+      when(blockchain.getBlockHeader(ancestorHash)).thenReturn(Optional.of(ancestorHeader));
+    } else {
+      when(blockchain.getBlockHeader(ancestorHash)).thenReturn(Optional.empty());
+    }
+    observer.onBlockAdded(event);
+  }
+
+  private void reorg(final long newHead, final long ancestor) {
+    reorg(newHead, ancestor, true);
   }
 
   private static void idle() throws InterruptedException {
@@ -342,5 +367,45 @@ class BonsaiArchiveTrailingSyncTest {
     assertThat(caughtUp.get(5, TimeUnit.SECONDS)).isFalse();
     verify(blockchain).removeObserver(OBSERVER_ID);
     verify(archiver, never()).catchUpTo(anyLong(), any());
+  }
+
+  @Test
+  void reorgBelowFlatPositionHaltsFlat() {
+    migrated.set(600L);
+    when(archiver.coverageEnd()).thenReturn(OptionalLong.of(580L));
+    start();
+    reorg(1100, 590);
+    assertThat(sync.isFlatHalted()).isTrue();
+    assertThat(sync.isProofsHalted()).isFalse();
+  }
+
+  @Test
+  void reorgBelowProofsCoverageHaltsProofs() {
+    migrated.set(580L);
+    when(archiver.coverageEnd()).thenReturn(OptionalLong.of(600L));
+    start();
+    reorg(1100, 590);
+    assertThat(sync.isProofsHalted()).isTrue();
+    assertThat(sync.isFlatHalted()).isFalse();
+  }
+
+  @Test
+  void reorgAboveBothHaltsNothing() {
+    migrated.set(600L);
+    when(archiver.coverageEnd()).thenReturn(OptionalLong.of(600L));
+    start();
+    reorg(1100, 900);
+    assertThat(sync.isFlatHalted()).isFalse();
+    assertThat(sync.isProofsHalted()).isFalse();
+  }
+
+  @Test
+  void reorgWithUnknownAncestorHaltsNothing() {
+    migrated.set(600L);
+    when(archiver.coverageEnd()).thenReturn(OptionalLong.of(600L));
+    start();
+    reorg(1100, 590, false);
+    assertThat(sync.isFlatHalted()).isFalse();
+    assertThat(sync.isProofsHalted()).isFalse();
   }
 }

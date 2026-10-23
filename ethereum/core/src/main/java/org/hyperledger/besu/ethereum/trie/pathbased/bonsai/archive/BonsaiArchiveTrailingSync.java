@@ -16,7 +16,9 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive;
 
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.TrailingTrieNodeArchiver;
+import org.hyperledger.besu.plugin.data.AddedBlockContext.EventType;
 
 import java.io.Closeable;
 import java.util.Optional;
@@ -130,10 +132,47 @@ public final class BonsaiArchiveTrailingSync implements Closeable {
   }
 
   private void onBlockAdded(final BlockAddedEvent event) {
+    if (event.getEventType() == EventType.CHAIN_REORG) {
+      haltWorkersHoldingReorgedBlocks(event);
+    }
     if (event.isNewCanonicalHead()) {
       targetBlock.accumulateAndGet(sharedTarget(event.getHeader().getNumber()), Math::max);
       scheduleRunIfReady();
     }
+  }
+
+  /**
+   * Halts each worker whose archive already holds blocks the reorg replaced: the workers only
+   * trail, so this happens only when the reorg is deeper than the trailing buffer. Archived data
+   * cannot be rewound, so the archive needs a resync.
+   */
+  private void haltWorkersHoldingReorgedBlocks(final BlockAddedEvent event) {
+    final Optional<BlockHeader> ancestorHeader =
+        blockchain.getBlockHeader(event.getCommonAncestorHash());
+    if (ancestorHeader.isEmpty()) {
+      LOG.warn(
+          "Chain reorg common ancestor {} not found; cannot check the archive against it",
+          event.getCommonAncestorHash());
+      return;
+    }
+    final long ancestor = ancestorHeader.get().getNumber();
+    if (ancestor < migrator.getMigratedBlockNumber()) {
+      haltForReorg(flat, "flat", ancestor, migrator.getMigratedBlockNumber());
+    }
+    archiver
+        .map(TrailingTrieNodeArchiver::coverageEnd)
+        .filter(end -> end.isPresent() && ancestor < end.getAsLong())
+        .ifPresent(end -> haltForReorg(proofs, "proofs", ancestor, end.getAsLong()));
+  }
+
+  private void haltForReorg(
+      final WorkerState worker, final String workerName, final long ancestor, final long position) {
+    worker.halted = true;
+    LOG.error(
+        "Chain reorg to common ancestor {} replaced blocks the {} archive already holds (up to {}); halting it. Resync the archive to recover.",
+        ancestor,
+        workerName,
+        position);
   }
 
   /**
