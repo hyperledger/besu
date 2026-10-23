@@ -41,6 +41,16 @@ class ProgressFormatTest {
   }
 
   @Test
+  void picksTheUnitAfterRounding() {
+    assertThat(ProgressFormat.compact(999_949)).isEqualTo("999.9K");
+    assertThat(ProgressFormat.compact(999_960)).isEqualTo("1.00M");
+    assertThat(ProgressFormat.compact(9_994_999)).isEqualTo("9.99M");
+    assertThat(ProgressFormat.compact(9_999_000)).isEqualTo("10.0M");
+    assertThat(ProgressFormat.compact(999_949_999)).isEqualTo("999.9M");
+    assertThat(ProgressFormat.compact(999_960_000)).isEqualTo("1.00B");
+  }
+
+  @Test
   void writesDurationsInTwoUnitsAtMost() {
     assertThat(ProgressFormat.duration(Duration.ZERO)).isEqualTo("0s");
     assertThat(ProgressFormat.duration(Duration.ofSeconds(-5))).isEqualTo("0s");
