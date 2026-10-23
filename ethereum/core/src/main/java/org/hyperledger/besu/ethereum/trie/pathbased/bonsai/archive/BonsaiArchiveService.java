@@ -15,10 +15,9 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveTrieNodeStrategy;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.FinalizedTrieNodeArchiver;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.TrailingTrieNodeArchiver;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 
@@ -35,7 +34,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Lifecycle handle for the Bonsai archive's background components: trie-node capture, the flat-DB
- * archive migrator and, when archive proofs are enabled, the finalized trie-node archiver. Built by
+ * archive migrator and, when archive proofs are enabled, the trailing trie-node archiver. Built by
  * {@link BonsaiArchiveFactory}.
  */
 public final class BonsaiArchiveService implements Closeable {
@@ -45,7 +44,7 @@ public final class BonsaiArchiveService implements Closeable {
   /**
    * The trie-node capture strategy and archiver that exist only when archive proofs are enabled.
    */
-  record ProofCapture(ArchiveTrieNodeStrategy strategy, FinalizedTrieNodeArchiver archiver) {}
+  record ProofCapture(ArchiveTrieNodeStrategy strategy, TrailingTrieNodeArchiver archiver) {}
 
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
   private final Blockchain blockchain;
@@ -82,43 +81,31 @@ public final class BonsaiArchiveService implements Closeable {
     }
     proofCapture.ifPresent(
         capture -> {
-          capture
-              .strategy()
-              .setHasChainEstimate(() -> synchronizer.getBestPeerChainHead().isPresent());
-          capture.strategy().setFinalizedBlockLimit(this::finalizedBlockLimit);
-          capture.strategy().setCatchUpTo(capture.archiver()::catchUpTo);
-          synchronizer.subscribeInSync(capture.strategy(), maxLayersToLoad);
-          startFinalizedArchiver(synchronizer, capture);
+          final ArchiveTrieNodeStrategy strategy = capture.strategy();
+          final TrailingTrieNodeArchiver archiver = capture.archiver();
+          strategy.setHasFinalizedBlock(this::hasImportedFinalizedBlock);
+          strategy.setCatchUpTo(archiver::catchUpTo);
+          synchronizer.subscribeInSync(strategy, maxLayersToLoad);
+          // The archiver runs only while the capture mode is trailing; the first block decides.
+          strategy.setCaptureModeListener(
+              mode -> {
+                if (mode == ArchiveTrieNodeStrategy.CaptureMode.TRAILING) {
+                  archiver.start();
+                } else {
+                  archiver.stop();
+                }
+              });
         });
     startMigration(synchronizer);
   }
 
   /**
-   * The finalized block's number. Unlimited when there is no finality signal (no competing blocks
-   * reach a peer-less node without a consensus client) or when the finalized block is not yet
-   * imported (it is ahead of every block being imported).
+   * Whether a finalized block is imported. False when there is no finality signal (BFT, Clique) or
+   * when the finalized block is ahead of every block being imported.
    */
   @VisibleForTesting
-  long finalizedBlockLimit() {
-    return blockchain
-        .getFinalized()
-        .flatMap(blockchain::getBlockHeader)
-        .map(BlockHeader::getNumber)
-        .orElse(Long.MAX_VALUE);
-  }
-
-  private void startFinalizedArchiver(final Synchronizer synchronizer, final ProofCapture capture) {
-    final AtomicBoolean archiverStarted = new AtomicBoolean(false);
-    synchronizer.subscribeInSync(
-        inSync -> {
-          if (inSync
-              && synchronizer.getBestPeerChainHead().isPresent()
-              && archiverStarted.compareAndSet(false, true)) {
-            LOG.info("Node is in sync, starting finalized trie-node archiver");
-            capture.archiver().start();
-          }
-        },
-        maxLayersToLoad);
+  boolean hasImportedFinalizedBlock() {
+    return blockchain.getFinalized().flatMap(blockchain::getBlockHeader).isPresent();
   }
 
   private void startMigration(final Synchronizer synchronizer) {

@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.worldstate.ExtraStorageConfiguration
 import static org.hyperledger.besu.ethereum.worldstate.ExtraStorageConfiguration.Unstable.DEFAULT_BONSAI_ARCHIVE_SHALLOW_CHECKPOINT_INTERVAL;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveTrieNodeStrategy.CaptureMode;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.trienode.BonsaiTrieNodeStrategy;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.trienode.TrieNodeKey;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -62,10 +63,13 @@ class ArchiveTrieNodeStrategyTest {
             DEFAULT_BONSAI_ARCHIVE_DEEP_CHECKPOINT_INTERVAL);
   }
 
+  // Gate open: behind the network, so blocks are captured inline. Gate closed: in sync with a
+  // finalized block, so the trailing archiver owns the head.
   private ArchiveTrieNodeStrategy strategyWithGate(final boolean gateOpen) {
     final ArchiveTrieNodeStrategy strategy =
-        new ArchiveTrieNodeStrategy(new BonsaiTrieNodeStrategy(), capture, () -> true);
-    strategy.setArchiving(gateOpen);
+        new ArchiveTrieNodeStrategy(new BonsaiTrieNodeStrategy(), capture);
+    strategy.setHasFinalizedBlock(() -> true);
+    strategy.onInSyncStatusChange(!gateOpen);
     return strategy;
   }
 
@@ -117,12 +121,12 @@ class ArchiveTrieNodeStrategyTest {
     put(strategy, locationA, Bytes.fromHexString("0xaaaa"));
 
     // Block 2: gate closes — not archived.
-    strategy.setArchiving(false);
+    strategy.onInSyncStatusChange(true);
     setStoredBlockNumber(1L);
     put(strategy, locationB, Bytes.fromHexString("0xbbbb"));
 
     // Block 3: gate re-opens — archives again (no latch).
-    strategy.setArchiving(true);
+    strategy.onInSyncStatusChange(false);
     setStoredBlockNumber(2L);
     put(strategy, locationC, Bytes.fromHexString("0xcccc"));
 
@@ -138,81 +142,115 @@ class ArchiveTrieNodeStrategyTest {
   }
 
   @Test
-  void keepsArchivingWhenInSyncButPeerless() {
-    // SyncState reports "in sync" when there is no remote chain estimate (no peers). Such a
-    // peer-less in-sync signal must NOT stop archiving: capture continues while
-    // hasChainEstimate is false, even for a non-genesis block.
+  void inSyncWithoutFinalityCapturesInline() {
+    // BFT and Clique have no finality signal; their blocks are captured inline at the head whether
+    // or not the node has peers.
     final ArchiveTrieNodeStrategy strategy =
-        new ArchiveTrieNodeStrategy(new BonsaiTrieNodeStrategy(), capture, () -> false);
-    strategy.onInSyncStatusChange(true); // spurious in-sync caused by having no peers
+        new ArchiveTrieNodeStrategy(new BonsaiTrieNodeStrategy(), capture);
+    strategy.onInSyncStatusChange(true);
 
     setStoredBlockNumber(5L); // current block 6, not genesis
     final Bytes location = Bytes.of(0x0e);
     put(strategy, location, Bytes.fromHexString("0xcafe"));
 
-    assertThat(historyStore.getLatestBefore(ArchiveNodeKey.account(location), 6L))
-        .as("peer-less in-sync must keep archiving")
-        .isPresent();
-  }
-
-  @Test
-  void peerlessCaptureStopsAtFinalizedBlock() {
-    // Without a chain estimate, capture runs at the head, where blocks above the finalized block
-    // can still be reorged out. Only blocks at or below it are archived.
-    final ArchiveTrieNodeStrategy strategy =
-        new ArchiveTrieNodeStrategy(new BonsaiTrieNodeStrategy(), capture, () -> false);
-    strategy.onInSyncStatusChange(true);
-    strategy.setFinalizedBlockLimit(() -> 5L);
-
-    final Bytes atFinalized = Bytes.of(0x05);
-    setStoredBlockNumber(4L); // current block 5
-    put(strategy, atFinalized, Bytes.fromHexString("0x0505"));
-
-    final Bytes aboveFinalized = Bytes.of(0x06);
-    setStoredBlockNumber(5L); // current block 6
-    put(strategy, aboveFinalized, Bytes.fromHexString("0x0606"));
-
-    assertThat(historyStore.getLatestBefore(ArchiveNodeKey.account(atFinalized), 5L))
-        .as("block at the finalized block is archived")
-        .isPresent();
-    assertThat(historyStore.getLatestBefore(ArchiveNodeKey.account(aboveFinalized), 6L))
-        .as("block above the finalized block is not archived")
-        .isEmpty();
-    assertThat(coverageTracker.hasArchiveBlock(6L)).isFalse();
-  }
-
-  @Test
-  void finalizedBlockLimitIgnoredWhenBehindNetwork() {
-    // Behind the network, every imported block is already final regardless of the local finalized
-    // block, which goes stale during a long catch-up.
-    final ArchiveTrieNodeStrategy strategy =
-        new ArchiveTrieNodeStrategy(new BonsaiTrieNodeStrategy(), capture, () -> true);
-    strategy.onInSyncStatusChange(false);
-    strategy.setFinalizedBlockLimit(() -> 5L);
-
-    setStoredBlockNumber(5L); // current block 6
-    final Bytes location = Bytes.of(0x0e);
-    put(strategy, location, Bytes.fromHexString("0xcafe"));
-
     assertThat(historyStore.getLatestBefore(ArchiveNodeKey.account(location), 6L)).isPresent();
+    assertThat(strategy.getCaptureMode()).isEqualTo(CaptureMode.INLINE);
   }
 
   @Test
-  void finalizedBlockLimitStillAppliesWhenChainEstimateAppearsLater() {
-    // Peers connecting while the node is near the head raise no in-sync event, so capture keeps
-    // running at the head and must stay limited to final blocks.
-    final AtomicBoolean hasEstimate = new AtomicBoolean(false);
+  void inSyncWithFinalizedBlockUsesTrailingMode() {
+    // In sync with a finalized block (PoS at the head, with or without peers), head blocks can
+    // still be reorged out, so the trailing archiver archives them instead.
     final ArchiveTrieNodeStrategy strategy =
-        new ArchiveTrieNodeStrategy(new BonsaiTrieNodeStrategy(), capture, hasEstimate::get);
+        new ArchiveTrieNodeStrategy(new BonsaiTrieNodeStrategy(), capture);
+    strategy.setHasFinalizedBlock(() -> true);
     strategy.onInSyncStatusChange(true);
-    strategy.setFinalizedBlockLimit(() -> 5L);
-    hasEstimate.set(true);
 
     setStoredBlockNumber(5L); // current block 6
     final Bytes location = Bytes.of(0x0e);
     put(strategy, location, Bytes.fromHexString("0xcafe"));
 
     assertThat(historyStore.getLatestBefore(ArchiveNodeKey.account(location), 6L)).isEmpty();
+    assertThat(coverageTracker.hasArchiveBlock(6L)).isFalse();
+    assertThat(strategy.getCaptureMode()).isEqualTo(CaptureMode.TRAILING);
+  }
+
+  @Test
+  void behindNetworkCapturesInlineDespiteFinality() {
+    // Behind the network, every imported block is already final.
+    final ArchiveTrieNodeStrategy strategy =
+        new ArchiveTrieNodeStrategy(new BonsaiTrieNodeStrategy(), capture);
+    strategy.setHasFinalizedBlock(() -> true);
+    strategy.onInSyncStatusChange(false);
+
+    setStoredBlockNumber(5L); // current block 6
+    final Bytes location = Bytes.of(0x0e);
+    put(strategy, location, Bytes.fromHexString("0xcafe"));
+
+    assertThat(historyStore.getLatestBefore(ArchiveNodeKey.account(location), 6L)).isPresent();
+    assertThat(strategy.getCaptureMode()).isEqualTo(CaptureMode.INLINE);
+  }
+
+  @Test
+  void restartWithFinalityUsesTrailingModeBeforeFirstInSyncEvent() {
+    // A restarted PoS node imports blocks from its CL before any in-sync event; they are head
+    // blocks, so neither they nor the blocks before them may be archived inline.
+    final ArchiveTrieNodeStrategy strategy =
+        new ArchiveTrieNodeStrategy(new BonsaiTrieNodeStrategy(), capture);
+    strategy.setHasFinalizedBlock(() -> true);
+    final AtomicInteger catchUps = new AtomicInteger();
+    strategy.setCatchUpTo(
+        target -> {
+          catchUps.incrementAndGet();
+          return true;
+        });
+
+    setStoredBlockNumber(5L); // current block 6
+    final Bytes location = Bytes.of(0x0e);
+    put(strategy, location, Bytes.fromHexString("0xcafe"));
+
+    assertThat(historyStore.getLatestBefore(ArchiveNodeKey.account(location), 6L)).isEmpty();
+    assertThat(catchUps).hasValue(0);
+    assertThat(strategy.getCaptureMode()).isEqualTo(CaptureMode.TRAILING);
+  }
+
+  @Test
+  void captureModeListenerToldOnlyOfChanges() {
+    final ArchiveTrieNodeStrategy strategy = strategyWithGate(true);
+    final List<CaptureMode> changes = new ArrayList<>();
+    final List<String> order = new ArrayList<>();
+    strategy.setCaptureModeListener(
+        mode -> {
+          changes.add(mode);
+          order.add("mode " + mode);
+        });
+    strategy.setCatchUpTo(
+        target -> {
+          order.add("catch-up " + target);
+          return true;
+        });
+
+    setStoredBlockNumber(5L); // block 6: already inline, no change
+    put(strategy, Bytes.of(0x06), Bytes.fromHexString("0x0606"));
+    strategy.onInSyncStatusChange(true);
+    setStoredBlockNumber(6L); // block 7: trailing
+    put(strategy, Bytes.of(0x07), Bytes.fromHexString("0x0707"));
+    setStoredBlockNumber(7L); // block 8: still trailing
+    put(strategy, Bytes.of(0x08), Bytes.fromHexString("0x0808"));
+    strategy.onInSyncStatusChange(false);
+    setStoredBlockNumber(8L); // block 9: back to inline, after its catch-up
+    put(strategy, Bytes.of(0x09), Bytes.fromHexString("0x0909"));
+
+    assertThat(changes).containsExactly(CaptureMode.TRAILING, CaptureMode.INLINE);
+    assertThat(order).containsExactly("catch-up 5", "mode TRAILING", "catch-up 8", "mode INLINE");
+  }
+
+  @Test
+  void startsInlineBeforeAnyBlockSoTheArchiverStaysIdle() {
+    final ArchiveTrieNodeStrategy strategy =
+        new ArchiveTrieNodeStrategy(new BonsaiTrieNodeStrategy(), capture);
+
+    assertThat(strategy.getCaptureMode()).isEqualTo(CaptureMode.INLINE);
   }
 
   @Test
@@ -245,12 +283,16 @@ class ArchiveTrieNodeStrategyTest {
     setStoredBlockNumber(5L); // current block 6
     put(strategy, Bytes.of(0x06), Bytes.fromHexString("0x0606"));
 
-    strategy.setArchiving(false);
-    strategy.setArchiving(true);
+    strategy.onInSyncStatusChange(true);
+    setStoredBlockNumber(6L); // current block 7, left to the trailing archiver
+    put(strategy, Bytes.of(0x07), Bytes.fromHexString("0x0707"));
+
+    strategy.onInSyncStatusChange(false);
     setStoredBlockNumber(8L); // current block 9
     put(strategy, Bytes.of(0x09), Bytes.fromHexString("0x0909"));
 
     assertThat(catchUps).containsExactly(5L, 8L);
+    assertThat(strategy.getCaptureMode()).isEqualTo(CaptureMode.INLINE);
   }
 
   @Test
@@ -272,18 +314,46 @@ class ArchiveTrieNodeStrategyTest {
     assertThat(historyStore.getLatestBefore(ArchiveNodeKey.account(Bytes.of(0x07)), 7L)).isEmpty();
     assertThat(coverageTracker.hasCoverage()).isFalse();
     assertThat(catchUps).hasValue(1);
+    assertThat(strategy.getCaptureMode())
+        .as("the trailing archiver takes over when inline capture cannot start")
+        .isEqualTo(CaptureMode.TRAILING);
   }
 
   @Test
-  void finalizedBlockLimitReadOncePerTransaction() {
+  void failedCatchUpRetriedAfterNextInSyncChange() {
+    final ArchiveTrieNodeStrategy strategy = strategyWithGate(true);
+    final AtomicBoolean succeed = new AtomicBoolean(false);
+    final List<Long> catchUps = new ArrayList<>();
+    strategy.setCatchUpTo(
+        target -> {
+          catchUps.add(target);
+          return succeed.get();
+        });
+    setStoredBlockNumber(5L); // current block 6
+    put(strategy, Bytes.of(0x06), Bytes.fromHexString("0x0606"));
+
+    succeed.set(true);
+    strategy.onInSyncStatusChange(false);
+    setStoredBlockNumber(6L); // current block 7
+    put(strategy, Bytes.of(0x07), Bytes.fromHexString("0x0707"));
+
+    assertThat(catchUps).containsExactly(5L, 6L);
+    assertThat(historyStore.getLatestBefore(ArchiveNodeKey.account(Bytes.of(0x07)), 7L))
+        .isPresent();
+    assertThat(strategy.getCaptureMode()).isEqualTo(CaptureMode.INLINE);
+  }
+
+  @Test
+  void finalizedBlockCheckedOncePerTransaction() {
     final ArchiveTrieNodeStrategy strategy =
-        new ArchiveTrieNodeStrategy(new BonsaiTrieNodeStrategy(), capture, () -> false);
+        new ArchiveTrieNodeStrategy(new BonsaiTrieNodeStrategy(), capture);
     final AtomicInteger reads = new AtomicInteger();
-    strategy.setFinalizedBlockLimit(
+    strategy.setHasFinalizedBlock(
         () -> {
           reads.incrementAndGet();
-          return Long.MAX_VALUE;
+          return false;
         });
+    strategy.onInSyncStatusChange(true);
     setStoredBlockNumber(5L);
 
     final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
@@ -295,22 +365,6 @@ class ArchiveTrieNodeStrategyTest {
     tx.commit();
 
     assertThat(reads).hasValue(1);
-  }
-
-  @Test
-  void stopsArchivingWhenInSyncWithRemoteEstimate() {
-    // Genuine in-sync (a remote chain estimate exists) closes the gate for non-genesis blocks.
-    final ArchiveTrieNodeStrategy strategy =
-        new ArchiveTrieNodeStrategy(new BonsaiTrieNodeStrategy(), capture, () -> true);
-    strategy.onInSyncStatusChange(true);
-
-    setStoredBlockNumber(5L); // current block 6, not genesis
-    final Bytes location = Bytes.of(0x0e);
-    put(strategy, location, Bytes.fromHexString("0xcafe"));
-
-    assertThat(historyStore.getLatestBefore(ArchiveNodeKey.account(location), 6L))
-        .as("genuine in-sync (with a peer) stops archiving")
-        .isEmpty();
   }
 
   @Test

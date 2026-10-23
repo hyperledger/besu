@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveTrieNodeStrategy;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.FinalizedTrieNodeArchiver;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.TrailingTrieNodeArchiver;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ExtraStorageConfiguration;
@@ -85,9 +85,9 @@ public final class BonsaiArchiveFactory {
       final ExecutorService trieCapturePool =
           Executors.newFixedThreadPool(captureParallelism, namedThreads("trie-capture"));
       final ScheduledExecutorService archiverExecutor =
-          Executors.newScheduledThreadPool(1, namedThreads("finalized-trienode-archiver"));
+          Executors.newScheduledThreadPool(1, namedThreads("trailing-trienode-archiver"));
       final ExecutorService archiverCapturePool =
-          Executors.newFixedThreadPool(captureParallelism, namedThreads("trie-capture-finalized"));
+          Executors.newFixedThreadPool(captureParallelism, namedThreads("trie-capture-trailing"));
       executors.addAll(List.of(trieCapturePool, archiverExecutor, archiverCapturePool));
       final ArchiveTrieNodeStrategy strategy =
           ArchiveTrieNodeStrategy.createArchiveStrategy(
@@ -101,7 +101,7 @@ public final class BonsaiArchiveFactory {
           Optional.of(
               new BonsaiArchiveService.ProofCapture(
                   strategy,
-                  new FinalizedTrieNodeArchiver(
+                  new TrailingTrieNodeArchiver(
                       worldStateStorage,
                       provider,
                       provider.getTrieLogManager(),

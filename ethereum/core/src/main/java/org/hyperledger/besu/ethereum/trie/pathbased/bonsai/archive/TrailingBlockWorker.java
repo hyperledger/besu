@@ -137,6 +137,12 @@ public abstract class TrailingBlockWorker implements Closeable {
                 }));
   }
 
+  /** Stops following new canonical heads. Catch-ups already queued still run. */
+  protected final void stopObserving() {
+    blockObserverId.ifPresent(blockchain::removeObserver);
+    blockObserverId = OptionalLong.empty();
+  }
+
   /** Queues a catch-up unless one is already in flight, or the worker is closed or halted. */
   protected final void scheduleCatchUpIfNeeded() {
     if (closed || halted || !catchUpRunning.compareAndSet(false, true)) {
@@ -227,8 +233,7 @@ public abstract class TrailingBlockWorker implements Closeable {
   @Override
   public void close() {
     closed = true;
-    blockObserverId.ifPresent(blockchain::removeObserver);
-    blockObserverId = OptionalLong.empty();
+    stopObserving();
     // shutdownNow drops queued tasks without completing their futures; cancel them so callers
     // blocked in runAndWait are released instead of waiting forever.
     for (final Runnable dropped : executorService.shutdownNow()) {

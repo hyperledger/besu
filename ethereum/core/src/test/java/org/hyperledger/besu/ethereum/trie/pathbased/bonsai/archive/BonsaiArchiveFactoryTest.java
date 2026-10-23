@@ -17,11 +17,14 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -43,10 +46,13 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -129,7 +135,7 @@ class BonsaiArchiveFactoryTest {
   }
 
   @Test
-  void finalizedBlockLimitIsFinalizedBlockNumber() {
+  void hasImportedFinalizedBlockWhenFinalizedBlockImported() {
     final Hash finalized = Hash.hash(Bytes.of(1));
     final BlockHeader header = new BlockHeaderTestFixture().number(42L).buildHeader();
     when(blockchain.getFinalized()).thenReturn(Optional.of(finalized));
@@ -137,27 +143,62 @@ class BonsaiArchiveFactoryTest {
     final DataStorageConfiguration config = archiveConfig(true);
     archive = createArchive(config, storage(config));
 
-    assertThat(archive.finalizedBlockLimit()).isEqualTo(42L);
+    assertThat(archive.hasImportedFinalizedBlock()).isTrue();
   }
 
   @Test
-  void finalizedBlockLimitUnlimitedWithoutFinality() {
+  void noImportedFinalizedBlockWithoutFinality() {
     when(blockchain.getFinalized()).thenReturn(Optional.empty());
     final DataStorageConfiguration config = archiveConfig(true);
     archive = createArchive(config, storage(config));
 
-    assertThat(archive.finalizedBlockLimit()).isEqualTo(Long.MAX_VALUE);
+    assertThat(archive.hasImportedFinalizedBlock()).isFalse();
   }
 
   @Test
-  void finalizedBlockLimitUnlimitedWhenFinalizedBlockNotImported() {
+  void noImportedFinalizedBlockWhenFinalizedBlockNotImported() {
     final Hash finalized = Hash.hash(Bytes.of(1));
     when(blockchain.getFinalized()).thenReturn(Optional.of(finalized));
     when(blockchain.getBlockHeader(finalized)).thenReturn(Optional.empty());
     final DataStorageConfiguration config = archiveConfig(true);
     archive = createArchive(config, storage(config));
 
-    assertThat(archive.finalizedBlockLimit()).isEqualTo(Long.MAX_VALUE);
+    assertThat(archive.hasImportedFinalizedBlock()).isFalse();
+  }
+
+  @Test
+  void trailingModeStartsArchiverWithoutPeers() {
+    // A PoS node with no peers: the first head block above the finalized block switches the
+    // capture mode to trailing, which starts the archiver. No peer or in-sync event is needed.
+    final Hash finalized = Hash.hash(Bytes.of(1));
+    when(blockchain.getFinalized()).thenReturn(Optional.of(finalized));
+    when(blockchain.getBlockHeader(finalized))
+        .thenReturn(Optional.of(new BlockHeaderTestFixture().number(3L).buildHeader()));
+    final DataStorageConfiguration config = archiveConfig(true);
+    final BonsaiWorldStateKeyValueStorage storage = storage(config);
+    storage.upgradeToArchiveFlatDbMode();
+    archive = createArchive(config, storage);
+    archive.start(synchronizer);
+    // Only the ongoing flat-DB migration follows the chain so far.
+    verify(blockchain, times(1)).observeBlockAdded(any());
+
+    final ArchiveTrieNodeStrategy strategy =
+        (ArchiveTrieNodeStrategy) storage.getTrieNodeStrategy();
+    final SegmentedKeyValueStorage composed = storage.getComposedWorldStateStorage();
+    final SegmentedKeyValueStorageTransaction setHead = composed.startTransaction();
+    setHead.put(
+        TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY, Bytes.ofUnsignedLong(5L).toArrayUnsafe());
+    setHead.commit();
+    final SegmentedKeyValueStorageTransaction tx = composed.startTransaction();
+    final Bytes node = Bytes.fromHexString("0xcafe");
+    strategy.putTrieNode(
+        composed, tx, Bytes.of(0x0e), Bytes32.wrap(Hash.hash(node).getBytes()), node);
+    strategy.onBeforeCommit(composed, tx);
+    tx.commit();
+
+    assertThat(strategy.getCaptureMode()).isEqualTo(ArchiveTrieNodeStrategy.CaptureMode.TRAILING);
+    verify(blockchain, times(2)).observeBlockAdded(any());
+    verify(synchronizer, never()).getBestPeerChainHead();
   }
 
   @Test

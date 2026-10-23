@@ -28,10 +28,9 @@ import java.io.Closeable;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.function.LongPredicate;
-import java.util.function.LongSupplier;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -46,7 +45,7 @@ import org.slf4j.LoggerFactory;
  * TRIE_BRANCH_STORAGE_ARCHIVE} so historical {@code eth_getProof} requests don't need trie-log
  * replay.
  *
- * <p>Each put delegates to {@code base} (live trie) first, then — if the archive gate is open —
+ * <p>Each put delegates to {@code base} (live trie) first, then — if the block is captured inline —
  * reads the prior node value from storage (where it is typically hot in the top few in-memory
  * layers) and calls {@link ArchiveTrieNodeWriter#capture} to queue an async history-entry write.
  * Workers compute the history entry ({@link ArchiveNodeHistoryStore#getLatestBefore} + encode
@@ -55,8 +54,8 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Reading the prior node on the calling thread — rather than inside a worker — avoids disk I/O
  * in the common case (the prior value is hot in the in-memory layered chain) and eliminates any
- * need for worker threads to access the layered storage. An archiving gap — gate closed then
- * reopened, or a restart — forces the next block to write FULL, since the newest archive entry no
+ * need for worker threads to access the layered storage. An archiving gap — a switch from trailing
+ * mode, or a restart — forces the next block to write FULL, since the newest archive entry no
  * longer matches the live trie.
  */
 public class ArchiveTrieNodeStrategy
@@ -64,30 +63,44 @@ public class ArchiveTrieNodeStrategy
 
   private static final Logger LOG = LoggerFactory.getLogger(ArchiveTrieNodeStrategy.class);
 
+  /**
+   * Which component writes trie-node history into the archive. Only one is active at a time; they
+   * are alternative ways of storing the same data.
+   */
+  public enum CaptureMode {
+    /** Each block's trie nodes are archived as the block is imported. */
+    INLINE,
+    /** The {@link TrailingTrieNodeArchiver} archives blocks once they can no longer be reorged. */
+    TRAILING
+  }
+
   private final TrieNodeStrategy base;
   private final ArchiveTrieNodeWriter trieNodeWriter;
 
-  // Starts true (archive everything) until the first in-sync event. Safe default for initial sync
-  // and no-peers startup
-  private final AtomicBoolean archiving = new AtomicBoolean(true);
+  // Who writes the archive. Starts INLINE so the trailing archiver stays idle until a block shows
+  // it is needed; the first inline block still catches up first.
+  private volatile CaptureMode captureMode = CaptureMode.INLINE;
 
-  // True when an external chain estimate exists (e.g. a peer or CL that knows the chain head)
-  private volatile BooleanSupplier hasChainEstimate;
+  // Set once the blocks before inline capture started are archived, so coverage stays contiguous.
+  private volatile boolean inlineCaughtUp = false;
 
-  // True when the last in-sync event said the node is behind the network, so every block it imports
-  // is already final. Otherwise capture may be running at the head.
-  private volatile boolean behindNetwork = false;
+  // Set when that catch-up fails; inline capture is not retried until the next in-sync event.
+  private volatile boolean inlineCatchUpFailed = false;
 
-  // Highest block that can no longer be reorged out. Consulted unless the node is behind the
-  // network.
-  private volatile LongSupplier finalizedBlockLimit = () -> Long.MAX_VALUE;
+  // A node behind the network imports only final blocks. Assumed in sync until an event says
+  // otherwise, so a restarted node at the head cannot archive non-final blocks before the first
+  // event; a fresh node still captures inline since its finalized block is not imported yet.
+  private volatile boolean inSync = true;
 
-  // Archives the blocks up to the given one that were imported while capture was off, returning
-  // whether it succeeded. Runs before capture resumes so coverage never skips over them.
+  // True when a finalized block is imported, so blocks above it can still be reorged out.
+  private volatile BooleanSupplier hasFinalizedBlock = () -> false;
+
+  // Told of every mode change, on the importing thread.
+  private volatile Consumer<CaptureMode> captureModeListener = mode -> {};
+
+  // Archives the blocks up to the given one, returning whether it succeeded. Runs before inline
+  // capture starts so coverage never skips over blocks the trailing archiver had not reached.
   private volatile LongPredicate catchUpTo = target -> true;
-
-  // Set when capture starts or resumes, cleared once the catch-up before its first block succeeds.
-  private volatile boolean needsCatchUp = true;
 
   // Block number is constant within a transaction; cache it to avoid a storage read per node write.
   private final Cache<SegmentedKeyValueStorageTransaction, Long> txBlockNumberCache =
@@ -119,33 +132,29 @@ public class ArchiveTrieNodeStrategy
             new ArchiveCoverageTracker(liveStorage),
             trieCapturePool,
             shallowCheckpointInterval,
-            deepCheckpointInterval),
-        () -> false);
+            deepCheckpointInterval));
   }
 
   /**
-   * Like {@link #createArchiveStrategy} but for the finalized trie-node archiver: capture is always
-   * on (the archiver only ever processes final blocks) and the caller drives archive-write routing
-   * via {@link ArchiveTrieNodeWriter#setArchiveWriteTransaction}. Reads (diff base / coverage)
-   * still use the supplied canonical storage.
+   * Like {@link #createArchiveStrategy} but for the trailing trie-node archiver: every block is
+   * captured inline (the archiver only ever processes final blocks) and the caller drives
+   * archive-write routing via {@link ArchiveTrieNodeWriter#setArchiveWriteTransaction}. Reads (diff
+   * base / coverage) still use the supplied canonical storage.
    */
-  public static ArchiveTrieNodeStrategy createFinalizedArchiverStrategy(
+  public static ArchiveTrieNodeStrategy createTrailingArchiverStrategy(
       final SegmentedKeyValueStorage canonicalLiveStorage,
       final ExecutorService trieCapturePool,
       final int shallowCheckpointInterval,
       final int deepCheckpointInterval) {
-    final ArchiveTrieNodeStrategy strategy =
-        new ArchiveTrieNodeStrategy(
-            new BonsaiTrieNodeStrategy(),
-            new ArchiveTrieNodeWriter(
-                new ArchiveNodeHistoryStore(canonicalLiveStorage),
-                new ArchiveCoverageTracker(canonicalLiveStorage),
-                trieCapturePool,
-                shallowCheckpointInterval,
-                deepCheckpointInterval),
-            () -> true); // hasChainEstimate irrelevant; keep archiving always on
-    strategy.onInSyncStatusChange(false); // force archiving = true
-    return strategy;
+    // With no in-sync events and no finality signal, the mode stays INLINE.
+    return new ArchiveTrieNodeStrategy(
+        new BonsaiTrieNodeStrategy(),
+        new ArchiveTrieNodeWriter(
+            new ArchiveNodeHistoryStore(canonicalLiveStorage),
+            new ArchiveCoverageTracker(canonicalLiveStorage),
+            trieCapturePool,
+            shallowCheckpointInterval,
+            deepCheckpointInterval));
   }
 
   /** Returns the underlying writer so the archiver can call {@code setArchiveWriteTransaction}. */
@@ -154,61 +163,57 @@ public class ArchiveTrieNodeStrategy
   }
 
   /**
-   * Supplies whether an external chain estimate exists. Must be set before the in-sync subscription
-   * is registered, since it is consulted from {@link #onInSyncStatusChange(boolean)}.
+   * Supplies whether a finalized block is imported. While the node is in sync and one is, blocks at
+   * the head can still be reorged out, so the trailing archiver archives them once they are final
+   * instead of capturing them inline.
    */
-  public void setHasChainEstimate(final BooleanSupplier hasChainEstimate) {
-    this.hasChainEstimate =
-        Objects.requireNonNull(hasChainEstimate, "hasChainEstimate must not be null");
+  public void setHasFinalizedBlock(final BooleanSupplier hasFinalizedBlock) {
+    this.hasFinalizedBlock =
+        Objects.requireNonNull(hasFinalizedBlock, "hasFinalizedBlock must not be null");
   }
 
   /**
-   * Supplies the highest block that can no longer be reorged out. Unless the node is behind the
-   * network, capture may be running at the head and only archives blocks up to this limit; the
-   * finalized archiver archives the rest once they are final.
-   */
-  public void setFinalizedBlockLimit(final LongSupplier finalizedBlockLimit) {
-    this.finalizedBlockLimit =
-        Objects.requireNonNull(finalizedBlockLimit, "finalizedBlockLimit must not be null");
-  }
-
-  /**
-   * Supplies the catch-up run before capture starts or resumes. It is called on the importing
-   * thread with the block before the first one to be captured, and must archive every block up to
-   * it before returning true.
+   * Supplies the catch-up run before inline capture starts or resumes. It is called on the
+   * importing thread with the block before the first one to be captured, and must archive every
+   * block up to it before returning true.
    */
   public void setCatchUpTo(final LongPredicate catchUpTo) {
     this.catchUpTo = Objects.requireNonNull(catchUpTo, "catchUpTo must not be null");
   }
 
   /**
+   * Supplies the listener told of every capture mode change. It is called on the importing thread,
+   * after any catch-up and before the block is captured.
+   */
+  public void setCaptureModeListener(final Consumer<CaptureMode> captureModeListener) {
+    this.captureModeListener =
+        Objects.requireNonNull(captureModeListener, "captureModeListener must not be null");
+  }
+
+  /**
+   * Returns which component currently writes the archive.
+   *
+   * @return the capture mode
+   */
+  public CaptureMode getCaptureMode() {
+    return captureMode;
+  }
+
+  /**
    * @param base the delegate strategy for the live trie
    * @param trieNodeWriter the writer that persists archived history entries
-   * @param hasChainEstimate supplies whether an external chain estimate exists (see field)
    */
   @VisibleForTesting
   public ArchiveTrieNodeStrategy(
-      final TrieNodeStrategy base,
-      final ArchiveTrieNodeWriter trieNodeWriter,
-      final BooleanSupplier hasChainEstimate) {
+      final TrieNodeStrategy base, final ArchiveTrieNodeWriter trieNodeWriter) {
     this.base = Objects.requireNonNull(base);
     this.trieNodeWriter = Objects.requireNonNull(trieNodeWriter);
-    this.hasChainEstimate =
-        Objects.requireNonNull(hasChainEstimate, "hasChainEstimate must not be null");
   }
 
   @Override
   public void onInSyncStatusChange(final boolean inSync) {
-    behindNetwork = !inSync;
-    // A peer-less node reports "in sync" forever, so only trust a corroborated in-sync signal.
-    setArchiving(!inSync || !hasChainEstimate.getAsBoolean());
-  }
-
-  @VisibleForTesting
-  void setArchiving(final boolean archive) {
-    if (!archiving.getAndSet(archive) && archive) {
-      needsCatchUp = true;
-    }
+    this.inSync = inSync;
+    inlineCatchUpFailed = false;
   }
 
   private static long readBlockNumber(final SegmentedKeyValueStorage storage) {
@@ -233,29 +238,42 @@ public class ArchiveTrieNodeStrategy
     if (block == 0L) {
       return true;
     }
-    if (!archiving.get()) {
+    // In sync with finality, the head can still be reorged out. Otherwise every imported block is
+    // final: the node is behind the network, the finalized block is not imported yet, or the chain
+    // has no finality signal (BFT blocks are final on import).
+    if (inSync && hasFinalizedBlock.getAsBoolean()) {
+      switchTo(CaptureMode.TRAILING, block);
       return false;
     }
-    if (!behindNetwork && block > finalizedBlockLimit.getAsLong()) {
-      return false;
-    }
-    return catchUpBeforeCapture(block);
-  }
-
-  private boolean catchUpBeforeCapture(final long block) {
-    if (!needsCatchUp) {
+    if (captureMode == CaptureMode.INLINE && inlineCaughtUp) {
       return true;
     }
+    if (inlineCatchUpFailed) {
+      return false;
+    }
     if (catchUpTo.test(block - 1L)) {
-      needsCatchUp = false;
+      switchTo(CaptureMode.INLINE, block);
+      inlineCaughtUp = true;
       return true;
     }
     LOG.warn(
-        "Archive trie-node capture could not archive the blocks before {}; it stays off until it"
-            + " is next enabled, and the finalized archiver will archive them",
+        "Archive trie-node capture could not archive the blocks before {}; the trailing archiver"
+            + " stays active until the next in-sync change",
         block);
-    archiving.set(false);
+    inlineCatchUpFailed = true;
+    switchTo(CaptureMode.TRAILING, block);
     return false;
+  }
+
+  private void switchTo(final CaptureMode mode, final long block) {
+    if (mode == CaptureMode.TRAILING) {
+      inlineCaughtUp = false;
+    }
+    if (captureMode != mode) {
+      captureMode = mode;
+      LOG.info("Archive trie-node capture mode is now {} from block {}", mode, block);
+      captureModeListener.accept(mode);
+    }
   }
 
   // Bonsai re-commits unchanged nodes along a touched path; skip archiving them to avoid

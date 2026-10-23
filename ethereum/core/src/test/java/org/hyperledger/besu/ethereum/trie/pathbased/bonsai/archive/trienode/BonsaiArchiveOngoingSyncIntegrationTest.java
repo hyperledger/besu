@@ -77,7 +77,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
   private SegmentedInMemoryKeyValueStorage archiveStorage;
   private MutableBlockchain blockchain;
   private BlockDataGenerator blockDataGenerator;
-  private final List<FinalizedTrieNodeArchiver> archivers = new ArrayList<>();
+  private final List<TrailingTrieNodeArchiver> archivers = new ArrayList<>();
 
   @BeforeEach
   void setUp() {
@@ -294,7 +294,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
    * A archiver that stubs archiveBlocks: updates archived block number and persists it to real
    * storage so restart tests can verify durability.
    */
-  static class ControllableArchiver extends FinalizedTrieNodeArchiver {
+  static class ControllableArchiver extends TrailingTrieNodeArchiver {
 
     final AtomicInteger archiveBlocksCalls = new AtomicInteger();
     private final PausedCapture paused;
