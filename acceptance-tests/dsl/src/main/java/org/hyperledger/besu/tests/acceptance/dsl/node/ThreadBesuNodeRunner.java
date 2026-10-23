@@ -39,7 +39,6 @@ import org.hyperledger.besu.cryptoservices.KeyPairSecurityModule;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.pluginadapter.SecurityModuleServiceImpl;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.pluginadapter.NetworkEndpointServiceImpl;
@@ -83,13 +82,16 @@ import org.hyperledger.besu.plugin.CoreConfiguration;
 import org.hyperledger.besu.plugin.rpc.RpcConfiguration;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.NetworkEndpointService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.plugin.storage.StorageConfiguration;
+import org.hyperledger.besu.plugins.graphql.GraphQLPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BesuPluginServiceRegistrar;
+import org.hyperledger.besu.services.BuiltInPluginServiceManager;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
@@ -105,6 +107,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -128,6 +131,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   private final Map<String, Runner> besuRunners = new HashMap<>();
 
   private final Map<Node, BesuPluginContextImpl> besuPluginContextMap = new ConcurrentHashMap<>();
+  private final Map<Node, GraphQLPlugin> graphQLPluginMap = new ConcurrentHashMap<>();
 
   private final VertxOptions vertxOptions;
 
@@ -222,7 +226,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .permissioningService(permissioningService)
         .metricsConfiguration(node.getMetricsConfiguration())
         .p2pEnabled(node.isP2pEnabled())
-        .graphQLConfiguration(GraphQLConfiguration.createDefault())
         .staticNodes(node.getStaticNodes().stream().map(EnodeURLImpl::fromString).toList())
         .besuPluginContext(besuPluginContext)
         .autoLogBloomCaching(false)
@@ -242,6 +245,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     loadAdditionalServices(besuController, besuPluginContext, runner, metricsSystem);
 
     besuPluginContext.startPlugins();
+    // the built-in GraphQL plugin is started like BesuCommand does: right after the other plugins,
+    // with a failure to start being fatal
+    final GraphQLPlugin graphQLPlugin = component.graphQLPlugin();
+    graphQLPluginMap.put(node, graphQLPlugin);
+    graphQLPlugin.start();
 
     runner.startEthereumMainLoop();
 
@@ -255,6 +263,10 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     if (pluginContext != null) {
       pluginContext.stopPlugins();
     }
+    final GraphQLPlugin graphQLPlugin = graphQLPluginMap.remove(node);
+    if (graphQLPlugin != null) {
+      graphQLPlugin.stop();
+    }
     node.stop();
     killRunner(node.getName());
   }
@@ -264,6 +276,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     // stop all plugins from pluginContext
     besuPluginContextMap.values().forEach(BesuPluginContextImpl::stopPlugins);
     besuPluginContextMap.clear();
+    graphQLPluginMap.values().forEach(GraphQLPlugin::stop);
+    graphQLPluginMap.clear();
 
     // iterate over a copy of the set so that besuRunner can be updated when a runner is killed
     new HashSet<>(besuRunners.keySet()).forEach(this::killRunner);
@@ -369,6 +383,12 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     @Singleton
     NetworkEndpointServiceImpl provideNetworkEndpointService() {
       return new NetworkEndpointServiceImpl();
+    }
+
+    @Provides
+    @Singleton
+    GraphQLPlugin provideGraphQLPlugin() {
+      return new GraphQLPlugin();
     }
 
     @Provides
@@ -548,6 +568,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final SecurityModuleServiceImpl securityModuleService,
         final RpcEndpointServiceImpl rpcEndpointServiceImpl,
         final NetworkEndpointServiceImpl networkEndpointService,
+        final GraphQLPlugin graphQLPlugin,
         final BesuConfigurationImpl commonPluginConfiguration,
         final PermissioningServiceImpl permissioningService,
         final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
@@ -579,6 +600,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           securityModuleService,
           rpcEndpointServiceImpl,
           networkEndpointService,
+          graphQLPlugin,
           blockchainServiceImpl,
           commonPluginConfiguration,
           permissioningService,
@@ -631,6 +653,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final SecurityModuleServiceImpl securityModuleService,
         final RpcEndpointServiceImpl rpcEndpointServiceImpl,
         final NetworkEndpointServiceImpl networkEndpointService,
+        final GraphQLPlugin graphQLPlugin,
         final BlockchainServiceImpl blockchainServiceImpl,
         final BesuConfigurationImpl commonPluginConfiguration,
         final PermissioningServiceImpl permissioningService,
@@ -683,6 +706,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
               .requestedPluginsInfo(requestedPlugins.stream().map(PluginInfo::new).toList())
               .build());
       besuPluginContext.registerPlugins();
+      // registered as BesuCommand does, before the extra options are parsed so that thread-mode
+      // nodes accept the --graphql-* options too
+      graphQLPlugin.register(
+          new BuiltInPluginServiceManager(besuPluginContext, commandLine, Set.of("--graphql-"))
+              .withService(NetworkEndpointService.class, networkEndpointService));
       networkEndpointService.seal();
       commandLine.parseArgs(extraCLIOptions.toArray(new String[0]));
 
@@ -731,8 +759,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           dataDir, dataDir.resolve(DATABASE_PATH), node.getDataStorageConfiguration());
       commonPluginConfiguration.withMiningParameters(miningConfiguration);
       // Process-mode nodes never pass --host-allowlist or --Xhttp-timeout-seconds, so use the CLI
-      // defaults rather than the node's JSON-RPC values (which allow any host), keeping the host
-      // checks of plugin services the same in both runner modes.
+      // defaults rather than the node's JSON-RPC values (which allow any host), keeping GraphQL's
+      // host checks the same in both runner modes.
       commonPluginConfiguration
           .withRpcHttpTimeoutSec(TimeoutOptions.defaultOptions().getTimeoutSeconds())
           .withHostsAllowlist(List.of("localhost", "127.0.0.1"))
@@ -812,6 +840,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     RpcEndpointServiceImpl rpcEndpointService();
 
     NetworkEndpointServiceImpl networkEndpointService();
+
+    GraphQLPlugin graphQLPlugin();
 
     BlockchainServiceImpl blockchainService();
 

@@ -46,6 +46,7 @@ import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -64,10 +65,10 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.api.pluginadapter.NetworkEndpointServiceImpl;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -83,6 +84,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.NetworkEndpointService;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.plugins.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
@@ -125,6 +127,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine;
@@ -316,7 +319,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   // Testing default values
   @Test
   public void callingBesuCommandWithoutOptionsMustSyncWithDefaultValues() {
-    parseCommand();
+    final TestBesuCommand besuCommand = parseCommand();
 
     final int maxPeers = 25;
 
@@ -327,7 +330,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
     verify(mockRunnerBuilder).p2pListenPort(eq(30303));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(DEFAULT_JSON_RPC_CONFIGURATION));
-    verify(mockRunnerBuilder).graphQLConfiguration(eq(DEFAULT_GRAPH_QL_CONFIGURATION));
+    assertThat(besuCommand.getGraphQLPlugin().getConfiguration())
+        .isEqualTo(DEFAULT_GRAPH_QL_CONFIGURATION);
     verify(mockRunnerBuilder).webSocketConfiguration(eq(DEFAULT_WEB_SOCKET_CONFIGURATION));
     verify(mockRunnerBuilder).metricsConfiguration(eq(DEFAULT_METRICS_CONFIGURATION));
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkArg.capture());
@@ -1685,12 +1689,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void graphQLHttpEnabledPropertyDefaultIsFalse() {
-    parseCommand();
+    final TestBesuCommand besuCommand = parseCommand();
 
-    verify(mockRunnerBuilder).graphQLConfiguration(graphQLConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(graphQLConfigArgumentCaptor.getValue().isEnabled()).isFalse();
+    assertThat(besuCommand.getGraphQLPlugin().getConfiguration().isEnabled()).isFalse();
+    assertThat(besuCommand.getGraphQLPlugin().isEnabled()).isFalse();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -2454,15 +2458,20 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void pluginRpcConfigurationDefaults() {
-    parseCommand("--p2p-host=10.1.2.3");
+  public void pluginRpcConfigurationDefaultsMatchGraphQL() {
+    final TestBesuCommand besuCommand = parseCommand("--p2p-host=10.1.2.3");
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    final GraphQLConfiguration graphQLConfiguration =
+        besuCommand.getGraphQLPlugin().getConfiguration();
 
     assertThat(commonPluginConfiguration.getConfiguredRpcHttpTimeoutSec())
+        .isEqualTo(graphQLConfiguration.getHttpTimeoutSec())
         .isEqualTo(TimeoutOptions.defaultOptions().getTimeoutSeconds());
     assertThat(commonPluginConfiguration.getConfiguredHostAllowlist())
         .containsExactly("localhost", "127.0.0.1");
-    assertThat(commonPluginConfiguration.getDefaultHostAddress()).isEqualTo("10.1.2.3");
+    assertThat(commonPluginConfiguration.getDefaultHostAddress())
+        .isEqualTo(graphQLConfiguration.getHost())
+        .isEqualTo("10.1.2.3");
     assertThat(commonPluginConfiguration.getConfiguredMaxLogFilterAddresses())
         .isEqualTo(ApiConfiguration.DEFAULT_MAX_FILTER_ADDRESSES);
   }
@@ -2659,6 +2668,89 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--metrics-port=13",
         "--metrics-push-port=14");
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void assertThatGraphQLPortClashWithRpcHttpPortFails() {
+    parseCommand(
+        "--graphql-http-enabled",
+        "--graphql-http-port=8545",
+        "--rpc-http-enabled",
+        "--rpc-http-port=8545");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "Port number '8545' has been specified multiple times. Please review the supplied configuration.");
+  }
+
+  @Test
+  public void assertThatDisabledGraphQLPortDoesNotClash() {
+    parseCommand("--graphql-http-port=8545", "--rpc-http-enabled", "--rpc-http-port=8545");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void graphQLEndpointIsRegisteredByTheBuiltInPlugin() {
+    final TestBesuCommand besuCommand =
+        parseCommand(
+            "--graphql-http-enabled", "--graphql-http-host=1.2.3.4", "--graphql-http-port=1234");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    final NetworkEndpointServiceImpl networkEndpointService =
+        besuCommand.getNetworkEndpointService();
+    assertThat(networkEndpointService.isSealed()).isTrue();
+    assertThat(networkEndpointService.getEndpoints()).hasSize(1);
+    final NetworkEndpointService.NetworkEndpoint endpoint =
+        networkEndpointService.getEndpoints().get(0);
+    assertThat(endpoint.getServiceName()).isEqualTo("graphQL");
+    assertThat(endpoint.getPortsFileKey()).isEqualTo("graphql-http");
+    assertThat(endpoint.isEnabled()).isTrue();
+    assertThat(endpoint.getHost()).isEqualTo("1.2.3.4");
+    assertThat(endpoint.getConfiguredPort()).isEqualTo(1234);
+  }
+
+  @Test
+  public void graphQLPluginIsStartedAfterTheOtherPluginsAndBeforeTheMainLoop() {
+    final TestBesuCommand besuCommand = parseCommand("--graphql-http-enabled");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    final InOrder inOrder = inOrder(getBesuPluginContext(), mockRunner);
+    inOrder.verify(getBesuPluginContext()).startPlugins();
+    inOrder.verify(mockRunner).startEthereumMainLoop();
+    assertThat(besuCommand.getGraphQLPluginStartCount()).isEqualTo(1);
+  }
+
+  @Test
+  public void graphQLOptionsDependencyWarningsUseTheBesuCommandLogger() {
+    parseCommand("--graphql-http-host=1.2.3.4", "--graphql-http-port=1234");
+
+    verify(mockLogger)
+        .warn(
+            "{} has been ignored because {} was not defined on the command line.",
+            "--graphql-http-host and --graphql-http-port",
+            "--graphql-http-enabled");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void helpShowsTheGraphQLOptionsSection() {
+    parseCommand("--help");
+    assertThat(commandOutput.toString(UTF_8))
+        .contains("GraphQL Options")
+        .contains("--graphql-http-enabled")
+        .contains("--graphql-max-blocks-range");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void graphQLOptionsAreReadFromEnvironmentVariables() {
+    setEnvironmentVariable("BESU_GRAPHQL_HTTP_ENABLED", "true");
+    setEnvironmentVariable("BESU_GRAPHQL_HTTP_PORT", "4321");
+    final TestBesuCommand besuCommand = parseCommand();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    assertThat(besuCommand.getGraphQLPlugin().getConfiguration().isEnabled()).isTrue();
+    assertThat(besuCommand.getGraphQLPlugin().getConfiguration().getPort()).isEqualTo(4321);
   }
 
   @Test

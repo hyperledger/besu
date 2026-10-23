@@ -58,7 +58,6 @@ dependencies {
   implementation project(':services:tasks')
 
   implementation 'com.google.guava:guava'
-  implementation 'com.graphql-java:graphql-java'
   implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'io.opentelemetry:opentelemetry-extension-trace-propagators'

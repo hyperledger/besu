@@ -22,7 +22,6 @@ import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManagerBuilder;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -195,7 +194,6 @@ public class JsonRpcTestMethodsFactory {
     final JsonRpcConfiguration jsonRpcConfiguration = mock(JsonRpcConfiguration.class);
     final WebSocketConfiguration webSocketConfiguration = mock(WebSocketConfiguration.class);
     final MetricsConfiguration metricsConfiguration = mock(MetricsConfiguration.class);
-    final GraphQLConfiguration graphQLConfiguration = mock(GraphQLConfiguration.class);
 
     final NatService natService = new NatService(Optional.empty());
 
@@ -229,7 +227,6 @@ public class JsonRpcTestMethodsFactory {
             jsonRpcConfiguration,
             webSocketConfiguration,
             metricsConfiguration,
-            graphQLConfiguration,
             new NetworkEndpointServiceImpl(),
             natService,
             new HashMap<>(),

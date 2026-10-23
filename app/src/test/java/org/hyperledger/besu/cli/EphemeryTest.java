@@ -38,7 +38,6 @@ import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ImmutableInProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
@@ -228,7 +227,10 @@ public class EphemeryTest extends CommandTestAbstract {
 
   @Test
   public void testStopEphemery() throws Exception {
+    final int graphQLStopsBefore = besuCommand.getGraphQLPluginStopCount();
     runner.stopEphemery(besuCommand);
+    // the built-in GraphQL plugin owns its HTTP server, so it is stopped to free its port
+    assertThat(besuCommand.getGraphQLPluginStopCount()).isEqualTo(graphQLStopsBefore + 1);
     assertThat(besuCommand.dataPath.toString()).doesNotContain(ephemeryDataPathPrefix);
     assertThat(initialCycleId)
         .isEqualTo(besuCommand.getGenesisConfigOptions().getChainId().get().add(BigInteger.ONE));
@@ -243,8 +245,13 @@ public class EphemeryTest extends CommandTestAbstract {
 
   @Test
   public void testRestartEphemery() throws Exception {
+    final int graphQLStartsBefore = besuCommand.getGraphQLPluginStartCount();
+    final int graphQLStopsBefore = besuCommand.getGraphQLPluginStopCount();
     runner.stopEphemery(besuCommand);
     runner.startEphemery(besuCommand);
+    // the built-in GraphQL plugin is stopped before the restart and started again with it
+    assertThat(besuCommand.getGraphQLPluginStopCount()).isEqualTo(graphQLStopsBefore + 1);
+    assertThat(besuCommand.getGraphQLPluginStartCount()).isEqualTo(graphQLStartsBefore + 1);
     assertThat(besuCommand.dataPath.toString()).contains(ephemeryDataPathPrefix);
     assertThat(initialCycleId)
         .isEqualTo(besuCommand.getGenesisConfigOptions().getChainId().get().add(BigInteger.ONE));
@@ -408,7 +415,6 @@ public class EphemeryTest extends CommandTestAbstract {
             .besuController(controller)
             .ethNetworkConfig(EthNetworkConfig.getNetworkConfig(EPHEMERY))
             .jsonRpcConfiguration(jsonRpcConfiguration())
-            .graphQLConfiguration(graphQLConfiguration())
             .webSocketConfiguration(wsRpcConfiguration())
             .jsonRpcIpcConfiguration(new JsonRpcIpcConfiguration())
             .inProcessRpcConfiguration(ImmutableInProcessRpcConfiguration.builder().build())
@@ -481,13 +487,6 @@ public class EphemeryTest extends CommandTestAbstract {
     configuration.setPort(0);
     configuration.setEnabled(true);
     configuration.setHostsAllowlist(Collections.singletonList("*"));
-    return configuration;
-  }
-
-  private GraphQLConfiguration graphQLConfiguration() {
-    final GraphQLConfiguration configuration = GraphQLConfiguration.createDefault();
-    configuration.setPort(0);
-    configuration.setEnabled(false);
     return configuration;
   }
 

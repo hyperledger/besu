@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -42,7 +41,6 @@ public class NetServices implements JsonRpcMethod {
   private final WebSocketConfiguration webSocketConfiguration;
   private final P2PNetwork p2pNetwork;
   private final MetricsConfiguration metricsConfiguration;
-  private final GraphQLConfiguration graphQLConfiguration;
   private final NetworkEndpointService networkEndpointService;
   private final Set<String> warnedNameClashes = ConcurrentHashMap.newKeySet();
 
@@ -51,13 +49,11 @@ public class NetServices implements JsonRpcMethod {
       final WebSocketConfiguration webSocketConfiguration,
       final P2PNetwork p2pNetwork,
       final MetricsConfiguration metricsConfiguration,
-      final NetworkEndpointService networkEndpointService,
-      final GraphQLConfiguration graphQLConfiguration) {
+      final NetworkEndpointService networkEndpointService) {
     this.jsonRpcConfiguration = jsonRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
     this.p2pNetwork = p2pNetwork;
     this.metricsConfiguration = metricsConfiguration;
-    this.graphQLConfiguration = graphQLConfiguration;
     this.networkEndpointService = networkEndpointService;
   }
 
@@ -98,14 +94,9 @@ public class NetServices implements JsonRpcMethod {
           createServiceDetailsMap(
               metricsConfiguration.getHost(), metricsConfiguration.getActualPort()));
     }
-    if (graphQLConfiguration.isEnabled()) {
-      servicesMap.put(
-          "graphQL",
-          createServiceDetailsMap(graphQLConfiguration.getHost(), graphQLConfiguration.getPort()));
-    }
-    // Listeners owned by plugins come after the built-in services, in registration order; a
-    // built-in entry wins on a name clash. A misbehaving endpoint is skipped so that it cannot
-    // break net_services for every caller.
+    // Listeners owned by plugins (GraphQL among them) come after the built-in services, in
+    // registration order; a built-in entry wins on a name clash. A misbehaving endpoint is skipped
+    // so that it cannot break net_services for every caller.
     for (final NetworkEndpointService.NetworkEndpoint endpoint :
         networkEndpointService.getEndpoints()) {
       try {

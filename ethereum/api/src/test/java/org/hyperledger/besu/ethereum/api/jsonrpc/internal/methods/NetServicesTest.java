@@ -69,17 +69,16 @@ public class NetServicesTest {
   }
 
   @Test
-  public void shouldReportPluginEndpointRightAfterMetrics() {
+  public void shouldReportGraphQLPluginEndpointAtTheFormerBuiltInPosition() {
     final MetricsConfiguration metrics =
         MetricsConfiguration.builder().enabled(true).host("127.0.0.1").port(9545).build();
-    networkEndpointService.registerEndpoint(endpoint("pluginA", true, "127.0.0.1", 9004));
+    networkEndpointService.registerEndpoint(endpoint("graphQL", true, "127.0.0.1", 8547));
 
     final Map<String, Map<String, String>> result = response(netServices(metrics));
 
-    // the same format as the built-in entries, after the built-in services (here, right after
-    // metrics)
-    assertThat(result.keySet()).containsExactly("jsonrpc", "metrics", "pluginA");
-    assertThat(result.get("pluginA")).isEqualTo(details("127.0.0.1", "9004"));
+    // the same key, format and position (right after metrics) as the former core graphQL entry
+    assertThat(result.keySet()).containsExactly("jsonrpc", "metrics", "graphQL");
+    assertThat(result.get("graphQL")).isEqualTo(details("127.0.0.1", "8547"));
   }
 
   @Test
@@ -161,9 +160,7 @@ public class NetServicesTest {
         WebSocketConfiguration.createDefault(),
         mock(P2PNetwork.class),
         metricsConfiguration,
-        endpointService,
-        // a built-in service that these tests leave disabled
-        mock());
+        endpointService);
   }
 
   private static class DelegatingEndpoint implements NetworkEndpoint {

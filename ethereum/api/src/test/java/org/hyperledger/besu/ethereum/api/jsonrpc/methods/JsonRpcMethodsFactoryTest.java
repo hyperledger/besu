@@ -26,7 +26,6 @@ import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -140,7 +139,6 @@ class JsonRpcMethodsFactoryTest {
                 mock(JsonRpcConfiguration.class),
                 mock(WebSocketConfiguration.class),
                 mock(MetricsConfiguration.class),
-                mock(GraphQLConfiguration.class),
                 new NetworkEndpointServiceImpl(),
                 natService,
                 new HashMap<>(),
@@ -185,7 +183,6 @@ class JsonRpcMethodsFactoryTest {
                 mock(JsonRpcConfiguration.class),
                 mock(WebSocketConfiguration.class),
                 mock(MetricsConfiguration.class),
-                mock(GraphQLConfiguration.class),
                 new NetworkEndpointServiceImpl(),
                 natService,
                 new HashMap<>(),

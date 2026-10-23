@@ -27,7 +27,6 @@ import static org.mockito.Mockito.verify;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
@@ -35,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.plugins.graphql.GraphQLConfiguration;
 
 import java.io.File;
 import java.io.IOException;
@@ -102,7 +102,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     final MetricsConfiguration metricsConfiguration =
         MetricsConfiguration.builder().enabled(false).host("8.6.7.5").port(309).build();
 
-    parseCommand("--config-file", toml.toString());
+    final TestBesuCommand besuCommand = parseCommand("--config-file", toml.toString());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -112,7 +112,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("1.2.3.4"));
     verify(mockRunnerBuilder).p2pListenPort(eq(1234));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(jsonRpcConfiguration));
-    verify(mockRunnerBuilder).graphQLConfiguration(eq(graphQLConfiguration));
+    assertThat(besuCommand.getGraphQLPlugin().getConfiguration()).isEqualTo(graphQLConfiguration);
     verify(mockRunnerBuilder).webSocketConfiguration(eq(webSocketConfiguration));
     verify(mockRunnerBuilder).metricsConfiguration(eq(metricsConfiguration));
     verify(mockRunnerBuilder).build();
@@ -149,7 +149,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
   public void noOverrideDefaultValuesIfKeyIsNotPresentInConfigFile() {
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
 
-    parseCommand("--config-file", configFile);
+    final TestBesuCommand besuCommand = parseCommand("--config-file", configFile);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -167,7 +167,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
     verify(mockRunnerBuilder).p2pListenPort(eq(30303));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(jsonRpcConfiguration));
-    verify(mockRunnerBuilder).graphQLConfiguration(eq(graphQLConfiguration));
+    assertThat(besuCommand.getGraphQLPlugin().getConfiguration()).isEqualTo(graphQLConfiguration);
     verify(mockRunnerBuilder).webSocketConfiguration(eq(webSocketConfiguration));
     verify(mockRunnerBuilder).metricsConfiguration(eq(metricsConfiguration));
     verify(mockRunnerBuilder).build();

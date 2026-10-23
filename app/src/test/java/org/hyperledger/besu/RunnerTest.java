@@ -36,7 +36,6 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ImmutableInProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
@@ -200,8 +199,7 @@ public final class RunnerTest {
     // endpoint whose ports file key clashes with a built-in entry, which the real registry rejects.
     final List<NetworkEndpointService.NetworkEndpoint> pluginEndpoints =
         List.of(
-            new TestNetworkEndpoint(
-                "pluginService", "plugin-service", true, 8600, Optional.of(4321)),
+            new TestNetworkEndpoint("graphQL", "graphql-http", true, 8547, Optional.of(4321)),
             new TestNetworkEndpoint("notStarted", "not-started", true, 8999, Optional.empty()),
             new TestNetworkEndpoint("disabled", "disabled", false, 0, Optional.of(9998)),
             // a plugin endpoint whose ports file key clashes with a built-in entry
@@ -246,7 +244,6 @@ public final class RunnerTest {
             .besuController(controllerAhead)
             .ethNetworkConfig(EthNetworkConfig.getNetworkConfig(DEV))
             .jsonRpcConfiguration(jsonRpcConfiguration())
-            .graphQLConfiguration(graphQLConfiguration())
             .webSocketConfiguration(wsRpcConfiguration())
             .jsonRpcIpcConfiguration(new JsonRpcIpcConfiguration())
             .inProcessRpcConfiguration(ImmutableInProcessRpcConfiguration.builder().build())
@@ -298,7 +295,6 @@ public final class RunnerTest {
               .besuController(controllerBehind)
               .ethNetworkConfig(behindEthNetworkConfiguration)
               .jsonRpcConfiguration(jsonRpcConfiguration())
-              .graphQLConfiguration(graphQLConfiguration())
               .webSocketConfiguration(wsRpcConfiguration())
               .metricsConfiguration(metricsConfiguration())
               .dataDir(dataDirBehind)
@@ -411,7 +407,7 @@ public final class RunnerTest {
     }
     assertThat(ports.getProperty("json-rpc"))
         .isEqualTo(String.valueOf(runner.getJsonRpcPort().orElseThrow()));
-    assertThat(ports.getProperty("plugin-service")).isEqualTo("4321");
+    assertThat(ports.getProperty("graphql-http")).isEqualTo("4321");
     // not started, disabled (even with a listening port) and failing endpoints are left out, and a
     // built-in entry wins on a key clash
     assertThat(ports).doesNotContainKeys("not-started", "disabled", "broken");
@@ -423,10 +419,10 @@ public final class RunnerTest {
       assertThat(resp.code()).isEqualTo(200);
       final JsonObject result = new JsonObject(resp.body().string()).getJsonObject("result");
       assertThat(result.fieldNames())
-          .contains("pluginService", "notStarted")
+          .contains("graphQL", "notStarted")
           .doesNotContain("disabled", "broken");
-      assertThat(result.getJsonObject("pluginService").getMap())
-          .isEqualTo(Map.of("host", "127.0.0.1", "port", "8600"));
+      assertThat(result.getJsonObject("graphQL").getMap())
+          .isEqualTo(Map.of("host", "127.0.0.1", "port", "8547"));
     }
   }
 
@@ -540,13 +536,6 @@ public final class RunnerTest {
     configuration.setPort(0);
     configuration.setEnabled(true);
     configuration.setHostsAllowlist(Collections.singletonList("*"));
-    return configuration;
-  }
-
-  private GraphQLConfiguration graphQLConfiguration() {
-    final GraphQLConfiguration configuration = GraphQLConfiguration.createDefault();
-    configuration.setPort(0);
-    configuration.setEnabled(false);
     return configuration;
   }
 

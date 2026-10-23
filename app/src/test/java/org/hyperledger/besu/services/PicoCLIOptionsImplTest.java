@@ -17,6 +17,8 @@ package org.hyperledger.besu.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import java.util.Set;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,6 +41,19 @@ public class PicoCLIOptionsImplTest {
   static final class MixinOptions {
     @Option(names = "--plugin-Test1-mixin")
     String mixinOption = "defaultmixin";
+  }
+
+  static final class LegacyOptions {
+    @Option(names = "--legacy-thing-enabled")
+    Boolean enabled = false;
+
+    @Option(names = "--plugin-Test2-other")
+    String other = "defaultother";
+  }
+
+  static final class BadOptions {
+    @Option(names = "--not-allowed")
+    String notAllowed = "default";
   }
 
   private SimpleCommand command;
@@ -75,6 +90,36 @@ public class PicoCLIOptionsImplTest {
     commandLine.parseArgs("--plugin-Test1-mixin", "2");
     assertThat(command.existingOption).isEqualTo("defaultexisting");
     assertThat(mixin.mixinOption).isEqualTo("2");
+  }
+
+  @Test
+  public void testUnprefixedOptionRejectedByDefault() {
+    assertThatExceptionOfType(RuntimeException.class)
+        .isThrownBy(() -> serviceImpl.addPicoCLIOptions("Test2", new LegacyOptions()))
+        .withMessage("Error loading CLI options");
+    assertThat(commandLine.getCommandSpec().findOption("--legacy-thing-enabled")).isNull();
+  }
+
+  @Test
+  public void testAdditionalAllowedPrefixIsAccepted() {
+    final PicoCLIOptionsImpl builtIn = new PicoCLIOptionsImpl(commandLine, Set.of("--legacy-"));
+    final LegacyOptions legacy = new LegacyOptions();
+
+    builtIn.addPicoCLIOptions("Test2", legacy);
+
+    commandLine.parseArgs("--legacy-thing-enabled", "--plugin-Test2-other", "3");
+    assertThat(legacy.enabled).isTrue();
+    assertThat(legacy.other).isEqualTo("3");
+  }
+
+  @Test
+  public void testAdditionalAllowedPrefixDoesNotAllowOtherOptions() {
+    final PicoCLIOptionsImpl builtIn = new PicoCLIOptionsImpl(commandLine, Set.of("--legacy-"));
+
+    assertThatExceptionOfType(RuntimeException.class)
+        .isThrownBy(() -> builtIn.addPicoCLIOptions("Test3", new BadOptions()))
+        .withMessage("Error loading CLI options");
+    assertThat(commandLine.getCommandSpec().findOption("--not-allowed")).isNull();
   }
 
   @Test

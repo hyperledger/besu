@@ -26,7 +26,6 @@ import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -238,7 +237,6 @@ public class JsonRpcHttpServiceRpcApisTest {
                 mock(JsonRpcConfiguration.class),
                 mock(WebSocketConfiguration.class),
                 mock(MetricsConfiguration.class),
-                mock(GraphQLConfiguration.class),
                 new NetworkEndpointServiceImpl(),
                 natService,
                 new HashMap<>(),
@@ -374,7 +372,6 @@ public class JsonRpcHttpServiceRpcApisTest {
                 jsonRpcConfiguration,
                 webSocketConfiguration,
                 metricsConfiguration,
-                mock(GraphQLConfiguration.class),
                 new NetworkEndpointServiceImpl(),
                 natService,
                 new HashMap<>(),

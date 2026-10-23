@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -39,7 +38,6 @@ public class NetJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
   private final MetricsConfiguration metricsConfiguration;
-  private final GraphQLConfiguration graphQLConfiguration;
   private final NetworkEndpointService networkEndpointService;
 
   public NetJsonRpcMethods(
@@ -48,14 +46,12 @@ public class NetJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
-      final NetworkEndpointService networkEndpointService,
-      final GraphQLConfiguration graphQLConfiguration) {
+      final NetworkEndpointService networkEndpointService) {
     this.p2pNetwork = p2pNetwork;
     this.networkId = networkId;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
     this.metricsConfiguration = metricsConfiguration;
-    this.graphQLConfiguration = graphQLConfiguration;
     this.networkEndpointService = networkEndpointService;
   }
 
@@ -76,7 +72,6 @@ public class NetJsonRpcMethods extends ApiGroupJsonRpcMethods {
             webSocketConfiguration,
             p2pNetwork,
             metricsConfiguration,
-            networkEndpointService,
-            graphQLConfiguration));
+            networkEndpointService));
   }
 }

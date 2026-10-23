@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -79,7 +78,6 @@ public class JsonRpcMethodsFactory {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
-      final GraphQLConfiguration graphQLConfiguration,
       final NetworkEndpointService networkEndpointService,
       final NatService natService,
       final Map<String, BesuPlugin> namedPlugins,
@@ -147,8 +145,7 @@ public class JsonRpcMethodsFactory {
                   jsonRpcConfiguration,
                   webSocketConfiguration,
                   metricsConfiguration,
-                  networkEndpointService,
-                  graphQLConfiguration),
+                  networkEndpointService),
               new MinerJsonRpcMethods(miningConfiguration, miningCoordinator),
               new PermJsonRpcMethods(accountsAllowlistController, nodeAllowlistController),
               new Web3JsonRpcMethods(clientNodeName),

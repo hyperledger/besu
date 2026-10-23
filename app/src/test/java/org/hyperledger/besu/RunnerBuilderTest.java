@@ -38,7 +38,6 @@ import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
@@ -163,7 +162,6 @@ public final class RunnerBuilderTest {
             .metricsSystem(new NoOpMetricsSystem())
             .jsonRpcConfiguration(mock(JsonRpcConfiguration.class))
             .permissioningService(mock(PermissioningServiceImpl.class))
-            .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .webSocketConfiguration(mock(WebSocketConfiguration.class))
             .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
             .inProcessRpcConfiguration(mock(InProcessRpcConfiguration.class))
@@ -215,7 +213,6 @@ public final class RunnerBuilderTest {
             .metricsSystem(new NoOpMetricsSystem())
             .permissioningService(mock(PermissioningServiceImpl.class))
             .jsonRpcConfiguration(mock(JsonRpcConfiguration.class))
-            .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .webSocketConfiguration(mock(WebSocketConfiguration.class))
             .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
             .inProcessRpcConfiguration(mock(InProcessRpcConfiguration.class))
@@ -296,7 +293,6 @@ public final class RunnerBuilderTest {
             .metricsSystem(new NoOpMetricsSystem())
             .permissioningService(mock(PermissioningServiceImpl.class))
             .jsonRpcConfiguration(mock(JsonRpcConfiguration.class))
-            .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .webSocketConfiguration(mock(WebSocketConfiguration.class))
             .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
             .inProcessRpcConfiguration(mock(InProcessRpcConfiguration.class))
@@ -384,7 +380,6 @@ public final class RunnerBuilderTest {
             .permissioningService(mock(PermissioningServiceImpl.class))
             .jsonRpcConfiguration(jrpc)
             .engineJsonRpcConfiguration(engine)
-            .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .webSocketConfiguration(mock(WebSocketConfiguration.class))
             .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
             .inProcessRpcConfiguration(mock(InProcessRpcConfiguration.class))
@@ -432,7 +427,6 @@ public final class RunnerBuilderTest {
             .webSocketConfiguration(wsRpc)
             .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
             .inProcessRpcConfiguration(mock(InProcessRpcConfiguration.class))
-            .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(Vertx.vertx())
             .dataDir(dataDir)
@@ -476,7 +470,6 @@ public final class RunnerBuilderTest {
             .webSocketConfiguration(wsRpc)
             .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
             .inProcessRpcConfiguration(mock(InProcessRpcConfiguration.class))
-            .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(Vertx.vertx())
             .dataDir(dataDir)
@@ -518,7 +511,6 @@ public final class RunnerBuilderTest {
             .metricsSystem(new NoOpMetricsSystem())
             .permissioningService(mock(PermissioningServiceImpl.class))
             .jsonRpcConfiguration(defaultRpcConfig)
-            .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .webSocketConfiguration(defaultWebSockConfig)
             .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
             .inProcessRpcConfiguration(mock(InProcessRpcConfiguration.class))
