@@ -36,6 +36,8 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BooleanSupplier;
+import java.util.function.LongSupplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.time.DurationFormatUtils;
@@ -139,7 +141,7 @@ public class BonsaiFlatDbToArchiveMigrator extends TrailingBlockWorker {
       return CompletableFuture.runAsync(
           () -> {
             try {
-              migrateBlocks(startBlock, target, true);
+              migrateBlocks(startBlock, target::get, true, () -> !closed);
               worldStateStorage.upgradeToArchiveFlatDbMode();
               logCompletion(startBlock, target.get(), migrationStartTime);
               // Hand off observers without a gap: register the ongoing observer first, then
@@ -169,8 +171,13 @@ public class BonsaiFlatDbToArchiveMigrator extends TrailingBlockWorker {
   }
 
   private void migrateBlocks(
-      final long startBlock, final AtomicLong target, final boolean shouldLog) {
-    for (long blockNumber = startBlock; blockNumber <= target.get(); blockNumber++) {
+      final long startBlock,
+      final LongSupplier target,
+      final boolean shouldLog,
+      final BooleanSupplier keepGoing) {
+    for (long blockNumber = startBlock;
+        blockNumber <= target.getAsLong() && keepGoing.getAsBoolean();
+        blockNumber++) {
       final Optional<TrieLog> maybeTrieLog =
           blockchain
               .getBlockHeader(blockNumber)
@@ -183,7 +190,7 @@ public class BonsaiFlatDbToArchiveMigrator extends TrailingBlockWorker {
         tx.commit();
         migratedBlockNumber.set(blockNumber);
         if (shouldLog) {
-          logProgress(blockNumber, target.get());
+          logProgress(blockNumber, target.getAsLong());
         }
       } else if (blockNumber > 0) {
         throw new IllegalStateException("No trie log found for block " + blockNumber);
@@ -208,10 +215,36 @@ public class BonsaiFlatDbToArchiveMigrator extends TrailingBlockWorker {
     startObserving();
   }
 
+  /**
+   * Sets the migrated block number from the saved migration progress, or 0 if there is none. Called
+   * before the first {@link #migrateTo} so it resumes after the last committed block.
+   */
+  public void loadMigrationProgress() {
+    migratedBlockNumber.set(getMigrationProgress().orElse(0L));
+  }
+
+  /**
+   * Migrates blocks from the one after the last migrated block up to {@code target}, one committed
+   * low-priority transaction per block. Blocks the calling thread until done or until {@code
+   * keepGoing} turns false, which is checked before each block.
+   *
+   * @param target the highest block number to migrate
+   * @param keepGoing returns false to stop between blocks
+   * @throws IllegalStateException if a block's trie log is missing
+   */
+  public void migrateTo(final long target, final BooleanSupplier keepGoing) {
+    migrateToTarget(() -> target, keepGoing);
+  }
+
   @Override
   protected void catchUp() {
+    // Reads the live, moving target so blocks arriving during the catch-up are included.
+    migrateToTarget(targetBlock::get, () -> true);
+  }
+
+  private void migrateToTarget(final LongSupplier target, final BooleanSupplier keepGoing) {
     final long startBlock = migratedBlockNumber.get() + 1;
-    final long initialTarget = targetBlock.get();
+    final long initialTarget = target.getAsLong();
     if (startBlock > initialTarget) {
       return;
     }
@@ -225,7 +258,7 @@ public class BonsaiFlatDbToArchiveMigrator extends TrailingBlockWorker {
           startBlock,
           initialTarget);
     }
-    migrateBlocks(startBlock, targetBlock, shouldLog);
+    migrateBlocks(startBlock, target, shouldLog, keepGoing);
     if (shouldLog) {
       final Duration duration = Duration.between(catchUpStart, Instant.now());
       LOG.info(

@@ -64,6 +64,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.awaitility.Awaitility;
@@ -535,6 +536,54 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     secondMigrator.startOngoingMigration();
     assertThat(secondMigrator.migratedBlockNumber.get()).isEqualTo(5L);
     secondMigrator.close();
+  }
+
+  @Test
+  public void migrateToMigratesUpToTarget() {
+    appendBlocks(5);
+    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator(BOUNDARY_DISABLED);
+
+    migrator.migrateTo(3, () -> true);
+
+    assertThat(getArchivedAccountKey(3L)).isPresent();
+    assertThat(getArchivedAccountKey(4L)).isEmpty();
+    assertThat(migrator.getMigrationProgress()).isEqualTo(Optional.of(3L));
+  }
+
+  @Test
+  public void migrateToStopsBetweenBlocksWhenKeepGoingTurnsFalse() {
+    appendBlocks(5);
+    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator(BOUNDARY_DISABLED);
+    final AtomicInteger checks = new AtomicInteger();
+
+    migrator.migrateTo(5, () -> checks.incrementAndGet() <= 2);
+
+    assertThat(migrator.getMigratedBlockNumber()).isEqualTo(2L);
+  }
+
+  @Test
+  public void migrateToThrowsOnMissingTrieLog() {
+    appendBlocks(3);
+    when(trieLogManager.getTrieLogLayer(hashAt(2L))).thenReturn(Optional.empty());
+    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator(BOUNDARY_DISABLED);
+
+    assertThatThrownBy(() -> migrator.migrateTo(3, () -> true))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("block 2");
+    assertThat(migrator.getMigratedBlockNumber()).isEqualTo(1L);
+  }
+
+  @Test
+  public void loadMigrationProgressSeedsFromSavedProgress() throws Exception {
+    appendBlocks(5);
+    final BonsaiFlatDbToArchiveMigrator firstMigrator = createMigrator(BOUNDARY_DISABLED);
+    firstMigrator.migrate().get(MIGRATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    firstMigrator.close();
+
+    final BonsaiFlatDbToArchiveMigrator secondMigrator = createMigrator(BOUNDARY_DISABLED);
+    secondMigrator.loadMigrationProgress();
+
+    assertThat(secondMigrator.getMigratedBlockNumber()).isEqualTo(5L);
   }
 
   // --- test helpers ---
