@@ -48,11 +48,10 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 
 /**
- * Round trips of EIP-8141 frame transactions through {@link FrameTransactionEncoder} and {@link
+ * Round trips of EIP-8141 frame transactions through {@link TransactionEncoder} and {@link
+ * TransactionDecoder}, which dispatch type 0x06 to {@link FrameTransactionEncoder} and {@link
  * FrameTransactionDecoder}, and of frame transaction receipts through {@link
- * TransactionReceiptEncoder} and {@link TransactionReceiptDecoder}. The transaction decoder is not
- * registered for type 0x06 in {@link TransactionDecoder} yet, so the transaction round trips call
- * it directly.
+ * TransactionReceiptEncoder} and {@link TransactionReceiptDecoder}.
  */
 class FrameTransactionCodecTest {
 
@@ -109,7 +108,8 @@ class FrameTransactionCodecTest {
         TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY);
     assertThat(encoded.get(0)).isEqualTo((byte) 0x06);
 
-    final Transaction decoded = FrameTransactionDecoder.decode(encoded);
+    final Transaction decoded =
+        TransactionDecoder.decodeOpaqueBytes(encoded, EncodingContext.BLOCK_BODY);
     assertThat(decoded.getType()).isEqualTo(TransactionType.FRAME);
     assertThat(decoded.getSender().getBytes()).isEqualTo(SENDER.getBytes());
     assertThat(decoded.getNonce()).isEqualTo(3);
@@ -175,7 +175,8 @@ class FrameTransactionCodecTest {
         Transaction.builder().copiedFrom(sampleTransaction()).nonceKeys(keys).build();
     final Bytes encoded = TransactionEncoder.encodeOpaqueBytes(keyed, EncodingContext.BLOCK_BODY);
 
-    final Transaction decoded = FrameTransactionDecoder.decode(encoded);
+    final Transaction decoded =
+        TransactionDecoder.decodeOpaqueBytes(encoded, EncodingContext.BLOCK_BODY);
     assertThat(decoded.getNonceKeys()).contains(keys);
     assertThat(decoded.getNonce()).isEqualTo(3);
     assertThat(TransactionEncoder.encodeOpaqueBytes(decoded, EncodingContext.BLOCK_BODY))
@@ -301,7 +302,8 @@ class FrameTransactionCodecTest {
             .build();
     final Bytes encoded =
         TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY);
-    final Transaction decoded = FrameTransactionDecoder.decode(encoded);
+    final Transaction decoded =
+        TransactionDecoder.decodeOpaqueBytes(encoded, EncodingContext.BLOCK_BODY);
     assertThat(decoded.getVersionedHashes().orElseThrow()).containsExactly(versionedHash);
     assertThat(decoded.getMaxFeePerBlobGas()).contains(Wei.of(1));
     assertThat(decoded.getBlobCount()).isEqualTo(1);
@@ -310,8 +312,9 @@ class FrameTransactionCodecTest {
   @Test
   void decodedBlobLessFrameTransactionCarriesAnEmptyVersionedHashList() {
     final Transaction decoded =
-        FrameTransactionDecoder.decode(
-            TransactionEncoder.encodeOpaqueBytes(sampleTransaction(), EncodingContext.BLOCK_BODY));
+        TransactionDecoder.decodeOpaqueBytes(
+            TransactionEncoder.encodeOpaqueBytes(sampleTransaction(), EncodingContext.BLOCK_BODY),
+            EncodingContext.BLOCK_BODY);
     assertThat(decoded.getVersionedHashes()).contains(List.of());
     assertThat(decoded.getBlobCount()).isZero();
   }
@@ -323,7 +326,8 @@ class FrameTransactionCodecTest {
             FrameTransactionCodecTest::writeLegacyNonceKeys,
             out -> out.writeBytes(Bytes.repeat((byte) 1, 9)),
             FrameTransactionCodecTest::writeSampleFees);
-    assertThatThrownBy(() -> FrameTransactionDecoder.decode(encoded))
+    assertThatThrownBy(
+            () -> TransactionDecoder.decodeOpaqueBytes(encoded, EncodingContext.BLOCK_BODY))
         .isInstanceOf(FrameFieldException.class)
         .hasMessage("nonce sequence exceeds 2^64-1");
   }
@@ -335,7 +339,8 @@ class FrameTransactionCodecTest {
             out -> out.writeList(List.of(Bytes.repeat((byte) 1, 33)), (k, o) -> o.writeBytes(k)),
             FrameTransactionCodecTest::writeSampleNonceSeq,
             FrameTransactionCodecTest::writeSampleFees);
-    assertThatThrownBy(() -> FrameTransactionDecoder.decode(encoded))
+    assertThatThrownBy(
+            () -> TransactionDecoder.decodeOpaqueBytes(encoded, EncodingContext.BLOCK_BODY))
         .isInstanceOf(FrameFieldException.class)
         .hasMessage("nonce key exceeds 2^256-1");
   }
@@ -353,7 +358,8 @@ class FrameTransactionCodecTest {
               out.writeUInt256Scalar(Wei.ZERO);
               out.endList();
             });
-    assertThatThrownBy(() -> FrameTransactionDecoder.decode(encoded))
+    assertThatThrownBy(
+            () -> TransactionDecoder.decodeOpaqueBytes(encoded, EncodingContext.BLOCK_BODY))
         .isInstanceOf(FrameFieldException.class)
         .hasMessage("max fee per gas exceeds 2^256-1");
   }
@@ -368,7 +374,8 @@ class FrameTransactionCodecTest {
     writeSampleNonceSeq(out);
     out.writeBytes(Bytes.repeat((byte) 1, 19));
     out.endList();
-    assertThatThrownBy(() -> FrameTransactionDecoder.decode(out.encoded()))
+    assertThatThrownBy(
+            () -> TransactionDecoder.decodeOpaqueBytes(out.encoded(), EncodingContext.BLOCK_BODY))
         .isInstanceOf(RLPException.class)
         .isNotInstanceOf(FrameFieldException.class)
         .hasMessage("Frame transaction sender must be a 20-byte address");
@@ -392,7 +399,8 @@ class FrameTransactionCodecTest {
               out.writeBytes(frame.data());
               out.endList();
             });
-    assertThatThrownBy(() -> FrameTransactionDecoder.decode(encoded))
+    assertThatThrownBy(
+            () -> TransactionDecoder.decodeOpaqueBytes(encoded, EncodingContext.BLOCK_BODY))
         .isInstanceOf(RLPException.class)
         .isNotInstanceOf(FrameFieldException.class)
         .hasMessage("Frame target must be empty or a 20-byte address");
@@ -415,7 +423,8 @@ class FrameTransactionCodecTest {
               out.writeBytes(Bytes.EMPTY);
               out.endList();
             });
-    assertThatThrownBy(() -> FrameTransactionDecoder.decode(encoded))
+    assertThatThrownBy(
+            () -> TransactionDecoder.decodeOpaqueBytes(encoded, EncodingContext.BLOCK_BODY))
         .isInstanceOf(FrameFieldException.class)
         .hasMessage("frame execution gas limit exceeds 2^64-1");
   }
@@ -423,7 +432,8 @@ class FrameTransactionCodecTest {
   @Test
   void rejectsAFrameTransactionWithoutFrames() {
     final Bytes encoded = encodeWithFrame(out -> {});
-    assertThatThrownBy(() -> FrameTransactionDecoder.decode(encoded))
+    assertThatThrownBy(
+            () -> TransactionDecoder.decodeOpaqueBytes(encoded, EncodingContext.BLOCK_BODY))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Frame transaction must have at least one frame");
   }
