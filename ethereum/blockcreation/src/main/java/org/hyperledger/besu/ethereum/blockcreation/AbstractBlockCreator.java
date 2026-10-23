@@ -331,13 +331,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final GasUsage usage =
           computeExcessBlobGas(transactionResults, newProtocolSpec, parentHeader);
 
-      // Compute the state root on the accumulator once, then pass it to persist to save the trie
-      // log without computing it a second time.
+      // computed once on the accumulator, persist reuses it to save the trie log
       final StateRootComputation stateRoot =
-          savesTrieLog(disposableWorldState, transactionResults)
-              ? STATE_ROOT_COMMITTER.compute(
-                  disposableWorldState, null, disposableWorldState.updater())
-              : null;
+          stateRootForTrieLog(disposableWorldState, transactionResults);
       BlockHeaderBuilder builder =
           BlockHeaderBuilder.create()
               .populateFrom(processableBlockHeader)
@@ -378,8 +374,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       operationTracer.traceEndBlock(blockHeader, blockBody);
       timings.register("blockAssembled");
       if (stateRoot != null) {
-        saveTrieLog(disposableWorldState, blockHeader, stateRoot);
-        timings.register("trieLogSaved");
+        try {
+          disposableWorldState.persist(blockHeader, (ws, header, updater) -> stateRoot);
+          timings.register("trieLogSaved");
+        } catch (final RuntimeException e) {
+          // block is still valid, import will just execute it again
+          LOG.warn("Unable to save the trie log of created block {}", blockHeader.toLogString(), e);
+        }
       }
       return new BlockCreationResult(
           block, transactionResults, timings, blockAccessList, maybeRequests);
@@ -395,7 +396,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   /**
    * Save the trie log of created blocks, so the import can use it instead of executing the block
-   * again. Only for frozen path-based world state and blocks with transactions.
+   * again. Only for path-based world state and blocks with transactions.
    *
    * @return true to save the trie log
    */
@@ -403,25 +404,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     return false;
   }
 
-  private boolean savesTrieLog(
+  private @Nullable StateRootComputation stateRootForTrieLog(
       final MutableWorldState worldState, final TransactionSelectionResults transactionResults) {
     return savesTrieLogOfCreatedBlocks()
-        && !transactionResults.getSelectedTransactions().isEmpty()
-        && worldState instanceof PathBasedWorldState pathBasedWorldState
-        && pathBasedWorldState.isStorageFrozen()
-        && !pathBasedWorldState.isTrieDisabled();
-  }
-
-  private void saveTrieLog(
-      final MutableWorldState worldState,
-      final BlockHeader blockHeader,
-      final StateRootComputation stateRoot) {
-    try {
-      worldState.persist(blockHeader, (ws, header, updater) -> stateRoot);
-    } catch (final RuntimeException e) {
-      // block is still valid, import will just execute it again
-      LOG.warn("Unable to save the trie log of created block {}", blockHeader.toLogString(), e);
-    }
+            && !transactionResults.getSelectedTransactions().isEmpty()
+            && worldState instanceof PathBasedWorldState
+        ? STATE_ROOT_COMMITTER.compute(worldState, null, worldState.updater())
+        : null;
   }
 
   record GasUsage(BlobGas excessBlobGas, BlobGas used) {}
