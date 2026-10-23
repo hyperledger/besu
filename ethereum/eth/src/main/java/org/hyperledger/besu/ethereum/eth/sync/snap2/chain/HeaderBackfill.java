@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -65,6 +66,7 @@ public final class HeaderBackfill {
   private volatile long lowestStored;
   private volatile boolean stopped;
   private volatile Instant started = Instant.now();
+  // guarded by this
   private Pipeline<Segment> pipeline;
 
   /**
@@ -120,30 +122,7 @@ public final class HeaderBackfill {
   /** Downloads every header in between and checks the chain reaches the floor. */
   public CompletableFuture<Void> run(final ExecutorService executor) {
     started = Instant.now();
-    if (top.getNumber() > floor.getNumber() + 1) {
-      LOG.info(
-          "SNAP2 headers started | {} headers, {} down to {}",
-          ProgressFormat.compact(total()),
-          ProgressFormat.block(top.getNumber() - 1),
-          ProgressFormat.block(floor.getNumber() + 1));
-      pipeline =
-          PipelineBuilder.createPipelineFrom(
-                  "headerSegments",
-                  new Segments(top.getNumber() - 1, floor.getNumber() + 1, headersPerRequest),
-                  parallelism,
-                  metricsSystem.createLabelledCounter(
-                      BesuMetricCategory.SYNCHRONIZER,
-                      "snap2_header_pipeline_processed_total",
-                      "Header segments processed by the SNAP2 sync",
-                      "step",
-                      "action"),
-                  false,
-                  "snap2-headers")
-              .thenProcessAsyncOrdered("downloadHeaders", this::download, parallelism)
-              .andFinishWith("storeHeaders", this::verifyAndStore);
-    }
-    final CompletableFuture<Void> done =
-        pipeline == null ? CompletableFuture.completedFuture(null) : pipeline.start(executor);
+    final CompletableFuture<Void> done = start(executor);
     return done.thenRun(
         () -> {
           if (!expected.equals(floor.getHash())) {
@@ -161,15 +140,42 @@ public final class HeaderBackfill {
         });
   }
 
+  // under the lock, so that a stop comes first or finds the pipeline started
+  private synchronized CompletableFuture<Void> start(final ExecutorService executor) {
+    if (stopped) {
+      return CompletableFuture.failedFuture(new CancellationException("header download stopped"));
+    }
+    if (top.getNumber() <= floor.getNumber() + 1) {
+      return CompletableFuture.completedFuture(null);
+    }
+    LOG.info(
+        "SNAP2 headers started | {} headers, {} down to {}",
+        ProgressFormat.compact(total()),
+        ProgressFormat.block(top.getNumber() - 1),
+        ProgressFormat.block(floor.getNumber() + 1));
+    pipeline =
+        PipelineBuilder.createPipelineFrom(
+                "headerSegments",
+                new Segments(top.getNumber() - 1, floor.getNumber() + 1, headersPerRequest),
+                parallelism,
+                metricsSystem.createLabelledCounter(
+                    BesuMetricCategory.SYNCHRONIZER,
+                    "snap2_header_pipeline_processed_total",
+                    "Header segments processed by the SNAP2 sync",
+                    "step",
+                    "action"),
+                false,
+                "snap2-headers")
+            .thenProcessAsyncOrdered("downloadHeaders", this::download, parallelism)
+            .andFinishWith("storeHeaders", this::verifyAndStore);
+    return pipeline.start(executor);
+  }
+
   /** Stops the download; no header is stored afterwards. */
   public synchronized void stop() {
     stopped = true;
     if (pipeline != null) {
-      try {
-        pipeline.abort();
-      } catch (final IllegalStateException notStarted) {
-        // nothing to abort
-      }
+      pipeline.abort();
     }
   }
 
