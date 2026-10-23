@@ -51,6 +51,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Property;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -384,6 +388,7 @@ class BonsaiArchiveTrailingSyncTest {
     migrated.set(580L);
     when(archiver.coverageEnd()).thenReturn(OptionalLong.of(600L));
     start();
+    sync.setProofsArchiving(true);
     reorg(1100, 590);
     assertThat(sync.isProofsHalted()).isTrue();
     assertThat(sync.isFlatHalted()).isFalse();
@@ -407,5 +412,134 @@ class BonsaiArchiveTrailingSyncTest {
     reorg(1100, 590, false);
     assertThat(sync.isFlatHalted()).isFalse();
     assertThat(sync.isProofsHalted()).isFalse();
+  }
+
+  @Test
+  void reorgBelowInlineCoverageWhileProofsDisabledHaltsNothing() {
+    migrated.set(0L);
+    when(archiver.coverageEnd()).thenReturn(OptionalLong.of(600L));
+    start();
+    reorg(1100, 590);
+    assertThat(sync.isProofsHalted()).isFalse();
+    assertThat(sync.isFlatHalted()).isFalse();
+  }
+
+  @Test
+  void reorgAtWorkerPositionHaltsNothing() {
+    migrated.set(600L);
+    start();
+    reorg(1100, 600);
+    assertThat(sync.isFlatHalted()).isFalse();
+  }
+
+  @Test
+  @SuppressWarnings("BannedMethod")
+  void repeatedReorgLogsHaltOnce() {
+    final List<String> errors = new CopyOnWriteArrayList<>();
+    final org.apache.logging.log4j.core.Logger logger =
+        (org.apache.logging.log4j.core.Logger)
+            LogManager.getLogger(BonsaiArchiveTrailingSync.class);
+    final AbstractAppender appender =
+        new AbstractAppender("halt-capture", null, null, true, Property.EMPTY_ARRAY) {
+          @Override
+          public void append(final LogEvent event) {
+            if (event.getLevel().isMoreSpecificThan(org.apache.logging.log4j.Level.ERROR)) {
+              errors.add(event.getMessage().getFormattedMessage());
+            }
+          }
+        };
+    appender.start();
+    logger.addAppender(appender);
+    try {
+      migrated.set(600L);
+      start();
+      reorg(1100, 590);
+      reorg(1101, 580);
+      assertThat(sync.isFlatHalted()).isTrue();
+      assertThat(errors).hasSize(1);
+      assertThat(errors.getFirst()).contains("halting it until restart");
+    } finally {
+      logger.removeAppender(appender);
+      appender.stop();
+    }
+  }
+
+  @Test
+  void haltStopsTheRunningStep() throws Exception {
+    final CountDownLatch entered = new CountDownLatch(1);
+    final AtomicBoolean sawStop = new AtomicBoolean(false);
+    migrated.set(600L);
+    doAnswer(
+            inv -> {
+              final BooleanSupplier keepGoing = inv.getArgument(1);
+              entered.countDown();
+              while (keepGoing.getAsBoolean()) {
+                Thread.sleep(5);
+              }
+              sawStop.set(true);
+              return null;
+            })
+        .when(migrator)
+        .migrateTo(anyLong(), any());
+    start();
+    sync.startFlatArchive();
+    head(2000);
+    assertThat(entered.await(5, TimeUnit.SECONDS)).isTrue();
+
+    reorg(2100, 590);
+
+    await().atMost(Duration.ofSeconds(5)).untilTrue(sawStop);
+    assertThat(sync.isFlatHalted()).isTrue();
+  }
+
+  @Test
+  void errorBacksOffWithoutStoppingProofs() {
+    final List<Long> callNanos = new CopyOnWriteArrayList<>();
+    doAnswer(
+            inv -> {
+              callNanos.add(System.nanoTime());
+              if (callNanos.size() == 1) {
+                throw new AssertionError("x");
+              }
+              migrated.set(inv.getArgument(0));
+              return null;
+            })
+        .when(migrator)
+        .migrateTo(anyLong(), any());
+    start();
+    sync.startFlatArchive();
+    sync.setProofsArchiving(true);
+
+    head(1000);
+    verify(archiver, timeout(5_000)).archiveTo(eq(520L), any());
+    verify(migrator, timeout(5_000).times(2)).migrateTo(eq(520L), any());
+    // The retry waited out the 20 ms initial backoff instead of looping straight back.
+    assertThat(TimeUnit.NANOSECONDS.toMillis(callNanos.get(1) - callNanos.get(0)))
+        .isGreaterThanOrEqualTo(20L);
+  }
+
+  @Test
+  void backoffRetriesWithoutAHeadEvent() {
+    doThrow(new IllegalStateException("missing trie log"))
+        .doAnswer(
+            inv -> {
+              migrated.set(inv.getArgument(0));
+              return null;
+            })
+        .when(migrator)
+        .migrateTo(anyLong(), any());
+    start();
+    sync.startFlatArchive();
+
+    head(1000);
+    verify(migrator, timeout(5_000).times(2)).migrateTo(eq(520L), any());
+  }
+
+  @Test
+  void startSeedsTargetFromChainHead() {
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(1000L);
+    start();
+    sync.startFlatArchive();
+    verify(migrator, timeout(5_000)).migrateTo(eq(520L), any());
   }
 }

@@ -246,7 +246,7 @@ class TrailingTrieNodeArchiverTest {
   // --- catch-up before live capture ---
 
   @Test
-  void catchUpToWithoutCoverageHasNothingToFill() {
+  void catchUpToWithoutCoverageReturnsTrueWithoutArchiving() {
     appendBlocks(10);
     final TrailingTrieNodeArchiver archiver = createRealArchiver();
 

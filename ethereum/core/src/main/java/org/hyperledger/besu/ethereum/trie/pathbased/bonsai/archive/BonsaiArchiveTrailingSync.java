@@ -129,6 +129,8 @@ public final class BonsaiArchiveTrailingSync implements Closeable {
       return;
     }
     blockObserverId = OptionalLong.of(blockchain.observeBlockAdded(this::onBlockAdded));
+    // Heads that arrived before the observer was registered would otherwise leave the target at 0.
+    targetBlock.accumulateAndGet(sharedTarget(blockchain.getChainHeadBlockNumber()), Math::max);
   }
 
   private void onBlockAdded(final BlockAddedEvent event) {
@@ -159,17 +161,24 @@ public final class BonsaiArchiveTrailingSync implements Closeable {
     if (ancestor < migrator.getMigratedBlockNumber()) {
       haltForReorg(flat, "flat", ancestor, migrator.getMigratedBlockNumber());
     }
-    archiver
-        .map(TrailingTrieNodeArchiver::coverageEnd)
-        .filter(end -> end.isPresent() && ancestor < end.getAsLong())
-        .ifPresent(end -> haltForReorg(proofs, "proofs", ancestor, end.getAsLong()));
+    // While inline capture archives proofs, the trailing archiver is off and its coverage is not
+    // its own to guard.
+    if (proofsEnabled) {
+      archiver
+          .map(TrailingTrieNodeArchiver::coverageEnd)
+          .filter(end -> end.isPresent() && ancestor < end.getAsLong())
+          .ifPresent(end -> haltForReorg(proofs, "proofs", ancestor, end.getAsLong()));
+    }
   }
 
   private void haltForReorg(
       final WorkerState worker, final String workerName, final long ancestor, final long position) {
+    if (worker.halted) {
+      return;
+    }
     worker.halted = true;
     LOG.error(
-        "Chain reorg to common ancestor {} replaced blocks the {} archive already holds (up to {}); halting it. Resync the archive to recover.",
+        "Chain reorg to common ancestor {} replaced blocks the {} archive already holds (up to {}); halting it until restart. Resync the archive to recover.",
         ancestor,
         workerName,
         position);
@@ -246,6 +255,10 @@ public final class BonsaiArchiveTrailingSync implements Closeable {
     return !closed && !catchUpPending;
   }
 
+  private boolean keepGoing(final WorkerState worker) {
+    return keepGoing() && !worker.halted;
+  }
+
   private boolean flatDue(final long target) {
     return flatEnabled && migrator.getMigratedBlockNumber() < target;
   }
@@ -287,7 +300,7 @@ public final class BonsaiArchiveTrailingSync implements Closeable {
             flat,
             migrator::getMigratedBlockNumber,
             target,
-            () -> migrator.migrateTo(target, this::keepGoing));
+            () -> migrator.migrateTo(target, () -> keepGoing(flat)));
       }
       // Checked again so a proofs step does not roll back only to yield straight away.
       archiver.ifPresent(
@@ -297,7 +310,7 @@ public final class BonsaiArchiveTrailingSync implements Closeable {
                   proofs,
                   trieNodeArchiver::getArchivedBlockNumber,
                   target,
-                  () -> trieNodeArchiver.archiveTo(target, this::keepGoing));
+                  () -> trieNodeArchiver.archiveTo(target, () -> keepGoing(proofs)));
             }
           });
     } finally {
@@ -319,9 +332,11 @@ public final class BonsaiArchiveTrailingSync implements Closeable {
       worker.succeeded();
     } catch (final TrailingTrieNodeArchiver.ArchiveGapException e) {
       // Retrying cannot recreate a missing trie log; the archive needs a resync.
-      worker.halted = true;
-      LOG.error(e.getMessage());
-    } catch (final RuntimeException e) {
+      if (!worker.halted) {
+        worker.halted = true;
+        LOG.error(e.getMessage());
+      }
+    } catch (final RuntimeException | Error e) {
       if (closed) {
         LOG.debug("{} step interrupted by close", worker.name, e);
         return;
