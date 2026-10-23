@@ -40,8 +40,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
 
@@ -55,6 +57,8 @@ class HeaderBackfillTest {
   private final FakeSender sender = new FakeSender();
   private final QueuedExecutor executor = new QueuedExecutor();
   private final List<BlockHeader> stored = new ArrayList<>();
+  // each list the back-fill handed to its store
+  private final List<List<BlockHeader>> batches = new ArrayList<>();
 
   @Test
   void storesTheHeadersDownToTheFloor() {
@@ -68,6 +72,14 @@ class HeaderBackfillTest {
     assertThat(backfill.lowestStored()).isEqualTo(1);
     // top down, each segment highest first
     assertThat(stored).containsExactlyElementsOf(chain.subList(1, 100).reversed());
+  }
+
+  @Test
+  void runsOnce() {
+    final HeaderBackfill backfill = backfill(chain.get(10), chain.get(10));
+    backfill.run(executor);
+
+    assertThatThrownBy(() -> backfill.run(executor)).isInstanceOf(IllegalStateException.class);
   }
 
   @Test
@@ -85,11 +97,27 @@ class HeaderBackfillTest {
   }
 
   @Test
-  void storesTheTrustedChainFromShortAnswersThatMixChains() {
-    // peers answer four headers at most, and serve by number another chain from block 31 to 35
+  void completesShortAnswersWithinTheirSegment() {
+    // peers answer four headers at most, so each segment goes on down by hash
     sender.answerAtMost(4);
     sender.serve(chain);
-    sender.serve(fork(chain.subList(0, 31), 35));
+    final HeaderBackfill backfill = backfill(chain.getFirst(), chain.get(60));
+
+    final CompletableFuture<Void> done = backfill.run(executor);
+    executor.runAll();
+
+    assertThat(done).isCompleted();
+    assertThat(stored).containsExactlyElementsOf(chain.subList(1, 60).reversed());
+    // each segment stored whole, not completed by the next one
+    assertThat(batches).extracting(List::size).containsExactly(10, 10, 10, 10, 10, 9);
+  }
+
+  @Test
+  void fetchesByHashASegmentThePeersDoNotServeByNumber() {
+    // blocks 20 to 29 are known by hash only, so their request by number fails
+    sender.serve(chain.subList(0, 20));
+    sender.serve(chain.subList(30, 101));
+    sender.know(chain);
     final HeaderBackfill backfill = backfill(chain.getFirst(), chain.get(60));
 
     final CompletableFuture<Void> done = backfill.run(executor);
@@ -116,21 +144,73 @@ class HeaderBackfillTest {
   @Test
   void storesNothingOnceStopped() {
     sender.serve(chain);
+    final List<GetBlockHeadersMessage> asked = new ArrayList<>();
+    sender.beforeAnswer = asked::add;
     final HeaderBackfill backfill = backfill(chain.getFirst(), chain.get(100));
     backfill.stop();
 
     final CompletableFuture<Void> done = backfill.run(executor);
     executor.runAll();
 
-    assertThat(done).isCompletedExceptionally();
+    assertThatThrownBy(done::join).hasCauseInstanceOf(CancellationException.class);
+    assertThat(asked).isEmpty();
     assertThat(stored).isEmpty();
+  }
+
+  @Test
+  void storesNothingOnceStoppedWhileASegmentIsFetchedAgain() {
+    sender.serve(chain);
+    // a peer serves another block 29 by number, so the segment from 29 down is fetched by hash
+    sender.serve(List.of(child(chain.get(28), 29, 1)));
+    final HeaderBackfill backfill = backfill(chain.getFirst(), chain.get(60));
+    sender.beforeAnswer =
+        message -> {
+          if (message.hash().isPresent()) {
+            backfill.stop();
+          }
+        };
+
+    final CompletableFuture<Void> done = backfill.run(executor);
+    executor.runAll();
+
+    assertThatThrownBy(done::join).hasCauseInstanceOf(CancellationException.class);
+    // the segments above the one fetched again
+    assertThat(stored).containsExactlyElementsOf(chain.subList(30, 60).reversed());
+  }
+
+  @Test
+  void checksTheTopItselfWhenItIsTheFloor() {
+    final CompletableFuture<Void> same = backfill(chain.get(10), chain.get(10)).run(executor);
+    final CompletableFuture<Void> other =
+        backfill(chain.get(10), child(chain.get(9), 10, 1)).run(executor);
+
+    assertThat(same).isCompleted();
+    assertThatThrownBy(other::join).hasCauseInstanceOf(WrongChainException.class);
+  }
+
+  @Test
+  void stopsWithoutItsLockWhileThePipelineRunsItsCallbacks() {
+    sender.serve(chain);
+    final HeaderBackfill backfill = backfill(chain.getFirst(), chain.get(100));
+    sender.beforeAnswer = message -> backfill.stop();
+    final CompletableFuture<Void> done = backfill.run(executor);
+    // else a stop from a callback deadlocks with another stop holding our lock
+    final List<Boolean> locked = new ArrayList<>();
+    done.whenComplete((unused, error) -> locked.add(Thread.holdsLock(backfill)));
+
+    executor.runAll();
+
+    assertThat(locked).containsExactly(false);
   }
 
   private HeaderBackfill backfill(final BlockHeader floor, final BlockHeader top) {
     return new HeaderBackfill(
         sender,
         ProtocolScheduleFixture.MAINNET,
-        stored::addAll,
+        batch -> {
+          batches.add(batch);
+          stored.addAll(batch);
+        },
         new HeaderFetcher(
             sender, ProtocolScheduleFixture.MAINNET, Optional::empty, HEADERS_PER_REQUEST),
         floor,
@@ -177,6 +257,8 @@ class HeaderBackfillTest {
     private final Map<Long, BlockHeader> served = new HashMap<>();
     private final Map<Hash, BlockHeader> known = new HashMap<>();
     private int maxAnswer = Integer.MAX_VALUE;
+    // called with each request before it is answered
+    private Consumer<GetBlockHeadersMessage> beforeAnswer = message -> {};
 
     private FakeSender() {
       when(peer.getAgreedCapabilities()).thenReturn(Set.of(EthProtocol.LATEST));
@@ -204,6 +286,7 @@ class HeaderBackfillTest {
     public <T> CompletableFuture<Response<T>> submit(
         final SyncRequest<T> request, final Set<EthPeer> excluded) {
       final GetBlockHeadersMessage message = GetBlockHeadersMessage.readFrom(request.message(peer));
+      beforeAnswer.accept(message);
       // a reverse request, from the header asked for down its own chain
       BlockHeader header =
           message
@@ -215,8 +298,13 @@ class HeaderBackfillTest {
         headers.add(header);
         header = known.get(header.getParentHash());
       }
-      return CompletableFuture.completedFuture(
-          new Response<>(request.decode(BlockHeadersMessage.create(headers), peer), peer));
+      // an invalid answer fails the request, as with the real sender
+      try {
+        return CompletableFuture.completedFuture(
+            new Response<>(request.decode(BlockHeadersMessage.create(headers), peer), peer));
+      } catch (final RuntimeException e) {
+        return CompletableFuture.failedFuture(e);
+      }
     }
 
     @Override

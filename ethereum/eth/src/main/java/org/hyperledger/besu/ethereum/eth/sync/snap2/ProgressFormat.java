@@ -38,16 +38,17 @@ public final class ProgressFormat {
   /** Returns a compact count, as in 2,140, 82.9K, 1.31M, 82.9M or 1.20B. */
   public static String compact(final long value) {
     final long magnitude = Math.abs(value);
+    // each unit stops half a shown digit short of the next one, where rounding would reach it
     if (magnitude < 10_000) {
       return count(value);
     }
-    if (magnitude < 1_000_000) {
+    if (magnitude < 1_000_000 - 50) {
       return String.format(Locale.ROOT, "%.1fK", value / 1e3);
     }
-    if (magnitude < 10_000_000) {
+    if (magnitude < 10_000_000 - 5_000) {
       return String.format(Locale.ROOT, "%.2fM", value / 1e6);
     }
-    if (magnitude < 1_000_000_000) {
+    if (magnitude < 1_000_000_000 - 50_000) {
       return String.format(Locale.ROOT, "%.1fM", value / 1e6);
     }
     return String.format(Locale.ROOT, "%.2fB", value / 1e9);
