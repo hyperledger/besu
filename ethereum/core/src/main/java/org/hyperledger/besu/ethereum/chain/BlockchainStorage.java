@@ -56,8 +56,8 @@ public interface BlockchainStorage {
   Optional<Hash> getTransactionHashBySenderAndNonce(Address sender, long nonce);
 
   /**
-   * Returns the lowest block whose body and receipts a sync stored, as it did those of every block
-   * above it up to the chain head, or empty when no sync recorded one.
+   * Returns the block from which a sync stored every body and receipts up to the chain head, or
+   * empty when no sync recorded one.
    */
   Optional<Long> getBodiesFrom();
 
