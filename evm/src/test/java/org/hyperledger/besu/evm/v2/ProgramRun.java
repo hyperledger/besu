@@ -198,7 +198,7 @@ final class ProgramRun {
       final long gas,
       final boolean isStatic,
       final List<Bytes32> slots) {
-    return execute(evm, code, calleeCode, secondCalleeCode, gas, isStatic, slots, false).outcome();
+    return execute(evm, code, calleeCode, secondCalleeCode, gas, isStatic, slots).outcome();
   }
 
   /**
@@ -223,7 +223,9 @@ final class ProgramRun {
       final long gas,
       final boolean isStatic,
       final List<Bytes32> slots) {
-    return execute(evm, code, calleeCode, secondCalleeCode, gas, isStatic, slots, true).outcome();
+    return execute(
+            evm, code, calleeCode, secondCalleeCode, gas, isStatic, slots, new StepRecorder())
+        .outcome();
   }
 
   /**
@@ -246,10 +248,24 @@ final class ProgramRun {
       final long gas,
       final boolean isStatic,
       final List<Bytes32> slots) {
-    return execute(evm, code, calleeCode, secondCalleeCode, gas, isStatic, slots, false);
+    return execute(
+        evm, code, calleeCode, secondCalleeCode, gas, isStatic, slots, OperationTracer.NO_TRACING);
   }
 
-  private static Execution execute(
+  /**
+   * As {@link #execute(EVM, Bytes, Bytes, Bytes, long, boolean, List)}, with the given tracer.
+   *
+   * @param evm the EVM to run it on
+   * @param code the contract's code
+   * @param calleeCode the code of CALLEE
+   * @param secondCalleeCode the code of SECOND_CALLEE
+   * @param gas the gas the contract is called with
+   * @param isStatic whether the contract is called in a static frame
+   * @param slots the storage and transient storage slots to compare
+   * @param tracer the tracer to run it with
+   * @return the execution
+   */
+  static Execution execute(
       final EVM evm,
       final Bytes code,
       final Bytes calleeCode,
@@ -257,9 +273,7 @@ final class ProgramRun {
       final long gas,
       final boolean isStatic,
       final List<Bytes32> slots,
-      final boolean traced) {
-    final StepRecorder recorder = new StepRecorder();
-    final OperationTracer tracer = traced ? recorder : OperationTracer.NO_TRACING;
+      final OperationTracer tracer) {
     final ToyWorld world = new ToyWorld();
     final WorldUpdater setup = world.updater();
     setup.getOrCreate(SENDER).setBalance(Wei.of(1_000_000));
@@ -328,7 +342,7 @@ final class ProgramRun {
             accounts(updater, slots),
             transientStorage(frame, slots),
             accesses.accesses,
-            recorder.steps);
+            tracer instanceof StepRecorder recorder ? recorder.steps : List.of());
     return new Execution(frame, updater, outcome);
   }
 

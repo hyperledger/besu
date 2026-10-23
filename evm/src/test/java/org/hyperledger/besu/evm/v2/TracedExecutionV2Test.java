@@ -43,7 +43,6 @@ class TracedExecutionV2Test {
   // PUSH1 0x2a PUSH1 0 MSTORE PUSH1 7 PUSH1 1 SSTORE STOP
   private static final Bytes STORES = Bytes.fromHexString("0x602a600052600760015500");
   private static final EVM EVM_V1 = MainnetEVMs.osaka(BigInteger.ONE, ProgramRun.V1);
-  private static final EVM EVM_V2 = MainnetEVMs.osaka(BigInteger.ONE, ProgramRun.V2);
 
   private final EVM evm =
       MainnetEVMs.osaka(
@@ -220,7 +219,7 @@ class TracedExecutionV2Test {
         ProgramRun.execute(EVM_V1, STORES, Bytes.EMPTY, Bytes.EMPTY, 100_000, false, List.of())
             .frame();
     final MessageFrame v2 =
-        ProgramRun.execute(EVM_V2, STORES, Bytes.EMPTY, Bytes.EMPTY, 100_000, false, List.of())
+        ProgramRun.execute(evm, STORES, Bytes.EMPTY, Bytes.EMPTY, 100_000, false, List.of())
             .frame();
 
     assertThat(v2.getState()).isEqualTo(MessageFrame.State.COMPLETED_SUCCESS);
@@ -229,6 +228,26 @@ class TracedExecutionV2Test {
     // v1 records them whether or not anything traces
     assertThat(v1.getMaybeUpdatedMemory()).isPresent();
     assertThat(v1.getMaybeUpdatedStorage()).isPresent();
+  }
+
+  @Test
+  void enabledTracerWithoutOperationsRecordsNoMemoryOrStorageUpdates() {
+    // enabled, but only for transaction and call hooks, as in parallel transaction execution
+    final OperationTracer tracer =
+        new OperationTracer() {
+          @Override
+          public boolean tracesOperations() {
+            return false;
+          }
+        };
+
+    final MessageFrame frame =
+        ProgramRun.execute(evm, STORES, Bytes.EMPTY, Bytes.EMPTY, 100_000, false, List.of(), tracer)
+            .frame();
+
+    assertThat(frame.getState()).isEqualTo(MessageFrame.State.COMPLETED_SUCCESS);
+    assertThat(frame.getMaybeUpdatedMemory()).isEmpty();
+    assertThat(frame.getMaybeUpdatedStorage()).isEmpty();
   }
 
   @Test
@@ -242,7 +261,7 @@ class TracedExecutionV2Test {
             + UInt256.valueOf(7).toHexString();
 
     final List<String> steps =
-        ProgramRun.runTraced(EVM_V2, STORES, Bytes.EMPTY, Bytes.EMPTY, 100_000, false, List.of())
+        ProgramRun.runTraced(evm, STORES, Bytes.EMPTY, Bytes.EMPTY, 100_000, false, List.of())
             .steps();
 
     assertThat(steps)

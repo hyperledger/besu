@@ -223,7 +223,7 @@ public class MessageFrame {
   // unchanged so that tracers snapshotting the stack every step share objects, as on v1
   private Bytes32[] stackViewV2;
   // Only a tracer that traces operations reads the memory and storage updates operations record,
-  // so EVM v2 turns the records off without one. v1 never does.
+  // so the v2 write methods record them only for one
   private boolean recordsUpdatesForTracerV2 = true;
   private Bytes output = Bytes.EMPTY;
   private Bytes returnData = Bytes.EMPTY;
@@ -608,13 +608,119 @@ public class MessageFrame {
   }
 
   /**
-   * Sets whether operations record their memory and storage updates, read through {@link
+   * Sets whether the v2 write methods record their memory and storage updates, read through {@link
    * #getMaybeUpdatedMemory} and {@link #getMaybeUpdatedStorage}.
    *
    * @param recordsUpdates true if the frame runs for a tracer that traces operations
    */
   public void setRecordsUpdatesForTracerV2(final boolean recordsUpdates) {
     this.recordsUpdatesForTracerV2 = recordsUpdates;
+  }
+
+  /**
+   * As {@link #readMutableMemory(long, long, boolean)} for a memory opcode, recording the read only
+   * for a tracer that traces operations.
+   *
+   * @param offset The offset in memory
+   * @param length The length of the bytes to read
+   * @return The bytes in the specified range
+   */
+  public MutableBytes readMutableMemoryV2(final long offset, final long length) {
+    final MutableBytes memBytes = memory.getMutableBytes(offset, length);
+    if (recordsUpdatesForTracerV2) {
+      setUpdatedMemory(offset, memBytes);
+    }
+    return memBytes;
+  }
+
+  /**
+   * As {@link #writeMemory(long, byte, boolean)} for a memory opcode, recording the update only for
+   * a tracer that traces operations.
+   *
+   * @param offset The offset in memory
+   * @param value The value to set in memory
+   */
+  public void writeMemoryV2(final long offset, final byte value) {
+    memory.setByte(offset, value);
+    if (recordsUpdatesForTracerV2) {
+      setUpdatedMemory(offset, Bytes.of(value));
+    }
+  }
+
+  /**
+   * As {@link #writeMemory(long, long, Bytes, boolean)} for a memory opcode, recording the update
+   * only for a tracer that traces operations.
+   *
+   * @param offset The offset in memory
+   * @param length The length of the bytes to write
+   * @param value The value to write
+   */
+  public void writeMemoryV2(final long offset, final long length, final Bytes value) {
+    memory.setBytes(offset, length, value);
+    if (recordsUpdatesForTracerV2) {
+      setUpdatedMemory(offset, 0, length, value);
+    }
+  }
+
+  /**
+   * As {@link #writeMemoryRightAligned(long, long, Bytes, boolean)} for a memory opcode, recording
+   * the update only for a tracer that traces operations.
+   *
+   * @param offset The offset in memory
+   * @param length The length of the bytes to write
+   * @param value The value to write
+   */
+  public void writeMemoryRightAlignedV2(final long offset, final long length, final Bytes value) {
+    memory.setBytesRightAligned(offset, length, value);
+    if (recordsUpdatesForTracerV2) {
+      setUpdatedMemoryRightAligned(offset, length, value);
+    }
+  }
+
+  /**
+   * As {@link #writeMemory(long, long, long, Bytes, boolean)} for a memory opcode, recording the
+   * update only for a tracer that traces operations.
+   *
+   * @param offset The offset in memory to start writing
+   * @param sourceOffset The offset in the source value to start writing
+   * @param length The length of the bytes to write
+   * @param value The value to write
+   */
+  public void writeMemoryV2(
+      final long offset, final long sourceOffset, final long length, final Bytes value) {
+    memory.setBytes(offset, sourceOffset, length, value);
+    if (recordsUpdatesForTracerV2 && length > 0) {
+      setUpdatedMemory(offset, sourceOffset, length, value);
+    }
+  }
+
+  /**
+   * As {@link #copyMemory(long, long, long, boolean)} for a memory opcode, recording the update
+   * only for a tracer that traces operations.
+   *
+   * @param dst The destination address
+   * @param src The source address
+   * @param length the number of bytes to copy
+   */
+  public void copyMemoryV2(final long dst, final long src, final long length) {
+    if (length > 0) {
+      memory.copy(dst, src, length);
+      if (recordsUpdatesForTracerV2) {
+        setUpdatedMemory(dst, memory.getBytes(dst, length));
+      }
+    }
+  }
+
+  /**
+   * As {@link #storageWasUpdated}, recording the update only for a tracer that traces operations.
+   *
+   * @param storageAddress the storage address
+   * @param value the value
+   */
+  public void storageWasUpdatedV2(final UInt256 storageAddress, final Bytes value) {
+    if (recordsUpdatesForTracerV2) {
+      maybeUpdatedStorage = Optional.of(new StorageEntry(storageAddress, value));
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -732,7 +838,7 @@ public class MessageFrame {
   public MutableBytes readMutableMemory(
       final long offset, final long length, final boolean explicitMemoryRead) {
     final MutableBytes memBytes = memory.getMutableBytes(offset, length);
-    if (explicitMemoryRead && recordsUpdatesForTracerV2) {
+    if (explicitMemoryRead) {
       setUpdatedMemory(offset, memBytes);
     }
     return memBytes;
@@ -747,7 +853,7 @@ public class MessageFrame {
    */
   public void writeMemory(final long offset, final byte value, final boolean explicitMemoryUpdate) {
     memory.setByte(offset, value);
-    if (explicitMemoryUpdate && recordsUpdatesForTracerV2) {
+    if (explicitMemoryUpdate) {
       setUpdatedMemory(offset, Bytes.of(value));
     }
   }
@@ -774,7 +880,7 @@ public class MessageFrame {
   public void writeMemory(
       final long offset, final long length, final Bytes value, final boolean explicitMemoryUpdate) {
     memory.setBytes(offset, length, value);
-    if (explicitMemoryUpdate && recordsUpdatesForTracerV2) {
+    if (explicitMemoryUpdate) {
       setUpdatedMemory(offset, 0, length, value);
     }
   }
@@ -792,7 +898,7 @@ public class MessageFrame {
   public void writeMemoryRightAligned(
       final long offset, final long length, final Bytes value, final boolean explicitMemoryUpdate) {
     memory.setBytesRightAligned(offset, length, value);
-    if (explicitMemoryUpdate && recordsUpdatesForTracerV2) {
+    if (explicitMemoryUpdate) {
       setUpdatedMemoryRightAligned(offset, length, value);
     }
   }
@@ -826,7 +932,7 @@ public class MessageFrame {
       final Bytes value,
       final boolean explicitMemoryUpdate) {
     memory.setBytes(offset, sourceOffset, length, value);
-    if (explicitMemoryUpdate && recordsUpdatesForTracerV2 && length > 0) {
+    if (explicitMemoryUpdate && length > 0) {
       setUpdatedMemory(offset, sourceOffset, length, value);
     }
   }
@@ -845,7 +951,7 @@ public class MessageFrame {
       final long dst, final long src, final long length, final boolean explicitMemoryUpdate) {
     if (length > 0) {
       memory.copy(dst, src, length);
-      if (explicitMemoryUpdate && recordsUpdatesForTracerV2) {
+      if (explicitMemoryUpdate) {
         setUpdatedMemory(dst, memory.getBytes(dst, length));
       }
     }
@@ -895,9 +1001,7 @@ public class MessageFrame {
    * @param value the value
    */
   public void storageWasUpdated(final UInt256 storageAddress, final Bytes value) {
-    if (recordsUpdatesForTracerV2) {
-      maybeUpdatedStorage = Optional.of(new StorageEntry(storageAddress, value));
-    }
+    maybeUpdatedStorage = Optional.of(new StorageEntry(storageAddress, value));
   }
 
   /**
@@ -1540,7 +1644,9 @@ public class MessageFrame {
   }
 
   /**
-   * Gets maybe updated memory.
+   * Gets the memory update recorded for tracers since the last {@link #reset}. On EVM v2 it is
+   * recorded only for a tracer that traces operations, so there an empty value can also mean that
+   * nothing was recorded.
    *
    * @return the maybe updated memory
    */
@@ -1549,7 +1655,9 @@ public class MessageFrame {
   }
 
   /**
-   * Gets maybe updated storage.
+   * Gets the storage update recorded for tracers since the last {@link #reset}. On EVM v2 it is
+   * recorded only for a tracer that traces operations, so there an empty value can also mean that
+   * nothing was recorded.
    *
    * @return the maybe updated storage
    */
