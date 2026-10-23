@@ -382,7 +382,7 @@ public final class StorageTrieUpdater {
                 batch.abort();
                 throw e;
               }
-              // a commit that fails leaves nothing to abort
+              // committed outside the try: a batch whose commit failed can no longer be aborted
               batch.commit();
             });
   }
