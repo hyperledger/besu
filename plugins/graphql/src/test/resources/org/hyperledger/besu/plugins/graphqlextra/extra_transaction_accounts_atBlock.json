@@ -1,0 +1,20 @@
+{
+  "request" : "{ transaction(hash: \"0x9cc6c7e602c56aa30c554bb691377f8703d778cec8845f4b88c0f72516b304f4\") { from(block: 5) { address balance transactionCount } to(block: 5) { address balance transactionCount } } }",
+  "response" : {
+    "data" : {
+      "transaction" : {
+        "from" : {
+          "address" : "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+          "balance" : "0x340ab63a0220c6d5",
+          "transactionCount" : "0x5"
+        },
+        "to" : {
+          "address" : "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+          "balance" : "0x32",
+          "transactionCount" : "0x0"
+        }
+      }
+    }
+  },
+  "statusCode" : 200
+}

@@ -1,0 +1,18 @@
+{
+  "request" : "{ transaction(hash: \"0x9cc6c7e602c56aa30c554bb691377f8703d778cec8845f4b88c0f72516b304f4\") { logs { index topics data account { address } } } }",
+  "response" : {
+    "data" : {
+      "transaction" : {
+        "logs" : [ {
+          "index" : "0x0",
+          "topics" : [ "0x0000000000000000000000000000000000000000000000000000000000000001", "0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b", "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" ],
+          "data" : "0x000000000000000000000000000000000000000000000000000000000000002a",
+          "account" : {
+            "address" : "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"
+          }
+        } ]
+      }
+    }
+  },
+  "statusCode" : 200
+}

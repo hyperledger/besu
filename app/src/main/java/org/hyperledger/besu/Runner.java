@@ -20,12 +20,12 @@ import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.options.PluginsConfigurationOptions;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.KeyPairUtil;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.EngineJsonRpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketService;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.cache.AutoTransactionLogBloomCachingService;
 import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethstats.EthStatsService;
 import org.hyperledger.besu.metrics.MetricsService;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.plugin.services.NetworkEndpointService;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -74,7 +75,6 @@ public class Runner implements AutoCloseable {
   private final NatService natService;
   private final NetworkRunner networkRunner;
   private final Optional<EthStatsService> ethStatsService;
-  private final Optional<GraphQLHttpService> graphQLHttp;
   private final Optional<JsonRpcHttpService> jsonRpc;
   private final Optional<EngineJsonRpcService> engineJsonRpc;
   private final Optional<MetricsService> metrics;
@@ -83,6 +83,8 @@ public class Runner implements AutoCloseable {
   private final Optional<Path> pidPath;
   private final Optional<WebSocketService> webSocketRpc;
   private final TransactionPoolEvictionService transactionPoolEvictionService;
+  private final NetworkEndpointService networkEndpointService;
+  private final BlockchainQueries blockchainQueries;
 
   private final BesuController besuController;
   private final Path dataDir;
@@ -99,7 +101,6 @@ public class Runner implements AutoCloseable {
    * @param natService the nat service
    * @param jsonRpc the json rpc
    * @param engineJsonRpc the engine json rpc
-   * @param graphQLHttp the graph ql http
    * @param webSocketRpc the web socket rpc
    * @param ipcJsonRpc the ipc json rpc
    * @param inProcessRpcMethods the in-process rpc methods
@@ -110,6 +111,8 @@ public class Runner implements AutoCloseable {
    * @param pidPath the pid path
    * @param transactionLogBloomCacher the transaction log bloom cacher
    * @param blockchain the blockchain
+   * @param networkEndpointService the registry of network listeners owned by plugins
+   * @param blockchainQueries the blockchain queries shared by the APIs
    */
   Runner(
       final Vertx vertx,
@@ -117,7 +120,6 @@ public class Runner implements AutoCloseable {
       final NatService natService,
       final Optional<JsonRpcHttpService> jsonRpc,
       final Optional<EngineJsonRpcService> engineJsonRpc,
-      final Optional<GraphQLHttpService> graphQLHttp,
       final Optional<WebSocketService> webSocketRpc,
       final Optional<JsonRpcIpcService> ipcJsonRpc,
       final Map<String, JsonRpcMethod> inProcessRpcMethods,
@@ -127,11 +129,12 @@ public class Runner implements AutoCloseable {
       final Path dataDir,
       final Optional<Path> pidPath,
       final Optional<TransactionLogBloomCacher> transactionLogBloomCacher,
-      final Blockchain blockchain) {
+      final Blockchain blockchain,
+      final NetworkEndpointService networkEndpointService,
+      final BlockchainQueries blockchainQueries) {
     this.vertx = vertx;
     this.networkRunner = networkRunner;
     this.natService = natService;
-    this.graphQLHttp = graphQLHttp;
     this.pidPath = pidPath;
     this.jsonRpc = jsonRpc;
     this.engineJsonRpc = engineJsonRpc;
@@ -142,6 +145,8 @@ public class Runner implements AutoCloseable {
     this.ethStatsService = ethStatsService;
     this.besuController = besuController;
     this.dataDir = dataDir;
+    this.networkEndpointService = networkEndpointService;
+    this.blockchainQueries = blockchainQueries;
     this.autoTransactionLogBloomCachingService =
         transactionLogBloomCacher.map(
             cacher -> new AutoTransactionLogBloomCachingService(blockchain, cacher));
@@ -156,7 +161,6 @@ public class Runner implements AutoCloseable {
 
     jsonRpc.ifPresent(service -> waitForServiceToStart("jsonRpc", service.start()));
     engineJsonRpc.ifPresent(service -> waitForServiceToStart("engineJsonRpc", service.start()));
-    graphQLHttp.ifPresent(service -> waitForServiceToStart("graphQLHttp", service.start()));
     webSocketRpc.ifPresent(service -> waitForServiceToStart("websocketRpc", service.start()));
     ipcJsonRpc.ifPresent(
         service ->
@@ -258,6 +262,8 @@ public class Runner implements AutoCloseable {
    */
   public void stopEphemery(final BesuCommand besuCommand) throws IOException, InterruptedException {
     if (besuController != null) {
+      // the built-in GraphQL plugin owns its HTTP server; free its port before the restart binds it
+      besuCommand.stopGraphQLPlugin();
       stopServices();
       clearDirectory(dataDir);
       besuCommand.setDataPathToParent();
@@ -299,7 +305,6 @@ public class Runner implements AutoCloseable {
     transactionPoolEvictionService.stop();
     jsonRpc.ifPresent(service -> waitForServiceToStop("jsonRpc", service.stop()));
     engineJsonRpc.ifPresent(service -> waitForServiceToStop("engineJsonRpc", service.stop()));
-    graphQLHttp.ifPresent(service -> waitForServiceToStop("graphQLHttp", service.stop()));
     webSocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.stop()));
     ipcJsonRpc.ifPresent(
         service ->
@@ -413,10 +418,6 @@ public class Runner implements AutoCloseable {
     if (port.isPresent()) {
       properties.setProperty("json-rpc", String.valueOf(port.get()));
     }
-    port = getGraphQLHttpPort();
-    if (port.isPresent()) {
-      properties.setProperty("graphql-http", String.valueOf(port.get()));
-    }
     port = getWebSocketPort();
     if (port.isPresent()) {
       properties.setProperty("ws-rpc", String.valueOf(port.get()));
@@ -429,9 +430,39 @@ public class Runner implements AutoCloseable {
     if (port.isPresent()) {
       properties.setProperty("engine-json-rpc", String.valueOf(port.get()));
     }
+    // Listeners owned by plugins, GraphQL's "graphql-http" among them. Properties are stored in
+    // hash order, not insertion order, so adding them after the built-in entries leaves the file
+    // laid out as it was when GraphQL was built in. A built-in entry wins on a key clash.
+    addPluginEndpointPorts(properties);
     // create besu.ports file
     createBesuFile(
         properties, "ports", "This file contains the ports used by the running instance of Besu");
+  }
+
+  private void addPluginEndpointPorts(final Properties properties) {
+    for (final NetworkEndpointService.NetworkEndpoint endpoint :
+        networkEndpointService.getEndpoints()) {
+      try {
+        if (!endpoint.isEnabled()) {
+          continue;
+        }
+        final String key = endpoint.getPortsFileKey();
+        if (properties.getProperty(key) != null) {
+          LOG.warn(
+              "Plugin network endpoint {} uses the ports file key {} of a built-in service; "
+                  + "it is not written to the ports file",
+              endpoint.getServiceName(),
+              key);
+          continue;
+        }
+        final Optional<Integer> listeningPort = endpoint.getListeningPort();
+        if (listeningPort.isPresent()) {
+          properties.setProperty(key, String.valueOf(listeningPort.get()));
+        }
+      } catch (final RuntimeException e) {
+        LOG.warn("Failed to read the port of a plugin network endpoint: {}", e.toString());
+      }
+    }
   }
 
   private void writeBesuNetworksToFile() {
@@ -497,15 +528,6 @@ public class Runner implements AutoCloseable {
   }
 
   /**
-   * Gets GraphQl http port.
-   *
-   * @return the graph ql http port
-   */
-  public Optional<Integer> getGraphQLHttpPort() {
-    return graphQLHttp.map(service -> service.socketAddress().getPort());
-  }
-
-  /**
    * Gets web socket port.
    *
    * @return the web socket port
@@ -525,6 +547,16 @@ public class Runner implements AutoCloseable {
     } else {
       return Optional.empty();
     }
+  }
+
+  /**
+   * Gets the blockchain queries shared by the JSON-RPC APIs, so that plugin services use the same
+   * gas price oracle and log bloom cache.
+   *
+   * @return the blockchain queries
+   */
+  public BlockchainQueries getBlockchainQueries() {
+    return blockchainQueries;
   }
 
   /**

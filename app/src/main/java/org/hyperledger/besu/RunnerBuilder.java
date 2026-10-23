@@ -26,11 +26,6 @@ import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLContextType;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetchers;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.EngineJsonRpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -62,6 +57,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.pending.
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.pending.PendingTransactionSubscriptionService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing.SyncingSubscriptionService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.transactionreceipts.TransactionReceiptsSubscriptionService;
+import org.hyperledger.besu.ethereum.api.pluginadapter.NetworkEndpointServiceImpl;
 import org.hyperledger.besu.ethereum.api.pluginadapter.RpcEndpointServiceImpl;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -124,11 +120,11 @@ import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.HealthCheckService;
+import org.hyperledger.besu.plugin.services.NetworkEndpointService;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.NetworkUtility;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -138,19 +134,16 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import graphql.GraphQL;
 import inet.ipaddr.IPAddress;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -182,7 +175,6 @@ public class RunnerBuilder {
   private EthstatsOptions ethstatsOptions;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private Optional<JsonRpcConfiguration> engineJsonRpcConfiguration = Optional.empty();
-  private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
   private InProcessRpcConfiguration inProcessRpcConfiguration;
   private ApiConfiguration apiConfiguration;
@@ -198,6 +190,7 @@ public class RunnerBuilder {
   private boolean autoLogBloomCaching = true;
   private StorageProvider storageProvider;
   private RpcEndpointServiceImpl rpcEndpointServiceImpl;
+  private NetworkEndpointService networkEndpointService = new NetworkEndpointServiceImpl();
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
   private List<IPAddress> allowedSubnets = new ArrayList<>();
@@ -431,17 +424,6 @@ public class RunnerBuilder {
   }
 
   /**
-   * Add GraphQl configuration.
-   *
-   * @param graphQLConfiguration the graph ql configuration
-   * @return the runner builder
-   */
-  public RunnerBuilder graphQLConfiguration(final GraphQLConfiguration graphQLConfiguration) {
-    this.graphQLConfiguration = graphQLConfiguration;
-    return this;
-  }
-
-  /**
    * Add Web socket configuration.
    *
    * @param webSocketConfiguration the web socket configuration
@@ -616,6 +598,18 @@ public class RunnerBuilder {
    */
   public RunnerBuilder rpcEndpointService(final RpcEndpointServiceImpl rpcEndpointService) {
     this.rpcEndpointServiceImpl = rpcEndpointService;
+    return this;
+  }
+
+  /**
+   * Add the registry of network listeners owned by plugins. They are reported by net_services and
+   * written to the ports file. Defaults to an empty registry.
+   *
+   * @param networkEndpointService the network endpoint service
+   * @return the runner builder
+   */
+  public RunnerBuilder networkEndpointService(final NetworkEndpointService networkEndpointService) {
+    this.networkEndpointService = networkEndpointService;
     return this;
   }
 
@@ -951,7 +945,6 @@ public class RunnerBuilder {
               jsonRpcConfiguration,
               webSocketConfiguration,
               metricsConfiguration,
-              graphQLConfiguration,
               natService,
               besuPluginContext.getPluginsByName(),
               dataDir,
@@ -1010,7 +1003,6 @@ public class RunnerBuilder {
               engineJsonRpcConfiguration.get(),
               webSocketConfiguration,
               metricsConfiguration,
-              graphQLConfiguration,
               natService,
               besuPluginContext.getPluginsByName(),
               dataDir,
@@ -1053,40 +1045,6 @@ public class RunnerBuilder {
                   createReadinessHealthService(besuPluginContext, peerNetwork, synchronizer)));
     }
 
-    Optional<GraphQLHttpService> graphQLHttpService = Optional.empty();
-    if (graphQLConfiguration.isEnabled()) {
-      final GraphQLDataFetchers fetchers =
-          new GraphQLDataFetchers(
-              supportedCapabilities,
-              graphQLConfiguration.getMaxBlockRange(),
-              apiConfiguration.getMaxFilterAddresses());
-      final Map<GraphQLContextType, Object> graphQlContextMap = new ConcurrentHashMap<>();
-      graphQlContextMap.putIfAbsent(GraphQLContextType.BLOCKCHAIN_QUERIES, blockchainQueries);
-      graphQlContextMap.putIfAbsent(GraphQLContextType.PROTOCOL_SCHEDULE, protocolSchedule);
-      graphQlContextMap.putIfAbsent(GraphQLContextType.TRANSACTION_POOL, transactionPool);
-      graphQlContextMap.putIfAbsent(GraphQLContextType.MINING_COORDINATOR, miningCoordinator);
-      graphQlContextMap.putIfAbsent(GraphQLContextType.SYNCHRONIZER, synchronizer);
-      graphQlContextMap.putIfAbsent(
-          GraphQLContextType.CHAIN_ID, protocolSchedule.getChainId().map(UInt256::valueOf));
-      graphQlContextMap.putIfAbsent(GraphQLContextType.TRANSACTION_SIMULATOR, transactionSimulator);
-      final GraphQL graphQL;
-      try {
-        graphQL = GraphQLProvider.buildGraphQL(fetchers);
-      } catch (final IOException ioe) {
-        throw new RuntimeException(ioe);
-      }
-
-      graphQLHttpService =
-          Optional.of(
-              new GraphQLHttpService(
-                  vertx,
-                  dataDir,
-                  graphQLConfiguration,
-                  graphQL,
-                  graphQlContextMap,
-                  besuController.getProtocolManager().ethContext().getScheduler()));
-    }
-
     Optional<WebSocketService> webSocketService = Optional.empty();
     if (webSocketConfiguration.isEnabled()) {
       final Map<String, JsonRpcMethod> nonEngineMethods =
@@ -1111,7 +1069,6 @@ public class RunnerBuilder {
               jsonRpcConfiguration,
               webSocketConfiguration,
               metricsConfiguration,
-              graphQLConfiguration,
               natService,
               besuPluginContext.getPluginsByName(),
               dataDir,
@@ -1179,7 +1136,6 @@ public class RunnerBuilder {
               jsonRpcConfiguration,
               webSocketConfiguration,
               metricsConfiguration,
-              graphQLConfiguration,
               natService,
               besuPluginContext.getPluginsByName(),
               dataDir,
@@ -1224,7 +1180,6 @@ public class RunnerBuilder {
               jsonRpcConfiguration,
               webSocketConfiguration,
               metricsConfiguration,
-              graphQLConfiguration,
               natService,
               besuPluginContext.getPluginsByName(),
               dataDir,
@@ -1241,7 +1196,6 @@ public class RunnerBuilder {
         natService,
         jsonRpcHttpService,
         engineJsonRpcService,
-        graphQLHttpService,
         webSocketService,
         jsonRpcIpcService,
         inProcessRpcMethods,
@@ -1251,7 +1205,9 @@ public class RunnerBuilder {
         dataDir,
         pidPath,
         autoLogBloomCaching ? blockchainQueries.getTransactionLogBloomCacher() : Optional.empty(),
-        context.getBlockchain());
+        context.getBlockchain(),
+        networkEndpointService,
+        blockchainQueries);
   }
 
   private boolean isEthStatsEnabled() {
@@ -1390,7 +1346,6 @@ public class RunnerBuilder {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
-      final GraphQLConfiguration graphQLConfiguration,
       final NatService natService,
       final Map<String, BesuPlugin> namedPlugins,
       final Path dataDir,
@@ -1429,7 +1384,7 @@ public class RunnerBuilder {
                 jsonRpcConfiguration,
                 webSocketConfiguration,
                 metricsConfiguration,
-                graphQLConfiguration,
+                networkEndpointService,
                 natService,
                 namedPlugins,
                 dataDir,

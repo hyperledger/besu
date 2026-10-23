@@ -54,7 +54,6 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.pluginadapter.SecurityModuleServiceImpl;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.pluginadapter.RpcEndpointServiceImpl;
@@ -256,7 +255,6 @@ public abstract class CommandTestAbstract {
   @Captor protected ArgumentCaptor<EthNetworkConfig> ethNetworkConfigArgumentCaptor;
   @Captor protected ArgumentCaptor<SynchronizerConfiguration> syncConfigurationCaptor;
   @Captor protected ArgumentCaptor<JsonRpcConfiguration> jsonRpcConfigArgumentCaptor;
-  @Captor protected ArgumentCaptor<GraphQLConfiguration> graphQLConfigArgumentCaptor;
   @Captor protected ArgumentCaptor<WebSocketConfiguration> wsRpcConfigArgumentCaptor;
   @Captor protected ArgumentCaptor<MetricsConfiguration> metricsConfigArgumentCaptor;
   @Captor protected ArgumentCaptor<StorageProvider> storageProviderArgumentCaptor;
@@ -510,6 +508,8 @@ public abstract class CommandTestAbstract {
 
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;
     private Vertx vertx;
+    private int graphQLPluginStartCount = 0;
+    private int graphQLPluginStopCount = 0;
 
     TestBesuCommand(
         final Supplier<RlpBlockImporter> mockBlockImporter,
@@ -556,6 +556,30 @@ public abstract class CommandTestAbstract {
     protected Vertx createVertx(final MetricsSystem metricsSystem) {
       vertx = super.createVertx(metricsSystem);
       return vertx;
+    }
+
+    /**
+     * Does not start the built-in GraphQL plugin: the plugin services it reads are mocked here, and
+     * starting it would bind a real port. Tests check the start through {@link
+     * #getGraphQLPluginStartCount()} and the plugin's configuration instead.
+     */
+    @Override
+    protected void startGraphQLPlugin() {
+      graphQLPluginStartCount++;
+    }
+
+    public int getGraphQLPluginStartCount() {
+      return graphQLPluginStartCount;
+    }
+
+    @Override
+    public void stopGraphQLPlugin() {
+      graphQLPluginStopCount++;
+      super.stopGraphQLPlugin();
+    }
+
+    public int getGraphQLPluginStopCount() {
+      return graphQLPluginStopCount;
     }
 
     public CommandSpec getSpec() {

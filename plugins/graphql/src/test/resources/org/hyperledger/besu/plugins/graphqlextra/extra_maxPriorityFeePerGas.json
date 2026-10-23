@@ -1,0 +1,9 @@
+{
+  "request" : "{ maxPriorityFeePerGas }",
+  "response" : {
+    "data" : {
+      "maxPriorityFeePerGas" : "0x3b9aca00"
+    }
+  },
+  "statusCode" : 200
+}

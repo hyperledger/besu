@@ -16,6 +16,8 @@ package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -28,6 +30,7 @@ public class PicoCLIOptionsImpl implements PicoCLIOptions {
   private static final Logger LOG = LoggerFactory.getLogger(PicoCLIOptionsImpl.class);
 
   private final CommandLine commandLine;
+  private final Set<String> additionalAllowedPrefixes;
 
   /**
    * Instantiates a new Pico cli options.
@@ -35,7 +38,24 @@ public class PicoCLIOptionsImpl implements PicoCLIOptions {
    * @param commandLine the command line
    */
   public PicoCLIOptionsImpl(final CommandLine commandLine) {
+    this(commandLine, Set.of());
+  }
+
+  /**
+   * Instantiates a new Pico cli options that, besides the {@code --plugin-<namespace>-} and {@code
+   * --Xplugin-<namespace>-} prefixes, also accepts options starting with any of the given prefixes.
+   * This is only meant for built-in plugins that must keep the option names they had when they were
+   * part of Besu core (for example {@code --graphql-}). It must never be handed to external
+   * plugins.
+   *
+   * @param commandLine the command line
+   * @param additionalAllowedPrefixes additional option name prefixes to accept, for example {@code
+   *     "--graphql-"}
+   */
+  public PicoCLIOptionsImpl(
+      final CommandLine commandLine, final Set<String> additionalAllowedPrefixes) {
     this.commandLine = commandLine;
+    this.additionalAllowedPrefixes = Set.copyOf(additionalAllowedPrefixes);
   }
 
   @Override
@@ -47,7 +67,9 @@ public class PicoCLIOptionsImpl implements PicoCLIOptions {
 
     for (final OptionSpec optionSpec : mixin.options()) {
       for (final String optionName : optionSpec.names()) {
-        if (!optionName.startsWith(pluginPrefix) && !optionName.startsWith(unstablePrefix)) {
+        if (!optionName.startsWith(pluginPrefix)
+            && !optionName.startsWith(unstablePrefix)
+            && additionalAllowedPrefixes.stream().noneMatch(optionName::startsWith)) {
           badOptionName = true;
           LOG.error(
               "Plugin option {} did not have the expected prefix of {}", optionName, pluginPrefix);

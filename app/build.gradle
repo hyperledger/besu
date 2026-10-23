@@ -66,6 +66,7 @@ dependencies {
   implementation project(':nat')
   implementation project(':plugin-api')
   implementation project(':plugins:rocksdb')
+  implementation project(':plugins:graphql')
   implementation project(':plugins:health')
   implementation project(':services:kvstore')
   implementation project(':util')
@@ -75,7 +76,6 @@ dependencies {
   implementation 'com.github.oshi:oshi-core'
   implementation 'com.google.guava:guava'
   implementation 'com.google.dagger:dagger'
-  implementation 'com.graphql-java:graphql-java'
   implementation 'com.github.seancfoley:ipaddress'
   implementation 'info.picocli:picocli'
   implementation 'io.vertx:vertx-core'

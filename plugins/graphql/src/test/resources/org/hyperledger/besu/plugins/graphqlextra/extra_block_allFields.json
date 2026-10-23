@@ -1,0 +1,38 @@
+{
+  "request" : "{ block(number: 34) { number hash parent { number } nonce transactionsRoot transactionCount stateRoot receiptsRoot miner { address } extraData gasLimit gasUsed baseFeePerGas nextBaseFeePerGas timestamp logsBloom mixHash difficulty totalDifficulty ommerCount ommerHash withdrawalsRoot blobGasUsed excessBlobGas } }",
+  "response" : {
+    "data" : {
+      "block" : {
+        "number" : "0x22",
+        "hash" : "0x4859ea10d276f6df988eabd48a02e0696cfd3deb769d2a5e0e416a5f3191028a",
+        "parent" : {
+          "number" : "0x21"
+        },
+        "nonce" : "0x0000000000000000",
+        "transactionsRoot" : "0x16661f63605269a46ad0c5ad8596e5417310a641563d3aa9b74f70cea0e48b49",
+        "transactionCount" : "0x1",
+        "stateRoot" : "0x34727aff24d1c51cd63fdc14515b15ddaa156fa0671c58a96c72b1553819945d",
+        "receiptsRoot" : "0xb56f5313fa6822e1ee3f84487b5b2f12c5e1746778ad39f9a89e5f0239cc9b83",
+        "miner" : {
+          "address" : "0x0000000000000000000000000000000000000000"
+        },
+        "extraData" : "0x",
+        "gasLimit" : "0x5fdfb0",
+        "gasUsed" : "0x5b22",
+        "baseFeePerGas" : "0x3437004a",
+        "nextBaseFeePerGas" : null,
+        "timestamp" : "0x561bc351",
+        "logsBloom" : "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "mixHash" : "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "difficulty" : "0x0",
+        "totalDifficulty" : "0x427c00",
+        "ommerCount" : "0x0",
+        "ommerHash" : "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+        "withdrawalsRoot" : "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+        "blobGasUsed" : "0x40000",
+        "excessBlobGas" : "0x0"
+      }
+    }
+  },
+  "statusCode" : 200
+}

@@ -1,0 +1,9 @@
+{
+  "request" : "{ chainID }",
+  "response" : {
+    "data" : {
+      "chainID" : "0x1"
+    }
+  },
+  "statusCode" : 200
+}

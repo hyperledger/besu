@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -26,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.NetVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.plugin.services.NetworkEndpointService;
 
 import java.math.BigInteger;
 import java.util.Map;
@@ -38,7 +38,7 @@ public class NetJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
   private final MetricsConfiguration metricsConfiguration;
-  private final GraphQLConfiguration graphQLConfiguration;
+  private final NetworkEndpointService networkEndpointService;
 
   public NetJsonRpcMethods(
       final P2PNetwork p2pNetwork,
@@ -46,13 +46,13 @@ public class NetJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
-      final GraphQLConfiguration graphQLConfiguration) {
+      final NetworkEndpointService networkEndpointService) {
     this.p2pNetwork = p2pNetwork;
     this.networkId = networkId;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
     this.metricsConfiguration = metricsConfiguration;
-    this.graphQLConfiguration = graphQLConfiguration;
+    this.networkEndpointService = networkEndpointService;
   }
 
   @Override
@@ -72,6 +72,6 @@ public class NetJsonRpcMethods extends ApiGroupJsonRpcMethods {
             webSocketConfiguration,
             p2pNetwork,
             metricsConfiguration,
-            graphQLConfiguration));
+            networkEndpointService));
   }
 }

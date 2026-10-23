@@ -34,7 +34,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.provider.PathBasedWor
 
 import java.util.Optional;
 
-import graphql.VisibleForTesting;
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

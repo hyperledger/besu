@@ -1,0 +1,15 @@
+{
+  "request" : "{ block(number: 0) { account(address: \"0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b\") { address balance transactionCount } } }",
+  "response" : {
+    "data" : {
+      "block" : {
+        "account" : {
+          "address" : "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+          "balance" : "0x9184e72a000",
+          "transactionCount" : "0x0"
+        }
+      }
+    }
+  },
+  "statusCode" : 200
+}
