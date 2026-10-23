@@ -49,6 +49,12 @@ public final class SyncStorageFixture {
   /** A sync storage with direct access to its backing world state storage. */
   public record Storages(SyncStateStorage sync, BonsaiWorldStateKeyValueStorage bonsai) {
 
+    /** Opens the stored account trie. */
+    public MerkleTrie<Bytes32, Bytes> accountTrie(final Bytes32 root) {
+      return new StoredMerklePatriciaTrie<>(
+          bonsai::getTrieNode, root, Function.identity(), Function.identity());
+    }
+
     /** Opens a stored storage trie. */
     public MerkleTrie<Bytes32, Bytes> storageTrie(final Bytes32 accountHash, final Bytes32 root) {
       return new StoredMerklePatriciaTrie<>(
@@ -96,6 +102,21 @@ public final class SyncStorageFixture {
           account.getBalance(),
           Hash.wrap(storageRoot(accountHash)),
           account.getCodeHash());
+    }
+
+    /** Returns the state root. */
+    public Bytes32 root() {
+      final SimpleMerklePatriciaTrie<Bytes32, Bytes> trie =
+          new SimpleMerklePatriciaTrie<>(Function.identity());
+      accountLeaves().forEach(trie::put);
+      return trie.getRootHash();
+    }
+
+    /** Returns the leaf values of the account trie. */
+    public NavigableMap<Bytes32, Bytes> accountLeaves() {
+      final TreeMap<Bytes32, Bytes> out = new TreeMap<>();
+      accounts.keySet().forEach(hash -> out.put(hash, Accounts.encode(account(hash))));
+      return out;
     }
 
     /** Returns the leaf values of a storage trie. */
