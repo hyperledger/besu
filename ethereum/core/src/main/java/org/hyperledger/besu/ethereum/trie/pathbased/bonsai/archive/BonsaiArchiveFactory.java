@@ -76,8 +76,8 @@ public final class BonsaiArchiveFactory {
         worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
 
     final List<ExecutorService> executors = new ArrayList<>();
-    final ScheduledExecutorService migrationExecutor =
-        Executors.newSingleThreadScheduledExecutor(namedThreads("archive-migrator"));
+    final ExecutorService migrationExecutor =
+        Executors.newSingleThreadExecutor(namedThreads("archive-migrator"));
     final ScheduledExecutorService trailingExecutor =
         Executors.newSingleThreadScheduledExecutor(namedThreads("bonsai-archive-trailing"));
     executors.addAll(List.of(migrationExecutor, trailingExecutor));
@@ -106,7 +106,6 @@ public final class BonsaiArchiveFactory {
                       provider,
                       provider.getTrieLogManager(),
                       blockchain,
-                      trailingExecutor,
                       archiverCapturePool,
                       unstable.getBonsaiArchiveShallowCheckpointInterval(),
                       unstable.getBonsaiArchiveDeepCheckpointInterval())));

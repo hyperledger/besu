@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.TrailingBlockWorker;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveCoverageTracker.Coverage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.provider.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -29,7 +28,6 @@ import org.hyperledger.besu.util.log.LogUtil;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
@@ -43,21 +41,19 @@ import org.slf4j.event.Level;
  * Archives trie-node history for blocks that can no longer be reorged out, while the capture mode
  * is {@link ArchiveTrieNodeStrategy.CaptureMode#TRAILING}.
  *
- * <p>The archiver trails the finalized block, or {@code head - maxLayersToLoad / 2} on chains
- * without finality. Each run rolls a layered world state back from the persisted head to the last
- * archived block, then forward one block at a time; the capture strategy writes each block's trie
- * nodes and coverage atomically to the archive, and the layer's own writes are discarded.
+ * <p>The trailing sync coordinator decides how far to archive and runs the archiver on its thread.
+ * Each run rolls a layered world state back from the persisted head to the last archived block,
+ * then forward one block at a time; the capture strategy writes each block's trie nodes and
+ * coverage atomically to the archive, and the layer's own writes are discarded.
  *
  * <p>Inline capture calls {@link #catchUpTo} before it starts or resumes, so coverage stays
  * contiguous. If a block's trie log is missing, the archiver halts rather than leave a gap.
  */
-public class TrailingTrieNodeArchiver extends TrailingBlockWorker {
+public class TrailingTrieNodeArchiver {
 
   private static final Logger LOG = LoggerFactory.getLogger(TrailingTrieNodeArchiver.class);
   private static final int LOG_INTERVAL_SECONDS = 60;
   private static final long CATCHUP_LOG_THRESHOLD = 1_000L;
-  private static final long CLOSE_TIMEOUT_SECONDS = 30L;
-  private static final long CATCH_UP_BATCH_BLOCKS = 32L;
 
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
   private final BonsaiWorldStateProvider worldStateProvider;
@@ -68,8 +64,6 @@ public class TrailingTrieNodeArchiver extends TrailingBlockWorker {
   private final int deepCheckpointInterval;
   private final ArchiveCoverageTracker coverage;
   private final AtomicBoolean shouldLogProgress = new AtomicBoolean(true);
-  // Set between start and stop, while the capture mode is trailing.
-  private volatile boolean running = false;
 
   final AtomicLong archivedBlockNumber = new AtomicLong(0L);
 
@@ -80,7 +74,6 @@ public class TrailingTrieNodeArchiver extends TrailingBlockWorker {
    * @param worldStateProvider the world state provider for opening and rolling archiver states
    * @param trieLogManager the trie log manager for reading trie logs
    * @param blockchain the blockchain for reading block headers
-   * @param executorService the executor service for running catch-ups on a separate thread
    * @param trieCapturePool the pool for computing archive history entries
    * @param shallowCheckpointInterval the shallow checkpoint interval for archive entries
    * @param deepCheckpointInterval the deep checkpoint interval for archive entries
@@ -90,11 +83,9 @@ public class TrailingTrieNodeArchiver extends TrailingBlockWorker {
       final BonsaiWorldStateProvider worldStateProvider,
       final TrieLogManager trieLogManager,
       final Blockchain blockchain,
-      final ScheduledExecutorService executorService,
       final ExecutorService trieCapturePool,
       final int shallowCheckpointInterval,
       final int deepCheckpointInterval) {
-    super(blockchain, executorService, CLOSE_TIMEOUT_SECONDS);
     this.worldStateStorage = worldStateStorage;
     this.worldStateProvider = worldStateProvider;
     this.trieLogManager = trieLogManager;
@@ -103,79 +94,6 @@ public class TrailingTrieNodeArchiver extends TrailingBlockWorker {
     this.shallowCheckpointInterval = shallowCheckpointInterval;
     this.deepCheckpointInterval = deepCheckpointInterval;
     this.coverage = new ArchiveCoverageTracker(worldStateStorage.getComposedWorldStateStorage());
-  }
-
-  /**
-   * Starts archiving from the end of the archive's coverage and follows new canonical heads. Does
-   * nothing if already running.
-   */
-  public synchronized void start() {
-    if (closed || running) {
-      return;
-    }
-    running = true;
-    archivedBlockNumber.set(coverage.getCoverage().map(Coverage::lastBlock).orElse(0L));
-    targetBlock.set(archiveTarget(blockchain.getChainHeadBlockNumber()));
-    LOG.info(
-        "Trailing trie-node archiver starting: archived={} target={}",
-        archivedBlockNumber.get(),
-        targetBlock.get());
-
-    startObserving();
-    scheduleCatchUpIfNeeded();
-  }
-
-  /**
-   * Stops following new canonical heads, so inline capture can take over. A catch-up already queued
-   * does nothing; {@link #catchUpTo} still runs.
-   */
-  public synchronized void stop() {
-    if (!running) {
-      return;
-    }
-    running = false;
-    stopObserving();
-    LOG.info("Trailing trie-node archiver stopped at block {}", archivedBlockNumber.get());
-  }
-
-  // Trailing by half the retention window leaves the other half as slack for the head to advance
-  // before a run rolls back to the archived block.
-  @VisibleForTesting
-  long archiveTarget(final long headNumber) {
-    return blockchain
-        .getFinalized()
-        .flatMap(blockchain::getBlockHeader)
-        .map(BlockHeader::getNumber)
-        .orElse(Math.max(0L, headNumber - trieLogManager.getMaxLayersToLoad() / 2));
-  }
-
-  @Override
-  protected long targetFor(final long headNumber) {
-    return archiveTarget(headNumber);
-  }
-
-  @Override
-  protected long position() {
-    return archivedBlockNumber.get();
-  }
-
-  @Override
-  protected boolean shouldCatchUp() {
-    // Every run rolls back from the head, so wait for a batch of blocks rather than run per block.
-    final long batch =
-        Math.clamp(trieLogManager.getMaxLayersToLoad() / 4, 1L, CATCH_UP_BATCH_BLOCKS);
-    return running && targetBlock.get() - archivedBlockNumber.get() >= batch;
-  }
-
-  /**
-   * Archives every block from the end of coverage up to the target and waits for it to finish.
-   * Called by live capture before it starts or resumes.
-   *
-   * @param target the last block to archive; must be final
-   * @return true if the archive now reaches the target or has no coverage to extend
-   */
-  public boolean catchUpTo(final long target) {
-    return runAndWait(() -> catchUpTo(target, () -> !closed));
   }
 
   /**
@@ -227,30 +145,6 @@ public class TrailingTrieNodeArchiver extends TrailingBlockWorker {
         .getCoverage()
         .map(c -> OptionalLong.of(c.lastBlock()))
         .orElseGet(OptionalLong::empty);
-  }
-
-  @Override
-  protected void catchUp() {
-    // Inline capture may have taken over since this run was queued.
-    if (!running) {
-      return;
-    }
-    advanceToArchiveProgress();
-    final long from = archivedBlockNumber.get();
-    final long target = targetBlock.get();
-    try {
-      archiveBlocks(from, target, () -> !closed);
-    } catch (final ArchiveGapException e) {
-      halt();
-      LOG.error(e.getMessage());
-    } finally {
-      final long reached = archivedBlockNumber.get();
-      if (reached > from && reached >= target) {
-        LOG.info("Trailing trie-node archiver: fully caught up at block {}", reached);
-      } else if (reached > from) {
-        LOG.debug("Trailing trie-node archiver: advanced to {} (target {})", reached, target);
-      }
-    }
   }
 
   @VisibleForTesting

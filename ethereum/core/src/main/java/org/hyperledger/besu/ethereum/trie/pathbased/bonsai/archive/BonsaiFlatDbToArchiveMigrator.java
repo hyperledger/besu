@@ -26,14 +26,16 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.hyperledger.besu.util.log.LogUtil;
 
+import java.io.Closeable;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
@@ -56,7 +58,7 @@ import org.slf4j.LoggerFactory;
  * head until it converges. Once all blocks are processed, the flat DB mode is atomically switched
  * to {@link org.hyperledger.besu.ethereum.worldstate.FlatDbMode#ARCHIVE}.
  */
-public class BonsaiFlatDbToArchiveMigrator extends TrailingBlockWorker {
+public class BonsaiFlatDbToArchiveMigrator implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiFlatDbToArchiveMigrator.class);
   private static final int LOG_INTERVAL_SECONDS = 60;
@@ -69,11 +71,13 @@ public class BonsaiFlatDbToArchiveMigrator extends TrailingBlockWorker {
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
   private final TrieLogManager trieLogManager;
   private final Blockchain blockchain;
-  private final ScheduledExecutorService executorService;
+  private final ExecutorService executorService;
   private final BonsaiArchiveFlatDbStrategy archiveStrategy;
   private final AtomicBoolean shouldLogProgress = new AtomicBoolean(true);
   protected final AtomicLong migratedBlockNumber = new AtomicLong(0);
   protected final AtomicBoolean migrationRunning = new AtomicBoolean(false);
+  volatile OptionalLong blockObserverId = OptionalLong.empty();
+  volatile boolean closed = false;
 
   /**
    * Creates a new BonsaiFlatDbToArchiveMigrator.
@@ -89,10 +93,9 @@ public class BonsaiFlatDbToArchiveMigrator extends TrailingBlockWorker {
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final TrieLogManager trieLogManager,
       final Blockchain blockchain,
-      final ScheduledExecutorService executorService,
+      final ExecutorService executorService,
       final MetricsSystem metricsSystem,
       final BonsaiArchiveFlatDbStrategy archiveStrategy) {
-    super(blockchain, executorService, CLOSE_TIMEOUT_SECONDS);
     this.worldStateStorage = worldStateStorage;
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
@@ -200,23 +203,6 @@ public class BonsaiFlatDbToArchiveMigrator extends TrailingBlockWorker {
   }
 
   /**
-   * Starts the ongoing migration of blocks to bonsai archive. This should only be called after the
-   * initial migration has been completed.
-   */
-  public synchronized void startOngoingMigration() {
-    if (closed) {
-      LOG.debug("startOngoingMigration called after close; skipping");
-      return;
-    }
-    if (blockObserverId.isPresent()) {
-      LOG.debug("startOngoingMigration called while an observer is already registered; skipping");
-      return;
-    }
-    migratedBlockNumber.set(getMigrationProgress().orElse(0L));
-    startObserving();
-  }
-
-  /**
    * Sets the migrated block number from the saved migration progress, or 0 if there is none. Called
    * before the first {@link #migrateTo} so it resumes after the last committed block.
    */
@@ -235,12 +221,6 @@ public class BonsaiFlatDbToArchiveMigrator extends TrailingBlockWorker {
    */
   public void migrateTo(final long target, final BooleanSupplier keepGoing) {
     migrateToTarget(() -> target, keepGoing);
-  }
-
-  @Override
-  protected void catchUp() {
-    // Reads the live, moving target so blocks arriving during the catch-up are included.
-    migrateToTarget(targetBlock::get, () -> true);
   }
 
   private void migrateToTarget(final LongSupplier target, final BooleanSupplier keepGoing) {
@@ -273,16 +253,6 @@ public class BonsaiFlatDbToArchiveMigrator extends TrailingBlockWorker {
     return Math.max(0, blockNumber - trieLogManager.getMaxLayersToLoad());
   }
 
-  @Override
-  protected long targetFor(final long headNumber) {
-    return archiveTarget(headNumber);
-  }
-
-  @Override
-  protected long position() {
-    return migratedBlockNumber.get();
-  }
-
   /**
    * Returns the current migrated block.
    *
@@ -292,9 +262,24 @@ public class BonsaiFlatDbToArchiveMigrator extends TrailingBlockWorker {
     return migratedBlockNumber.get();
   }
 
+  /**
+   * Stops a bulk migration in flight: it stops between blocks, its block observer is removed and
+   * the executor is shut down, waiting briefly for the running block to finish.
+   */
   @Override
   public synchronized void close() {
-    super.close();
+    closed = true;
+    blockObserverId.ifPresent(blockchain::removeObserver);
+    blockObserverId = OptionalLong.empty();
+    executorService.shutdownNow();
+    try {
+      if (!executorService.awaitTermination(CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+        LOG.warn(
+            "Bonsai archive migration did not stop within {}s of close", CLOSE_TIMEOUT_SECONDS);
+      }
+    } catch (final InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
   }
 
   private void logProgress(final long blockNumber, final long endBlock) {

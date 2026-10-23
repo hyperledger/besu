@@ -50,6 +50,8 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -250,6 +252,50 @@ class BonsaiArchiveFactoryTest {
 
     await().until(() -> archive.trailingSync().isFlatStarted());
     assertThat(storage.getFlatDbMode()).isEqualTo(FlatDbMode.ARCHIVE);
+  }
+
+  @Test
+  void closeDuringBulkMigrationDoesNotStartFlatArchive() throws Exception {
+    final CountDownLatch started = new CountDownLatch(1);
+    final CountDownLatch release = new CountDownLatch(1);
+    // Block the bulk migration at its first block, ignoring the interrupt from close, so it
+    // finishes normally after close without upgrading the flat DB.
+    when(blockchain.getBlockHeader(0L))
+        .thenAnswer(
+            invocation -> {
+              started.countDown();
+              while (release.getCount() > 0) {
+                try {
+                  release.await();
+                } catch (final InterruptedException e) {
+                  // keep waiting
+                }
+              }
+              return Optional.empty();
+            });
+    final DataStorageConfiguration config = archiveConfig(false);
+    final BonsaiWorldStateKeyValueStorage storage = storage(config);
+    when(synchronizer.subscribeInSync(any(Synchronizer.InSyncListener.class), eq(0L)))
+        .thenReturn(7L);
+    archive = createArchive(config, storage);
+    archive.start(synchronizer);
+    final ArgumentCaptor<Synchronizer.InSyncListener> listener =
+        ArgumentCaptor.forClass(Synchronizer.InSyncListener.class);
+    verify(synchronizer).subscribeInSync(listener.capture(), eq(0L));
+    listener.getValue().onInSyncStatusChange(true);
+    assertThat(started.await(5, TimeUnit.SECONDS)).isTrue();
+
+    final Thread closer = new Thread(archive::close);
+    closer.start();
+    // close() marks the migrator closed, then waits for its executor to terminate.
+    await().until(() -> closer.getState() == Thread.State.TIMED_WAITING);
+    release.countDown();
+    closer.join(TimeUnit.SECONDS.toMillis(5));
+
+    // The completion callback ran on the migrator thread before it terminated.
+    assertThat(closer.isAlive()).isFalse();
+    assertThat(archive.trailingSync().isFlatStarted()).isFalse();
+    assertThat(storage.getFlatDbMode()).isNotEqualTo(FlatDbMode.ARCHIVE);
   }
 
   @Test

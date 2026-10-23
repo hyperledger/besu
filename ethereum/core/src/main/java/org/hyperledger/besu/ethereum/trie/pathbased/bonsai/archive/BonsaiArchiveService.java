@@ -126,7 +126,7 @@ public final class BonsaiArchiveService implements Closeable {
                   LOG.info("Node is in sync, starting Bonsai archive migration");
                   migrator
                       .migrate()
-                      .thenRun(trailingSync::startFlatArchive)
+                      .thenRun(this::startFlatArchiveIfUpgraded)
                       .exceptionally(
                           error -> {
                             LOG.error(
@@ -140,6 +140,15 @@ public final class BonsaiArchiveService implements Closeable {
     } else {
       // Already in ARCHIVE mode (restart after migration): resume trailing the head
       trailingSync.startFlatArchive();
+    }
+  }
+
+  // Bulk migration also completes normally when it stops early on close, without upgrading.
+  private void startFlatArchiveIfUpgraded() {
+    if (worldStateStorage.getFlatDbMode() == FlatDbMode.ARCHIVE) {
+      trailingSync.startFlatArchive();
+    } else {
+      LOG.debug("Flat DB is not in archive mode after migration; not starting flat archive");
     }
   }
 

@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE_ARCHIVE;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -25,6 +26,8 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.BonsaiArchiveTrailingSync;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.BonsaiFlatDbToArchiveMigrator;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.provider.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.TrieLogManager;
@@ -35,13 +38,13 @@ import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.OptionalLong;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 
 import org.awaitility.Awaitility;
@@ -57,10 +60,10 @@ import org.mockito.quality.Strictness;
 /**
  * Integration tests for ongoing archive proof sync.
  *
- * <p>Uses {@code ControllableArchiver} (a test subclass that stubs out {@code archiveBlocks}) to
- * verify: archived block number persistence across restarts, single-catch-up coverage of
- * multi-block gaps, reorg safety (target constraint prevents above-target capture), and the Phase-A
- * → Phase-B handoff archived block number seed.
+ * <p>Drives a real {@link BonsaiArchiveTrailingSync} over a {@code ControllableArchiver} (a test
+ * subclass that stubs out {@code archiveBlocks}) to verify: archived block number persistence
+ * across restarts, catch-up of multi-block gaps, that the shared target is never exceeded, and that
+ * nothing runs after close.
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -69,16 +72,21 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
   private static final long AWAIT_SECONDS = 5L;
   private static final int SHALLOW_INTERVAL = 128;
   private static final int DEEP_INTERVAL = 1024;
-  private static final int MAX_LAYERS = 4;
+  // The shared target is head - 8 and a proofs run needs a batch of 10 blocks (maxLayers / 4).
+  private static final int MAX_LAYERS = 40;
+  private static final long TARGET_LAG = 8L;
+  private static final long BATCH_BLOCKS = 10L;
 
   @Mock private BonsaiWorldStateKeyValueStorage worldStateStorage;
   @Mock private BonsaiWorldStateProvider worldStateProvider;
   @Mock private TrieLogManager trieLogManager;
+  @Mock private BonsaiFlatDbToArchiveMigrator migrator;
 
   private SegmentedInMemoryKeyValueStorage archiveStorage;
   private MutableBlockchain blockchain;
   private BlockDataGenerator blockDataGenerator;
-  private final List<TrailingTrieNodeArchiver> archivers = new ArrayList<>();
+  private final List<BonsaiArchiveTrailingSync> syncs = new ArrayList<>();
+  private final List<ExecutorService> capturePools = new ArrayList<>();
 
   @BeforeEach
   void setUp() {
@@ -91,182 +99,156 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
 
   @AfterEach
   void tearDown() {
-    archivers.forEach(
-        r -> {
-          try {
-            r.close();
-          } catch (final Exception ignored) {
-            // best-effort teardown
-          }
-        });
+    syncs.forEach(BonsaiArchiveTrailingSync::close);
+    capturePools.forEach(ExecutorService::shutdownNow);
   }
 
-  /**
-   * A archiver catches up over a multi-block gap in a single run when the target is large enough.
-   * Verifies that {@code archiveBlocks(0, target)} is called and archived block number reaches the
-   * target.
-   */
+  /** The archiver catches up over a multi-block gap and reaches the shared target. */
   @Test
-  void archiverCatchesUpEntireTargetGapInOneRun() throws Exception {
-    appendBlocks(10); // head=10, target = 10-4/2 = 8
-    final ControllableArchiver archiver = createControllableArchiver();
-    archiver.start();
+  void archiverCatchesUpEntireTargetGap() {
+    final ControllableArchiver archiver = createControllableArchiver(null);
+    startProofsSync(archiver);
 
-    Awaitility.await()
-        .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.archivedBlockNumber.get()).isEqualTo(8L));
+    appendBlocks(50); // head=50, target=42
+
+    awaitArchived(archiver, 50 - TARGET_LAG);
   }
 
   /**
-   * After a crash and restart (new archiver instance over same storage), the archiver resumes from
+   * After a restart (new coordinator and archiver over the same storage), the archiver resumes from
    * the archive's coverage record.
    */
   @Test
-  void restartResumesFromCoverageCursor() throws Exception {
-    appendBlocks(10); // head=10, target=8
-    final ControllableArchiver firstArchiver = createControllableArchiver();
-    firstArchiver.start();
+  void restartResumesFromCoverageCursor() {
+    final ControllableArchiver firstArchiver = createControllableArchiver(null);
+    final BonsaiArchiveTrailingSync firstSync = startProofsSync(firstArchiver);
+    appendBlocks(50); // head=50, target=42
+    awaitArchived(firstArchiver, 42L);
+    firstSync.close();
+    final long archivedBeforeRestart = firstArchiver.getArchivedBlockNumber();
 
-    // Wait for first archiver to capture to target=8
-    Awaitility.await()
-        .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(firstArchiver.archivedBlockNumber.get()).isEqualTo(8L));
-    firstArchiver.close();
+    // Simulate 13 more blocks arriving before the restart.
+    appendBlocks(13); // head=63
 
-    // Simulate 3 more blocks arriving before the restart
-    appendBlocks(3); // head=13, target=11
+    final ControllableArchiver secondArchiver = createControllableArchiver(null);
+    startProofsSync(secondArchiver);
+    appendBlocks(1); // head=64, target=56
+    awaitArchived(secondArchiver, 56L);
 
-    // Second archiver: coverage = 8, so archived block number = 8
-    final ControllableArchiver secondArchiver = createControllableArchiver();
-    secondArchiver.start();
-    assertThat(secondArchiver.archivedBlockNumber.get()).isEqualTo(8L);
-
-    // It then catches up from 8 to 11
-    Awaitility.await()
-        .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(secondArchiver.archivedBlockNumber.get()).isEqualTo(11L));
+    assertThat(secondArchiver.firstFromExclusive.get()).isEqualTo(archivedBeforeRestart);
   }
 
   /**
-   * Phase-A handoff: if live capture archived up to block H, the coverage record says so and the
-   * archiver seeds its archived block number from H (not 0), avoiding re-archiving blocks already
-   * written.
+   * If live capture archived up to block H, the coverage record says so and the archiver continues
+   * from H (not 0), avoiding re-archiving blocks already written.
    */
   @Test
-  void phaseAHandoffCursorSeedsPhaseBCorrectly() throws Exception {
-    appendBlocks(10); // head=10, target=8
-    final ControllableArchiver archiver = createControllableArchiver();
-
-    // Simulate Phase A having archived up to block 5
+  void inlineCaptureCoverageSeedsTrailingArchiver() {
     final SegmentedKeyValueStorageTransaction coverageTx = archiveStorage.startTransaction();
     new ArchiveCoverageTracker(archiveStorage).record(coverageTx, 5L);
     coverageTx.commit();
-    archiver.start();
-    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(5L);
+    final ControllableArchiver archiver = createControllableArchiver(null);
+    startProofsSync(archiver);
 
-    // Phase B should catch up from 5 to 8 (not from 0)
-    Awaitility.await()
-        .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.archivedBlockNumber.get()).isEqualTo(8L));
+    appendBlocks(50); // head=50, target=42
+
+    awaitArchived(archiver, 42L);
+    assertThat(archiver.firstFromExclusive.get()).isEqualTo(5L);
   }
 
-  /**
-   * When the target advances repeatedly as new heads arrive, the archiver eventually processes all
-   * blocks up to the new target. The single-flight guard ensures this happens via re-arm (not via
-   * concurrent catch-ups).
-   */
+  /** When the target advances as new heads arrive, the archiver keeps processing batches. */
   @Test
-  void targetAdvanceDrivesOngoingCatchUps() throws Exception {
-    appendBlocks(5); // head=5, target=3
-    final ControllableArchiver archiver = createControllableArchiver();
-    archiver.start();
+  void targetAdvanceDrivesOngoingCatchUps() {
+    final ControllableArchiver archiver = createControllableArchiver(null);
+    startProofsSync(archiver);
 
-    // Wait to reach the initial target
-    Awaitility.await()
-        .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.archivedBlockNumber.get()).isEqualTo(3L));
+    appendBlocks(50); // target=42
+    awaitArchived(archiver, 42L);
 
-    // Add more blocks, advancing target to 5, then 7
-    appendBlocks(2); // head=7, target=5
-    Awaitility.await()
-        .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.archivedBlockNumber.get()).isEqualTo(5L));
+    appendBlocks(10); // head=60, target=52
+    awaitArchived(archiver, 52L);
 
-    appendBlocks(2); // head=9, target=7
-    Awaitility.await()
-        .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.archivedBlockNumber.get()).isEqualTo(7L));
+    appendBlocks(10); // head=70, target=62
+    awaitArchived(archiver, 62L);
   }
 
-  /**
-   * The archiver never captures blocks above the target. When a reorg event fires for a block above
-   * the finality horizon, the target (head − maxLayers / 2) does not change enough to pull in
-   * non-final blocks, and no capture happens above the target.
-   */
+  /** The archiver never archives above the shared target. */
   @Test
-  void captureNeverExceedsReplayTarget() throws Exception {
-    appendBlocks(4); // head=4, target = 4-4/2 = 2
-    final ControllableArchiver archiver = createControllableArchiver();
-    archiver.start();
+  void captureNeverExceedsSharedTarget() throws Exception {
+    final ControllableArchiver archiver = createControllableArchiver(null);
+    startProofsSync(archiver);
 
-    Awaitility.await()
-        .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.archivedBlockNumber.get()).isEqualTo(2L));
+    appendBlocks(50);
+    final long target = blockchain.getChainHeadBlockNumber() - TARGET_LAG;
+    awaitArchived(archiver, target);
 
-    // A non-canonical fork block fires (block observer sees non-canonical event)
-    // The observer checks isNewCanonicalHead() → false, so replayTarget stays at 2
-    assertThat(archiver.targetBlock()).isEqualTo(2L);
-    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(2L);
+    // Sub-batch head movement raises the target without starting a run.
+    appendBlocks(3);
+    Thread.sleep(200);
+    assertThat(archiver.highestToInclusive.get()).isLessThanOrEqualTo(target);
+    assertThat(archiver.getArchivedBlockNumber()).isLessThanOrEqualTo(target);
   }
 
-  /**
-   * After close, the archiver ignores subsequent block-added events and does not advance the
-   * archived block number.
-   */
+  /** After close, the coordinator ignores new heads and the archiver is not run again. */
   @Test
   void archiverDoesNotAdvanceAfterClose() throws Exception {
-    appendBlocks(5); // head=5, target=2
     final PausedCapture paused = new PausedCapture();
-    final ControllableArchiver archiver =
-        createControllableArchiver(Executors.newScheduledThreadPool(1), paused);
-    archiver.start();
+    final ControllableArchiver archiver = createControllableArchiver(paused);
+    final BonsaiArchiveTrailingSync sync = startProofsSync(archiver);
+    appendBlocks(50);
 
     paused.awaitStart(); // paused mid-capture
     paused.release();
+    sync.close();
+    final int callsAtClose = archiver.archiveBlocksCalls.get();
 
-    archiver.close();
-
-    // After close, adding blocks should not trigger new catch-ups
-    appendBlocks(5);
-    // Wait a moment and verify archived block number hasn't advanced past what was in-flight
+    appendBlocks(30);
     Thread.sleep(200);
-    assertThat(archiver.observerId()).isEqualTo(OptionalLong.empty());
+    assertThat(archiver.archiveBlocksCalls.get()).isEqualTo(callsAtClose);
   }
 
   // --- helpers ---
 
-  private ControllableArchiver createControllableArchiver() {
-    return createControllableArchiver(Executors.newScheduledThreadPool(1), null);
+  private BonsaiArchiveTrailingSync startProofsSync(final ControllableArchiver archiver) {
+    final BonsaiArchiveTrailingSync sync =
+        new BonsaiArchiveTrailingSync(
+            blockchain,
+            MAX_LAYERS,
+            migrator,
+            Optional.of(archiver),
+            Executors.newSingleThreadScheduledExecutor());
+    syncs.add(sync);
+    sync.start();
+    sync.setProofsArchiving(true);
+    return sync;
   }
 
-  private ControllableArchiver createControllableArchiver(
-      final ScheduledExecutorService executor, final PausedCapture paused) {
+  // A run starts only once a batch of blocks is pending, so the archiver ends up within one batch
+  // of the target, never above it.
+  private void awaitArchived(final ControllableArchiver archiver, final long target) {
+    Awaitility.await()
+        .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
+        .untilAsserted(
+            () ->
+                assertThat(archiver.getArchivedBlockNumber())
+                    .isBetween(target - (BATCH_BLOCKS - 1), target));
+  }
+
+  private ControllableArchiver createControllableArchiver(final PausedCapture paused) {
     // ControllableArchiver persists its archived block number advances to archiveStorage so restart
     // tests work
-    final ControllableArchiver archiver =
-        new ControllableArchiver(
-            worldStateStorage,
-            worldStateProvider,
-            trieLogManager,
-            blockchain,
-            executor,
-            Executors.newFixedThreadPool(2),
-            SHALLOW_INTERVAL,
-            DEEP_INTERVAL,
-            paused,
-            archiveStorage);
-    archivers.add(archiver);
-    return archiver;
+    final ExecutorService capturePool = Executors.newFixedThreadPool(2);
+    capturePools.add(capturePool);
+    return new ControllableArchiver(
+        worldStateStorage,
+        worldStateProvider,
+        trieLogManager,
+        blockchain,
+        capturePool,
+        SHALLOW_INTERVAL,
+        DEEP_INTERVAL,
+        paused,
+        archiveStorage);
   }
 
   private MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
@@ -292,12 +274,15 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
   // --- test doubles ---
 
   /**
-   * A archiver that stubs archiveBlocks: updates archived block number and persists it to real
+   * An archiver that stubs archiveBlocks: updates archived block number and persists it to real
    * storage so restart tests can verify durability.
    */
   static class ControllableArchiver extends TrailingTrieNodeArchiver {
 
     final AtomicInteger archiveBlocksCalls = new AtomicInteger();
+    // -1 until the first call.
+    final AtomicLong firstFromExclusive = new AtomicLong(-1L);
+    final AtomicLong highestToInclusive = new AtomicLong(0L);
     private final PausedCapture paused;
     private final SegmentedInMemoryKeyValueStorage persistStorage;
 
@@ -305,8 +290,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
         final BonsaiWorldStateKeyValueStorage worldStateStorage,
         final BonsaiWorldStateProvider worldStateProvider,
         final TrieLogManager trieLogManager,
-        final org.hyperledger.besu.ethereum.chain.Blockchain blockchain,
-        final ScheduledExecutorService executorService,
+        final Blockchain blockchain,
         final ExecutorService trieCapturePool,
         final int shallowCheckpointInterval,
         final int deepCheckpointInterval,
@@ -317,7 +301,6 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
           worldStateProvider,
           trieLogManager,
           blockchain,
-          executorService,
           trieCapturePool,
           shallowCheckpointInterval,
           deepCheckpointInterval);
@@ -329,6 +312,8 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
     void archiveBlocks(
         final long fromExclusive, final long toInclusive, final BooleanSupplier keepGoing) {
       archiveBlocksCalls.incrementAndGet();
+      firstFromExclusive.compareAndSet(-1L, fromExclusive);
+      highestToInclusive.accumulateAndGet(toInclusive, Math::max);
       if (paused != null) {
         paused.started.countDown();
         paused.awaitRelease();
