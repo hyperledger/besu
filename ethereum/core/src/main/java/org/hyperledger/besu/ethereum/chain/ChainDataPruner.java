@@ -82,6 +82,26 @@ public class ChainDataPruner implements BlockAddedObserver {
     }
   }
 
+  /**
+   * Returns the lowest block whose body and receipts a back-fill can store at this chain head: the
+   * lowest one still retained a pruning run later, so that a run starting while the back-fill
+   * stores a block never passes over it.
+   */
+  public long lowestToBackfill(final long chainHead) {
+    return lowestRetained(chainHead + config.chainPruningFrequency());
+  }
+
+  // the lowest block whose body and receipts stay in place at this chain head
+  private long lowestRetained(final long chainHead) {
+    return switch (pruningMode) {
+      case CHAIN_PRUNING ->
+          config.isBlockPruningEnabled()
+              ? Math.max(1, chainHead - config.chainPruningBlocksRetained() + 1)
+              : 0;
+      case PRE_MERGE_PRUNING -> mergeBlock;
+    };
+  }
+
   private void chainPrunerAction(final BlockAddedEvent event) {
     final BlockHeader header = event.getHeader();
     // Validate on every event, including non-canonical forks: a fork below the mark means
