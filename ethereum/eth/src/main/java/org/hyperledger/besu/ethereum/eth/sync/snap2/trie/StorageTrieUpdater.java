@@ -378,11 +378,12 @@ public final class StorageTrieUpdater {
                 batch.putAccount(
                     accountHash,
                     Accounts.encode(Accounts.withStorageRoot(account, Hash.wrap(root))));
-                batch.commit();
               } catch (final RuntimeException e) {
                 batch.abort();
                 throw e;
               }
+              // a commit that fails leaves nothing to abort
+              batch.commit();
             });
   }
 }

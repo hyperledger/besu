@@ -122,20 +122,27 @@ abstract class AbstractSyncStateStorage implements SyncStateStorage {
     final byte[] prefix = accountHash.toArrayUnsafe();
     try (Stream<Pair<byte[], byte[]>> slots =
         flat.streamFromKey(storageSegment, concat(prefix, ZEROS), concat(prefix, ONES))) {
+      // dropped before each commit: a commit that fails leaves nothing to abort
       Batch batch = batch();
       try {
         int pending = 0;
         for (final Iterator<Pair<byte[], byte[]>> it = slots.iterator(); it.hasNext(); ) {
           batch.removeStorage(accountHash, Bytes32.wrap(it.next().getKey(), 32));
           if (++pending == DELETES_PER_COMMIT) {
-            batch.commit();
+            final Batch full = batch;
+            batch = null;
+            full.commit();
             batch = batch();
             pending = 0;
           }
         }
-        batch.commit();
+        final Batch last = batch;
+        batch = null;
+        last.commit();
       } catch (final RuntimeException e) {
-        batch.abort();
+        if (batch != null) {
+          batch.abort();
+        }
         throw e;
       }
     }
