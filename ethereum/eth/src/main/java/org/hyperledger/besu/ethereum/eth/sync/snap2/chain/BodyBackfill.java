@@ -184,8 +184,8 @@ public final class BodyBackfill {
    * @param lowest the lowest block whose body and receipts are stored already, the download
    *     starting below it
    * @param lowestNeeded the lowest block whose body is needed for a chain head, above the floor of
-   *     the sync and one pruning run above the lowest block a pruner keeps, so that a pruning run
-   *     never passes over a range being written
+   *     the sync and, on a pruned chain, {@link
+   *     org.hyperledger.besu.ethereum.chain.ChainDataPruner#lowestToBackfill}
    */
   public BodyBackfill(
       final MutableBlockchain blockchain,
