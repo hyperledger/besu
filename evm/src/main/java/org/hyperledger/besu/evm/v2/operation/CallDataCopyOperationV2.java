@@ -52,8 +52,7 @@ public class CallDataCopyOperationV2 extends AbstractOperationV2 {
     if (numBytes == 0) {
       return new OperationResult(cost, null);
     }
-    frame.writeMemory(
-        memOffset, sourceOffset, numBytes, frame.getInputData(), frame.tracesOperationsV2());
+    frame.writeMemory(memOffset, sourceOffset, numBytes, frame.getInputData(), true);
     return new OperationResult(cost, null);
   }
 }

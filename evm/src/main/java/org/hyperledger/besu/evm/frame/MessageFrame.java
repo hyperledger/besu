@@ -222,9 +222,9 @@ public class MessageFrame {
   // Tracer view of the v2 stack: the item last handed out per slot, reused while the slot is
   // unchanged so that tracers snapshotting the stack every step share objects, as on v1
   private Bytes32[] stackViewV2;
-  // Whether EVM v2 runs the frame for a tracer that sees each operation, the only reader of the
-  // memory and storage updates that operations record
-  private boolean tracesOperationsV2 = true;
+  // Only a tracer that traces operations reads the memory and storage updates operations record,
+  // so EVM v2 turns the records off without one. v1 never does.
+  private boolean recordsUpdatesForTracerV2 = true;
   private Bytes output = Bytes.EMPTY;
   private Bytes returnData = Bytes.EMPTY;
   private Code createdCode = null;
@@ -608,23 +608,13 @@ public class MessageFrame {
   }
 
   /**
-   * Returns whether EVM v2 runs the frame for a tracer that traces operations. Only such a tracer
-   * reads the memory and storage updates recorded through {@link #getMaybeUpdatedMemory} and {@link
-   * #getMaybeUpdatedStorage}, so the v2 operations record them only if this is true.
+   * Sets whether operations record their memory and storage updates, read through {@link
+   * #getMaybeUpdatedMemory} and {@link #getMaybeUpdatedStorage}.
    *
-   * @return true unless EVM v2 runs the frame without tracing its operations
+   * @param recordsUpdates true if the frame runs for a tracer that traces operations
    */
-  public boolean tracesOperationsV2() {
-    return tracesOperationsV2;
-  }
-
-  /**
-   * Sets whether EVM v2 runs the frame for a tracer that traces operations.
-   *
-   * @param tracesOperations true if the tracer traces operations
-   */
-  public void setTracesOperationsV2(final boolean tracesOperations) {
-    this.tracesOperationsV2 = tracesOperations;
+  public void setRecordsUpdatesForTracerV2(final boolean recordsUpdates) {
+    this.recordsUpdatesForTracerV2 = recordsUpdates;
   }
 
   // ---------------------------------------------------------------------------
@@ -742,7 +732,7 @@ public class MessageFrame {
   public MutableBytes readMutableMemory(
       final long offset, final long length, final boolean explicitMemoryRead) {
     final MutableBytes memBytes = memory.getMutableBytes(offset, length);
-    if (explicitMemoryRead) {
+    if (explicitMemoryRead && recordsUpdatesForTracerV2) {
       setUpdatedMemory(offset, memBytes);
     }
     return memBytes;
@@ -757,7 +747,7 @@ public class MessageFrame {
    */
   public void writeMemory(final long offset, final byte value, final boolean explicitMemoryUpdate) {
     memory.setByte(offset, value);
-    if (explicitMemoryUpdate) {
+    if (explicitMemoryUpdate && recordsUpdatesForTracerV2) {
       setUpdatedMemory(offset, Bytes.of(value));
     }
   }
@@ -784,7 +774,7 @@ public class MessageFrame {
   public void writeMemory(
       final long offset, final long length, final Bytes value, final boolean explicitMemoryUpdate) {
     memory.setBytes(offset, length, value);
-    if (explicitMemoryUpdate) {
+    if (explicitMemoryUpdate && recordsUpdatesForTracerV2) {
       setUpdatedMemory(offset, 0, length, value);
     }
   }
@@ -802,7 +792,7 @@ public class MessageFrame {
   public void writeMemoryRightAligned(
       final long offset, final long length, final Bytes value, final boolean explicitMemoryUpdate) {
     memory.setBytesRightAligned(offset, length, value);
-    if (explicitMemoryUpdate) {
+    if (explicitMemoryUpdate && recordsUpdatesForTracerV2) {
       setUpdatedMemoryRightAligned(offset, length, value);
     }
   }
@@ -836,7 +826,7 @@ public class MessageFrame {
       final Bytes value,
       final boolean explicitMemoryUpdate) {
     memory.setBytes(offset, sourceOffset, length, value);
-    if (explicitMemoryUpdate && length > 0) {
+    if (explicitMemoryUpdate && recordsUpdatesForTracerV2 && length > 0) {
       setUpdatedMemory(offset, sourceOffset, length, value);
     }
   }
@@ -855,7 +845,7 @@ public class MessageFrame {
       final long dst, final long src, final long length, final boolean explicitMemoryUpdate) {
     if (length > 0) {
       memory.copy(dst, src, length);
-      if (explicitMemoryUpdate) {
+      if (explicitMemoryUpdate && recordsUpdatesForTracerV2) {
         setUpdatedMemory(dst, memory.getBytes(dst, length));
       }
     }
@@ -905,7 +895,9 @@ public class MessageFrame {
    * @param value the value
    */
   public void storageWasUpdated(final UInt256 storageAddress, final Bytes value) {
-    maybeUpdatedStorage = Optional.of(new StorageEntry(storageAddress, value));
+    if (recordsUpdatesForTracerV2) {
+      maybeUpdatedStorage = Optional.of(new StorageEntry(storageAddress, value));
+    }
   }
 
   /**

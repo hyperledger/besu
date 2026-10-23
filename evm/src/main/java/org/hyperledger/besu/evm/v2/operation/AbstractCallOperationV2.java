@@ -315,9 +315,9 @@ public abstract class AbstractCallOperationV2 extends AbstractOperationV2 {
 
     if (outputSize > outputData.size()) {
       frame.expandMemory(outputOffset, outputSize);
-      frame.writeMemory(outputOffset, outputData.size(), outputData, frame.tracesOperationsV2());
+      frame.writeMemory(outputOffset, outputData.size(), outputData, true);
     } else if (outputSize > 0) {
-      frame.writeMemory(outputOffset, outputSize, outputData, frame.tracesOperationsV2());
+      frame.writeMemory(outputOffset, outputSize, outputData, true);
     }
 
     frame.setReturnData(outputData);
