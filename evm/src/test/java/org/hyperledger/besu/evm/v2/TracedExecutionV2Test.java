@@ -178,13 +178,13 @@ class TracedExecutionV2Test {
   }
 
   @Test
-  void tracerThatSkipsOperationsGetsNoOperationCalls() {
+  void disabledTracerGetsNoOperationCalls() {
     // like the parallel block processor's tracer, which only implements a reward hook
     final List<String> calls = new ArrayList<>();
     final OperationTracer tracer =
         new OperationTracer() {
           @Override
-          public boolean tracesOperations() {
+          public boolean isEnabled() {
             return false;
           }
 
