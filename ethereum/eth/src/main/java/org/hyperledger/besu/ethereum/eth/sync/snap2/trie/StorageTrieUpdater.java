@@ -382,7 +382,7 @@ public final class StorageTrieUpdater {
                 batch.abort();
                 throw e;
               }
-              // committed outside the try: a batch whose commit failed can no longer be aborted
+              // outside the try: a transaction whose commit has started refuses its rollback
               batch.commit();
             });
   }

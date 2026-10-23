@@ -166,6 +166,15 @@ class BonsaiSyncStateStorageTest {
   }
 
   @Test
+  void deleteStorageWritesNothingForAnAccountWithoutSlots() {
+    final SyncStateStorage spied = spy(storage);
+
+    spied.deleteStorage(FIRST);
+
+    verify(spied, never()).batch();
+  }
+
+  @Test
   void removesAccountsAndSlots() {
     final SyncStateStorage.Batch batch = storage.batch();
     batch.putAccount(FIRST, ACCOUNT);
