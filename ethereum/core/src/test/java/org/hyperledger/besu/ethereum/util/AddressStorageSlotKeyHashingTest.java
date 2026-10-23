@@ -31,11 +31,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-/**
- * Checks that the benchmark helper still produces the two key populations the TLOAD/TSTORE
- * benchmarks rely on, now that {@link AddressStorageSlotKey} hashes 32-bit lanes and collisions
- * have to be solved for rather than written down in closed form.
- */
 public class AddressStorageSlotKeyHashingTest {
 
   private static final int KEYS = 300_000;
@@ -62,7 +57,6 @@ public class AddressStorageSlotKeyHashingTest {
       keys.add(key);
     }
 
-    // Every key is different, but they all land on one hash code and so in one bucket.
     assertThat(slots).hasSize(KEYS);
     assertThat(keys).hasSize(KEYS);
     assertThat(hashCodes).hasSize(1);
