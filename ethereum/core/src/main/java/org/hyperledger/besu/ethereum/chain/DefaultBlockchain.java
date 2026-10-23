@@ -396,8 +396,14 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public Optional<Long> getEarliestBlockNumber() {
+    // a sync stores bodies out of order below the block it records, so the search starts there,
+    // read again as the back-fill moves it down
+    final Optional<Long> bodiesFrom = getBodiesFrom();
+    if (bodiesFrom.isPresent()) {
+      return getFirstNonGenesisBlockNumber(bodiesFrom.get());
+    }
     if (earliestBlockNumber == null) {
-      Optional<Long> maybeEarliestBlockNumber = getFirstNonGenesisBlockNumber();
+      Optional<Long> maybeEarliestBlockNumber = getFirstNonGenesisBlockNumber(1);
       maybeEarliestBlockNumber.ifPresent(value -> earliestBlockNumber = value);
       return maybeEarliestBlockNumber;
     }
@@ -612,6 +618,13 @@ public class DefaultBlockchain implements MutableBlockchain {
   @Override
   public void storeBlockHeaders(
       final List<BlockHeader> blockHeaders, final Difficulty totalDifficulty) {
+    // one total difficulty fits every header only when none adds to it
+    blockHeaders.forEach(
+        header ->
+            checkArgument(
+                header.getDifficulty().isZero(),
+                "block %s is not a proof-of-stake block",
+                header.getNumber()));
     final BlockchainStorage.Updater updater = blockchainStorage.batchUpdater();
     blockHeaders.forEach(
         header -> {
@@ -750,8 +763,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       lastImportedTotalDifficulty = calculateTotalDifficultyForSyncing(header);
       updater.putTotalDifficulty(blockHash, lastImportedTotalDifficulty);
       lastImportedHeader = header;
-      lastImportedTransactionCount =
-          blockAndReceipts.getBlock().getBody().getEncodedTransactions().size();
+      lastImportedTransactionCount = blockAndReceipts.getBlock().getBody().getTransactionCount();
     }
     updater.setChainHead(lastImportedHeader.getBlockHash());
     updater.commit();
@@ -772,7 +784,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final BlockchainStorage.Updater updater,
       final SyncBlockWithReceipts blockAndReceipts,
       final boolean indexTransactions) {
-    final Hash blockHash = blockAndReceipts.getHeader().getHash();
+    final Hash blockHash = blockAndReceipts.getHash();
     final SyncBlockBody body = blockAndReceipts.getBlock().getBody();
     updater.putSyncBlockBody(blockHash, body);
     updater.putSyncTransactionReceipts(blockHash, blockAndReceipts.getReceipts());
@@ -1294,18 +1306,20 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   /**
    * Performs a binary search to find the first existing block number in the blockchain. This method
-   * starts the search from block number 1, as the genesis block (block 0) is assumed to always
-   * exist. It uses the chain head block number as the upper limit for the search.
+   * starts the search from {@code lowest}, at least block number 1, as the genesis block (block 0)
+   * is assumed to always exist. It uses the chain head block number as the upper limit for the
+   * search.
    *
    * <p>The search involves checking the presence of blocks by their numbers, narrowing down the
    * range until the first existing block is identified. If a block is found, its number is returned
    * wrapped in an {@code Optional}. If no block is found, an empty {@code Optional} is returned.
    *
+   * @param lowest the block number to start the search from
    * @return an {@code Optional<Long>} containing the number of the first existing block, or {@code
    *     Optional.empty()} if no block is found.
    */
-  private Optional<Long> getFirstNonGenesisBlockNumber() {
-    long low = 1;
+  private Optional<Long> getFirstNonGenesisBlockNumber(final long lowest) {
+    long low = lowest;
     long high = getChainHeadBlockNumber();
     while (low < high) {
       long mid = (low + high) / 2;

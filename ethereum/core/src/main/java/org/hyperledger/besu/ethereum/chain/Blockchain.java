@@ -62,7 +62,7 @@ public interface Blockchain {
 
   /**
    * Returns the block from which a sync stored every body and receipts up to the chain head. The
-   * blocks below may miss theirs.
+   * blocks below may miss theirs, and a pruner may later remove some above it without moving it.
    *
    * @return the block, or empty when no sync recorded one
    */
