@@ -29,6 +29,7 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage.Updater;
+import org.hyperledger.besu.ethereum.chain.InclusionListStatus;
 import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -284,24 +285,29 @@ public class KeyValueStoragePrefixedKeyBlockchainStorageTest {
     final Hash unsatisfiedBlockHash = generator.hash();
     Assertions.assertTrue(blockchainStorage.getInclusionListStatus(satisfiedBlockHash).isEmpty());
 
+    final InclusionListStatus satisfied = new InclusionListStatus(generator.bytes32(), true);
+    final InclusionListStatus unsatisfied = new InclusionListStatus(generator.bytes32(), false);
     Updater updater = blockchainStorage.updater();
-    updater.putInclusionListStatus(satisfiedBlockHash, true);
-    updater.putInclusionListStatus(unsatisfiedBlockHash, false);
+    updater.putInclusionListStatus(satisfiedBlockHash, satisfied);
+    updater.putInclusionListStatus(unsatisfiedBlockHash, unsatisfied);
     updater.commit();
 
     Assertions.assertEquals(
-        Optional.of(true), blockchainStorage.getInclusionListStatus(satisfiedBlockHash));
+        Optional.of(satisfied), blockchainStorage.getInclusionListStatus(satisfiedBlockHash));
     Assertions.assertEquals(
-        Optional.of(false), blockchainStorage.getInclusionListStatus(unsatisfiedBlockHash));
+        Optional.of(unsatisfied), blockchainStorage.getInclusionListStatus(unsatisfiedBlockHash));
 
     // a new status replaces the previous one
+    final InclusionListStatus satisfiedForAnotherList =
+        new InclusionListStatus(generator.bytes32(), true);
     updater = blockchainStorage.updater();
-    updater.putInclusionListStatus(unsatisfiedBlockHash, true);
+    updater.putInclusionListStatus(unsatisfiedBlockHash, satisfiedForAnotherList);
     updater.removeInclusionListStatus(satisfiedBlockHash);
     updater.commit();
 
     Assertions.assertEquals(
-        Optional.of(true), blockchainStorage.getInclusionListStatus(unsatisfiedBlockHash));
+        Optional.of(satisfiedForAnotherList),
+        blockchainStorage.getInclusionListStatus(unsatisfiedBlockHash));
     Assertions.assertTrue(blockchainStorage.getInclusionListStatus(satisfiedBlockHash).isEmpty());
   }
 }

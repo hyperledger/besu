@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.io.IOException;
-import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Deserializes an array of encoded transactions to a set, skipping the elements that are {@code
  * null} or cannot be decoded, so that a single invalid transaction does not prevent the others from
- * being returned. Duplicate transactions are returned once, and the order of the array is kept. A
+ * being returned. Duplicate transactions, with the same hash, are returned once, ordered by hash. A
  * value that is not an array still fails deserialization.
  *
  * <p>Meant for the inclusion list transactions (EIP-7805), where a transaction that cannot be
@@ -54,7 +54,7 @@ public class LenientTransactionSetDeserializer extends StdDeserializer<Set<Trans
           this, "Expected an array of transactions, but was: %s", node.getNodeType());
     }
 
-    final Set<Transaction> transactions = LinkedHashSet.newLinkedHashSet(node.size());
+    final Set<Transaction> transactions = new TreeSet<>(InclusionListTransactions.HASH_ORDER);
     for (int i = 0; i < node.size(); i++) {
       final JsonNode element = node.get(i);
       if (element.isNull()) {

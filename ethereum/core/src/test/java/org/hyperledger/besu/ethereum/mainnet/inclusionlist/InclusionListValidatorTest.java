@@ -22,7 +22,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -43,6 +45,7 @@ import org.hyperledger.besu.evm.gascalculator.StateGasCostCalculator;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -136,6 +139,38 @@ class InclusionListValidatorTest {
     // EIP-8037: the transaction could use its whole gas limit as state gas
     assertThat(validate(0, BLOCK_GAS_LIMIT - TX_GAS_LIMIT + 1).isValid()).isTrue();
     verify(transactionValidator, never()).validateForSender(any(), any(), any());
+  }
+
+  @Test
+  void notIncludedInDropsTheTransactionsOfTheBlock() {
+    final Transaction otherIlTx =
+        new TransactionTestFixture()
+            .nonce(1)
+            .createTransaction(SignatureAlgorithmFactory.getInstance().generateKeyPair());
+
+    assertThat(InclusionListValidator.notIncludedIn(List.of(ilTx, otherIlTx), List.of(ilTx)))
+        .containsExactly(otherIlTx);
+  }
+
+  @Test
+  void notIncludedInKeepsATransactionThatDiffersFromABlockTransactionOnlyInItsAccessList() {
+    final Transaction blockTx =
+        new TransactionTestFixture()
+            .type(TransactionType.EIP1559)
+            .createTransaction(SignatureAlgorithmFactory.getInstance().generateKeyPair());
+    // same signature, so it recovers a different sender
+    final Transaction ilTxWithAccessList =
+        Transaction.builder()
+            .copiedFrom(blockTx)
+            .accessList(List.of(new AccessListEntry(Address.ZERO, List.of())))
+            .sender(null)
+            .build();
+    // Transaction.equals ignores the access list, but the bytes differ
+    assertThat(ilTxWithAccessList).isEqualTo(blockTx);
+    assertThat(ilTxWithAccessList.getHash()).isNotEqualTo(blockTx.getHash());
+
+    assertThat(InclusionListValidator.notIncludedIn(List.of(ilTxWithAccessList), List.of(blockTx)))
+        .containsExactly(ilTxWithAccessList);
   }
 
   private InclusionListValidationResult validate(

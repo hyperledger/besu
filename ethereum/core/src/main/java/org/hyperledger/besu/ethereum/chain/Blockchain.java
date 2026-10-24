@@ -321,11 +321,11 @@ public interface Blockchain {
 
   /**
    * Returns whether the block satisfied the inclusion list (EIP-7805) it was last validated
-   * against.
+   * against, together with the checksum of that inclusion list.
    *
    * @param blockHash The hash of the block.
-   * @return true if the inclusion list was satisfied, false if not, or empty if the block was never
-   *     validated against an inclusion list.
+   * @return the inclusion list status, or empty if the block was never validated against an
+   *     inclusion list.
    */
-  Optional<Boolean> getInclusionListStatus(Hash blockHash);
+  Optional<InclusionListStatus> getInclusionListStatus(Hash blockHash);
 }

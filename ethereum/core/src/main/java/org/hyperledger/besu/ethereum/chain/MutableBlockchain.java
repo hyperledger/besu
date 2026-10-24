@@ -172,7 +172,7 @@ public interface MutableBlockchain extends Blockchain {
    * replacing any previous status for the same block.
    *
    * @param blockHash The hash of the block.
-   * @param isInclusionListSatisfied true if the block satisfied the inclusion list.
+   * @param inclusionListStatus the inclusion list status of the block.
    */
-  void putInclusionListStatus(Hash blockHash, boolean isInclusionListSatisfied);
+  void putInclusionListStatus(Hash blockHash, InclusionListStatus inclusionListStatus);
 }

@@ -55,7 +55,7 @@ public interface BlockchainStorage {
 
   Optional<Hash> getTransactionHashBySenderAndNonce(Address sender, long nonce);
 
-  Optional<Boolean> getInclusionListStatus(Hash blockHash);
+  Optional<InclusionListStatus> getInclusionListStatus(Hash blockHash);
 
   Updater updater();
 
@@ -123,7 +123,7 @@ public interface BlockchainStorage {
 
     void removeInclusionListStatus(Hash blockHash);
 
-    void putInclusionListStatus(Hash blockHash, boolean isInclusionListSatisfied);
+    void putInclusionListStatus(Hash blockHash, InclusionListStatus inclusionListStatus);
 
     void commit();
 

@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ForkchoiceUpdatedResultV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ForkchoiceUpdatedResultV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PayloadStatusV2;
+import org.hyperledger.besu.ethereum.chain.InclusionListStatus;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -176,7 +177,10 @@ public final class EngineForkchoiceUpdatedV5<
   protected ForkchoiceUpdatedResultV1 createValidResult(
       final Hash lastValid, final PayloadIdentifier payloadId) {
     final boolean inclusionListSatisfied =
-        blockchain.getInclusionListStatus(lastValid).orElse(true);
+        blockchain
+            .getInclusionListStatus(lastValid)
+            .map(InclusionListStatus::satisfied)
+            .orElse(true);
     return new ForkchoiceUpdatedResultV2(
         new PayloadStatusV2(VALID, lastValid, inclusionListSatisfied), payloadId);
   }

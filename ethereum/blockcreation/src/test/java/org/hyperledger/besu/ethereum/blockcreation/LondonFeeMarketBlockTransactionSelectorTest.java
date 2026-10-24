@@ -25,6 +25,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockTransactionSelector;
@@ -58,6 +60,7 @@ import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.number.Fraction;
 
+import java.math.BigInteger;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
@@ -331,6 +334,72 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     assertThat(results.getSelectedTransactions()).containsExactlyInAnyOrder(ilTx, poolTx);
     assertThat(results.getSelectedTransactions()).contains(ilTx);
     assertThat(results.getSelectedTransactions()).contains(poolTx);
+  }
+
+  @Test
+  public void inclusionListTransactionDifferingFromAPoolTransactionOnlyInItsAccessListIsIncluded() {
+    final ProcessableBlockHeader blockHeader = createBlock(5_000_000);
+
+    final Transaction poolTx = createEIP1559Transaction(0, Wei.of(7), Wei.ONE, 100_000, SENDER1);
+    ensureTransactionIsValid(poolTx);
+    // same signature, so it recovers a different sender, and Transaction.equals ignores the
+    // access list, but it is a different tx that must still be included
+    final Transaction ilTx =
+        Transaction.builder()
+            .copiedFrom(poolTx)
+            .accessList(List.of(new AccessListEntry(Address.ZERO, List.of())))
+            .sender(null)
+            .build();
+    assertThat(ilTx).isEqualTo(poolTx);
+    ensureTransactionIsValid(ilTx);
+
+    final BlockTransactionSelector selector =
+        createBlockSelectorAndSetupTxPool(
+            defaultTestMiningConfiguration,
+            transactionProcessor,
+            blockHeader,
+            AddressHelpers.ofValue(1),
+            Wei.ZERO,
+            transactionSelectionService,
+            List.of(ilTx));
+    transactionPool.addRemoteTransactions(List.of(poolTx));
+
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
+
+    assertThat(results.getSelectedTransactions())
+        .extracting(Transaction::getHash)
+        .containsExactly(poolTx.getHash(), ilTx.getHash());
+  }
+
+  @Test
+  public void inclusionListTransactionWithUnrecoverableSenderIsSkipped() {
+    final ProcessableBlockHeader blockHeader = createBlock(5_000_000);
+
+    final Transaction validIlTx = createEIP1559Transaction(0, Wei.of(7), Wei.ONE, 100_000, SENDER1);
+    ensureTransactionIsValid(validIlTx);
+    // r = 5 is a valid scalar but not the x-coordinate of any curve point
+    final Transaction unrecoverableSenderIlTx =
+        Transaction.builder()
+            .copiedFrom(createEIP1559Transaction(0, Wei.of(7), Wei.ONE, 100_000, SENDER2))
+            .sender(null)
+            .signature(
+                SignatureAlgorithmFactory.getInstance()
+                    .createSignature(BigInteger.valueOf(5), BigInteger.ONE, (byte) 0))
+            .build();
+
+    final BlockTransactionSelector selector =
+        createBlockSelectorAndSetupTxPool(
+            defaultTestMiningConfiguration,
+            transactionProcessor,
+            blockHeader,
+            AddressHelpers.ofValue(1),
+            Wei.ZERO,
+            transactionSelectionService,
+            List.of(unrecoverableSenderIlTx, validIlTx));
+
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
+
+    assertThat(results.getSelectedTransactions()).containsExactly(validIlTx);
   }
 
   @Test

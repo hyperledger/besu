@@ -19,12 +19,20 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
+import java.util.Comparator;
 import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public final class InclusionListTransactions {
+  /**
+   * Orders and deduplicates inclusion list transactions by hash (EIP-7805): a tx is identified by
+   * its exact bytes, while {@link Transaction#equals} ignores some fields, like the access list.
+   */
+  public static final Comparator<Transaction> HASH_ORDER =
+      Comparator.comparing((Transaction tx) -> tx.getHash().getBytes());
+
   private final Set<Transaction> transactions;
   private final Bytes32 checksum;
 

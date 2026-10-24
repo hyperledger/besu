@@ -20,6 +20,9 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.Json
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.AccessListEntry;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
@@ -58,7 +61,30 @@ class PayloadAttributesV5Test {
 
     final PayloadAttributesV5 attributes = deserialize(inclusionList);
 
-    assertThat(attributes.getInclusionListTransactions()).containsExactly(tx2, tx1);
+    assertThat(attributes.getInclusionListTransactions())
+        .extracting(Transaction::getHash)
+        .containsExactlyInAnyOrder(tx1.getHash(), tx2.getHash());
+  }
+
+  @Test
+  void keepsInclusionListTransactionsThatDifferOnlyInTheirAccessList() throws Exception {
+    final Transaction tx =
+        new TransactionTestFixture().type(TransactionType.EIP1559).createTransaction(KEY_PAIR);
+    final Transaction txWithAccessList =
+        Transaction.builder()
+            .copiedFrom(tx)
+            .accessList(List.of(new AccessListEntry(Address.ZERO, List.of())))
+            .sender(null)
+            .build();
+    // Transaction.equals ignores the access list, but they are different transactions
+    assertThat(txWithAccessList).isEqualTo(tx);
+
+    final PayloadAttributesV5 attributes =
+        deserialize(List.of(encode(tx), encode(txWithAccessList)));
+
+    assertThat(attributes.getInclusionListTransactions())
+        .extracting(Transaction::getHash)
+        .containsExactlyInAnyOrder(tx.getHash(), txWithAccessList.getHash());
   }
 
   @Test

@@ -22,7 +22,6 @@ import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.SHANGHAI;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -61,6 +60,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ForkchoiceUpda
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PayloadStatusV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PayloadStatusV2;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.chain.InclusionListStatus;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -177,13 +177,13 @@ public class InclusionListWorkflowIntegrationTest {
     when(mergeContext.isSyncing()).thenReturn(false);
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     // the inclusion list status is stored in the blockchain, back it with a map
-    final Map<Hash, Boolean> inclusionListStatusByBlockHash = new HashMap<>();
+    final Map<Hash, InclusionListStatus> inclusionListStatusByBlockHash = new HashMap<>();
     doAnswer(
             invocation ->
                 inclusionListStatusByBlockHash.put(
                     invocation.getArgument(0), invocation.getArgument(1)))
         .when(blockchain)
-        .putInclusionListStatus(any(), anyBoolean());
+        .putInclusionListStatus(any(), any());
     when(blockchain.getInclusionListStatus(any()))
         .thenAnswer(
             invocation ->
@@ -443,7 +443,7 @@ public class InclusionListWorkflowIntegrationTest {
   }
 
   @Test
-  public void newPayload_reportsStoredInclusionListStatusOfAlreadyPresentPayload() {
+  public void newPayload_reportsStoredStatusOfAlreadyPresentPayloadWithSameInclusionList() {
     final BlockHeader payloadHeader = setupValidPayloadHeader();
     stubBlockProcessingResult(InclusionListValidationResult.unsatisfied("unsatisfied"));
     final String ilTx = encode(createLegacyTransaction(0, Wei.of(100)));
@@ -457,10 +457,10 @@ public class InclusionListWorkflowIntegrationTest {
     when(blockchain.getBlockByHash(payloadHeader.getHash()))
         .thenReturn(Optional.of(mock(Block.class)));
 
-    // the inclusion list can only be validated while processing the block, so a payload already
-    // present is answered with the stored status, even if it is sent with another inclusion list
+    // sent again with the same inclusion list, answered with the stored status
     final PayloadStatusV2 resentStatus =
-        (PayloadStatusV2) fromSuccessResp(callNewPayload(payloadHeader, emptyList(), emptyList()));
+        (PayloadStatusV2)
+            fromSuccessResp(callNewPayload(payloadHeader, emptyList(), List.of(ilTx)));
     assertThat(resentStatus.getStatus()).isEqualTo(VALID);
     assertThat(resentStatus.getInclusionListSatisfied()).isFalse();
     assertThat(callForkchoiceUpdatedWithoutAttributes(payloadHeader).getInclusionListSatisfied())
@@ -468,6 +468,38 @@ public class InclusionListWorkflowIntegrationTest {
 
     // the block was processed only the first time
     verify(mergeCoordinator, times(1)).rememberBlock(any(), any(), any());
+  }
+
+  @Test
+  public void newPayload_processesAgainAlreadyPresentPayloadWithAnotherInclusionList() {
+    // the same block can be sent with different inclusion lists, e.g. tests that share a genesis
+    final BlockHeader payloadHeader = setupValidPayloadHeader();
+    final Transaction notIncludableTx = createLegacyTransaction(0, Wei.of(100));
+    final Transaction includableTx = createLegacyTransaction(1, Wei.of(100));
+
+    final PayloadStatusV2 firstStatus =
+        (PayloadStatusV2)
+            fromSuccessResp(
+                callNewPayload(payloadHeader, emptyList(), List.of(encode(notIncludableTx))));
+    assertThat(firstStatus.getInclusionListSatisfied()).isTrue();
+
+    // the payload is now part of the chain
+    when(blockchain.getBlockByHash(payloadHeader.getHash()))
+        .thenReturn(Optional.of(mock(Block.class)));
+    stubBlockProcessingResult(InclusionListValidationResult.unsatisfied("unsatisfied"));
+
+    // sent again with another inclusion list, it is processed again with it
+    final PayloadStatusV2 resentStatus =
+        (PayloadStatusV2)
+            fromSuccessResp(
+                callNewPayload(payloadHeader, emptyList(), List.of(encode(includableTx))));
+    assertThat(resentStatus.getStatus()).isEqualTo(VALID);
+    assertThat(resentStatus.getInclusionListSatisfied()).isFalse();
+    assertThat(callForkchoiceUpdatedWithoutAttributes(payloadHeader).getInclusionListSatisfied())
+        .isFalse();
+
+    verify(mergeCoordinator).rememberBlock(any(), any(), eq(Set.of(notIncludableTx)));
+    verify(mergeCoordinator).rememberBlock(any(), any(), eq(Set.of(includableTx)));
   }
 
   @Test

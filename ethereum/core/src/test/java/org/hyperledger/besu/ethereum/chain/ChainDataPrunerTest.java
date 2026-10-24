@@ -41,11 +41,13 @@ import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.Logger;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.Property;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class ChainDataPrunerTest {
+  private static final InclusionListStatus SATISFIED = new InclusionListStatus(Bytes32.ZERO, true);
 
   @Test
   public void singleChainPruning() {
@@ -99,7 +101,7 @@ public class ChainDataPrunerTest {
                       });
 
               blockchain.appendBlock(blk, gen.receipts(blk));
-              blockchain.putInclusionListStatus(blk.getHash(), true);
+              blockchain.putInclusionListStatus(blk.getHash(), SATISFIED);
               blockHashes.add(blk.getHash());
               long number = blk.getHeader().getNumber();
 
@@ -123,7 +125,7 @@ public class ChainDataPrunerTest {
                 assertThat(
                         blockchainStorage.getInclusionListStatus(
                             blockHashes.get((int) (number - retention))))
-                    .contains(true);
+                    .contains(SATISFIED);
               }
             });
   }

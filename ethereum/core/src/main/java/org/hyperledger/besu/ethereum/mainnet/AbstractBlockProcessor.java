@@ -60,10 +60,8 @@ import org.hyperledger.besu.plugin.services.worldstate.StateRootCommitter;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -160,8 +158,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final Block block = context.getBlock();
     final Optional<BlockAccessList> blockAccessList = context.getBlockAccessList();
     final List<TransactionReceipt> receipts = new ArrayList<>();
-    final Set<Transaction> notConfirmedInclusionListTxs =
-        new HashSet<>(context.getInclusionListTransactions());
     // EIP-7778: Track two separate cumulative gas values
     // cumulativeExecutionGasUsed: For block gas limit enforcement (uses protocol-specific strategy)
     //   - Pre-Amsterdam: gasLimit - gasRemaining (post-refund)
@@ -347,7 +343,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         } else if (transactionProcessingResult.getIsProcessedInParallel().isPresent()) {
           nbParallelTx++;
         }
-        notConfirmedInclusionListTxs.remove(transaction);
       }
 
       final InclusionListValidationResult inclusionListValidationResult =
@@ -357,7 +352,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               blockHeader,
               cumulativeExecutionGasUsed,
               cumulativeStateGasUsed,
-              notConfirmedInclusionListTxs);
+              InclusionListValidator.notIncludedIn(
+                  context.getInclusionListTransactions(), transactions));
 
       final var optionalHeaderBlobGasUsed = blockHeader.getBlobGasUsed();
       if (optionalHeaderBlobGasUsed.isPresent()) {

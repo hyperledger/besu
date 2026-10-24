@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet.inclusionlist;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -26,8 +27,11 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,13 +55,35 @@ public class InclusionListValidator {
 
   private static final Logger LOG = LoggerFactory.getLogger(InclusionListValidator.class);
 
+  /**
+   * Returns the inclusion list transactions that are not included in the block. A transaction is
+   * included only if a block transaction has its exact bytes, so they are matched by hash: {@link
+   * Transaction#equals} ignores some fields, like the access list and the authorization list.
+   *
+   * @param inclusionListTransactions the inclusion list transactions
+   * @param blockTransactions the transactions of the block
+   * @return the inclusion list transactions that are not in the block
+   */
+  public static Collection<Transaction> notIncludedIn(
+      final Collection<Transaction> inclusionListTransactions,
+      final List<Transaction> blockTransactions) {
+    if (inclusionListTransactions.isEmpty()) {
+      return List.of();
+    }
+    final Set<Hash> blockTransactionHashes =
+        blockTransactions.stream().map(Transaction::getHash).collect(Collectors.toSet());
+    return inclusionListTransactions.stream()
+        .filter(ilTx -> !blockTransactionHashes.contains(ilTx.getHash()))
+        .toList();
+  }
+
   public static InclusionListValidationResult validate(
       final ProtocolSpec protocolSpec,
       final WorldUpdater worldUpdater,
       final BlockHeader newBlockHeader,
       final long cumulativeExecutionGasUsed,
       final long cumulativeStateGasUsed,
-      final Set<Transaction> inclusionListTransactions) {
+      final Collection<Transaction> inclusionListTransactions) {
 
     LOG.atInfo()
         .setMessage("IL validation: {} IL txs")

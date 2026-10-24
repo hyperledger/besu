@@ -31,16 +31,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.NewPayloadR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.NewPayloadRequestParametersV4;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PayloadStatusV2;
+import org.hyperledger.besu.ethereum.chain.InclusionListStatus;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.inclusionlist.InclusionListValidationResult;
 
-import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,7 +97,7 @@ public final class EngineNewPayloadV6<
           requestContext.getRequiredLenientSet(
               4,
               Transaction.class,
-              _ -> new TreeSet<>(Comparator.comparing((Transaction t) -> t.getHash().getBytes())),
+              _ -> new TreeSet<>(InclusionListTransactions.HASH_ORDER),
               Configuration.FAIL_ON_UNKNOWN_BUT_NULL);
       logger()
           .info("Received {} unique inclusion list transactions", inclusionListTransactions.size());
@@ -113,10 +114,20 @@ public final class EngineNewPayloadV6<
             requestParameters, new InclusionListTransactions(inclusionListTransactions));
   }
 
+  /**
+   * The inclusion list can only be validated while processing the block, so a payload already
+   * present is only answered without processing it again if it was validated against the same
+   * inclusion list, otherwise it is processed again with the inclusion list of this request.
+   */
   @Override
   protected boolean isPayloadPresent(final Block block, final NPRP requestParameters) {
+    final Bytes32 inclusionListChecksum =
+        requestParameters.inclusionListTransactions().getChecksum();
     return super.isPayloadPresent(block, requestParameters)
-        && blockchain.getInclusionListStatus(block.getHash()).isPresent();
+        && blockchain
+            .getInclusionListStatus(block.getHash())
+            .filter(status -> status.isFor(inclusionListChecksum))
+            .isPresent();
   }
 
   @Override
@@ -126,9 +137,13 @@ public final class EngineNewPayloadV6<
       final NPRP requestParameters) {
     final boolean ilSatisfied;
     if (executionResult == null) {
-      // already present payload: isPayloadPresent ensures its status was stored, a payload never
-      // checked against an inclusion list has none to violate
-      ilSatisfied = blockchain.getInclusionListStatus(latestValidHash).orElse(true);
+      // already present payload: isPayloadPresent ensures its status was stored for the inclusion
+      // list of this request
+      ilSatisfied =
+          blockchain
+              .getInclusionListStatus(latestValidHash)
+              .map(InclusionListStatus::satisfied)
+              .orElse(true);
     } else {
       ilSatisfied =
           executionResult
@@ -136,7 +151,10 @@ public final class EngineNewPayloadV6<
               .map(BlockProcessingOutputs::getInclusionListValidationResult)
               .map(InclusionListValidationResult::isValid)
               .orElse(true);
-      blockchain.putInclusionListStatus(latestValidHash, ilSatisfied);
+      blockchain.putInclusionListStatus(
+          latestValidHash,
+          new InclusionListStatus(
+              requestParameters.inclusionListTransactions().getChecksum(), ilSatisfied));
     }
 
     return new PayloadStatusV2(VALID, latestValidHash, ilSatisfied);

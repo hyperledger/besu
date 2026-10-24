@@ -66,6 +66,7 @@ import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class DefaultBlockchainTest {
@@ -99,16 +100,18 @@ public class DefaultBlockchainTest {
         createMutableBlockchain(kvStore, kvStoreVariables, genesisBlock);
     assertThat(blockchain.getInclusionListStatus(blockHash)).isEmpty();
 
-    blockchain.putInclusionListStatus(blockHash, false);
-    assertThat(blockchain.getInclusionListStatus(blockHash)).contains(false);
+    final InclusionListStatus unsatisfied = new InclusionListStatus(Bytes32.random(), false);
+    blockchain.putInclusionListStatus(blockHash, unsatisfied);
+    assertThat(blockchain.getInclusionListStatus(blockHash)).contains(unsatisfied);
 
-    // a new status replaces the cached one
-    blockchain.putInclusionListStatus(blockHash, true);
-    assertThat(blockchain.getInclusionListStatus(blockHash)).contains(true);
+    // a new status, e.g. for another inclusion list, replaces the cached one
+    final InclusionListStatus satisfied = new InclusionListStatus(Bytes32.random(), true);
+    blockchain.putInclusionListStatus(blockHash, satisfied);
+    assertThat(blockchain.getInclusionListStatus(blockHash)).contains(satisfied);
 
     final DefaultBlockchain restartedBlockchain =
         createMutableBlockchain(kvStore, kvStoreVariables, genesisBlock);
-    assertThat(restartedBlockchain.getInclusionListStatus(blockHash)).contains(true);
+    assertThat(restartedBlockchain.getInclusionListStatus(blockHash)).contains(satisfied);
   }
 
   @Test

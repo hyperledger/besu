@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.chain.ChainReorgObserver;
+import org.hyperledger.besu.ethereum.chain.InclusionListStatus;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -229,7 +230,7 @@ public class ReferenceTestBlockchain implements Blockchain {
   }
 
   @Override
-  public Optional<Boolean> getInclusionListStatus(final Hash blockHash) {
+  public Optional<InclusionListStatus> getInclusionListStatus(final Hash blockHash) {
     throw new UnsupportedOperationException("Not Used for Reference Tests");
   }
 }

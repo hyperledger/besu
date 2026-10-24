@@ -26,6 +26,7 @@ import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECT
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TOO_LONG;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AbstractTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlobPriceTransactionSelector;
@@ -69,7 +70,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
@@ -146,7 +147,10 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private volatile @Nullable TransactionSelectionResult invalidTxSelectionTimeoutResult;
   private volatile @Nullable FutureTask<Void> currTxSelectionTask;
   private final List<CompletableFuture<Void>> scheduledSelectionTasks = new ArrayList<>(2);
-  private final Set<Transaction> inclusionListTransactions;
+  // keyed by hash: an inclusion list tx is included only by a block tx with its exact bytes
+  // (EIP-7805),
+  // while Transaction.equals ignores some fields, like the access list
+  private final Map<Hash, Transaction> inclusionListTransactions;
 
   public BlockTransactionSelector(
       final MiningConfiguration miningConfiguration,
@@ -193,7 +197,9 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     this.pluginTxsSelectionMaxTimeNanos =
         miningConfiguration.getPluginTxsSelectionMaxTime(blockTxsSelectionMaxTime).toNanos();
     this.maybeBlockAccessListBuilder = maybeBlockAccessListBuilder;
-    this.inclusionListTransactions = new HashSet<>(inclusionListTransactions);
+    this.inclusionListTransactions =
+        LinkedHashMap.newLinkedHashMap(inclusionListTransactions.size());
+    inclusionListTransactions.forEach(tx -> this.inclusionListTransactions.put(tx.getHash(), tx));
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
@@ -230,7 +236,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     // for any inclusion list txs not yet selected, evaluate and include it now
     // this is not time-limited, since failing to include any of these txs will result
     // in an invalid block
-    for (final Transaction ilTx : sortTransactionList(inclusionListTransactions)) {
+    for (final Transaction ilTx : sortTransactionList(inclusionListTransactions.values())) {
       final TransactionSelectionResult ilResult =
           evaluateTransaction(new PendingTransaction.Local.Priority(ilTx));
       LOG.atDebug()
@@ -266,11 +272,22 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     final Map<Address, NavigableSet<Transaction>> txsBySender = new HashMap<>();
 
     for (final Transaction tx : inclusionListTransactions) {
+      final Address sender;
+      try {
+        sender = tx.getSender();
+      } catch (final IllegalArgumentException | IllegalStateException e) {
+        // a tx whose signature does not recover a sender can never be included
+        LOG.atDebug()
+            .setMessage("Skipping inclusion list tx {}, its sender cannot be recovered")
+            .addArgument(tx::getHash)
+            .log();
+        continue;
+      }
       txsBySender
           .computeIfAbsent(
               // compare first by nonce then by hash, in case there is more than one tx with the
               // same nonce
-              tx.getSender(),
+              sender,
               k ->
                   new TreeSet<>(
                       Comparator.comparingLong(Transaction::getNonce)
@@ -1028,7 +1045,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
           processingResult.getStateGasUsed(),
           evaluationTimeNanos);
 
-      inclusionListTransactions.remove(transaction);
+      inclusionListTransactions.remove(transaction.getHash());
 
       notifySelected(evaluationContext, processingResult);
       LOG.atTrace()
