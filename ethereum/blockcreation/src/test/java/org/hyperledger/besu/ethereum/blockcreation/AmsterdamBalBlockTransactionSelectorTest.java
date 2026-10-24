@@ -286,7 +286,8 @@ class AmsterdamBalBlockTransactionSelectorTest {
             blockHeader, selectorsStateManager),
         ethScheduler,
         selectorsStateManager,
-        maybeBalBuilder);
+        maybeBalBuilder,
+        List.of());
   }
 
   private Transaction createTransaction(
