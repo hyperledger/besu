@@ -33,11 +33,13 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BooleanSupplier;
+import java.util.function.LongSupplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.time.DurationFormatUtils;
@@ -61,6 +63,7 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiFlatDbToArchiveMigrator.class);
   private static final int LOG_INTERVAL_SECONDS = 60;
   private static final long CATCHUP_LOG_THRESHOLD = 32;
+  private static final long CLOSE_TIMEOUT_SECONDS = 10L;
 
   private static final byte[] MIGRATION_PROGRESS_KEY =
       "ARCHIVE_MIGRATION_PROGRESS".getBytes(StandardCharsets.UTF_8);
@@ -68,15 +71,13 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
   private final TrieLogManager trieLogManager;
   private final Blockchain blockchain;
-  private final ScheduledExecutorService executorService;
+  private final ExecutorService executorService;
   private final BonsaiArchiveFlatDbStrategy archiveStrategy;
   private final AtomicBoolean shouldLogProgress = new AtomicBoolean(true);
   protected final AtomicLong migratedBlockNumber = new AtomicLong(0);
   protected final AtomicBoolean migrationRunning = new AtomicBoolean(false);
-  protected final AtomicLong ongoingTarget = new AtomicLong(0);
-  protected final AtomicBoolean catchUpRunning = new AtomicBoolean(false);
-  protected volatile OptionalLong blockObserverId = OptionalLong.empty();
-  private boolean closed = false;
+  volatile OptionalLong blockObserverId = OptionalLong.empty();
+  volatile boolean closed = false;
 
   /**
    * Creates a new BonsaiFlatDbToArchiveMigrator.
@@ -92,7 +93,7 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final TrieLogManager trieLogManager,
       final Blockchain blockchain,
-      final ScheduledExecutorService executorService,
+      final ExecutorService executorService,
       final MetricsSystem metricsSystem,
       final BonsaiArchiveFlatDbStrategy archiveStrategy) {
     this.worldStateStorage = worldStateStorage;
@@ -143,16 +144,17 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
       return CompletableFuture.runAsync(
           () -> {
             try {
-              migrateBlocks(startBlock, target, true);
+              migrateBlocks(startBlock, target::get, true, () -> !closed);
+              if (closed) {
+                // Stopped early on close: blocks are unmigrated, so do not upgrade or hand off.
+                LOG.debug("Bonsai archive migration stopped on close before completing");
+                return;
+              }
               worldStateStorage.upgradeToArchiveFlatDbMode();
               logCompletion(startBlock, target.get(), migrationStartTime);
-              // Hand off observers without a gap: register the ongoing observer first, then
-              // remove the bulk observer. A block arriving mid-handoff still reaches the ongoing
-              // observer; removing the bulk one first would drop any event landing in between.
-              final OptionalLong bulkObserverId = blockObserverId;
+              // Ongoing catch-up belongs to the trailing sync coordinator; bulk just leaves.
+              blockObserverId.ifPresent(blockchain::removeObserver);
               blockObserverId = OptionalLong.empty();
-              startOngoingMigration();
-              bulkObserverId.ifPresent(blockchain::removeObserver);
             } catch (final RuntimeException ex) {
               blockObserverId.ifPresent(blockchain::removeObserver);
               blockObserverId = OptionalLong.empty();
@@ -173,8 +175,13 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
   }
 
   private void migrateBlocks(
-      final long startBlock, final AtomicLong target, final boolean shouldLog) {
-    for (long blockNumber = startBlock; blockNumber <= target.get(); blockNumber++) {
+      final long startBlock,
+      final LongSupplier target,
+      final boolean shouldLog,
+      final BooleanSupplier keepGoing) {
+    for (long blockNumber = startBlock;
+        blockNumber <= target.getAsLong() && keepGoing.getAsBoolean();
+        blockNumber++) {
       final Optional<TrieLog> maybeTrieLog =
           blockchain
               .getBlockHeader(blockNumber)
@@ -187,7 +194,7 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
         tx.commit();
         migratedBlockNumber.set(blockNumber);
         if (shouldLog) {
-          logProgress(blockNumber, target.get());
+          logProgress(blockNumber, target.getAsLong());
         }
       } else if (blockNumber > 0) {
         throw new IllegalStateException("No trie log found for block " + blockNumber);
@@ -196,79 +203,49 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
   }
 
   /**
-   * Starts the ongoing migration of blocks to bonsai archive. This should only be called after the
-   * initial migration has been completed.
+   * Sets the migrated block number from the saved migration progress, or 0 if there is none. Called
+   * before the first {@link #migrateTo} so it resumes after the last committed block.
    */
-  public synchronized void startOngoingMigration() {
-    if (closed) {
-      LOG.debug("startOngoingMigration called after close; skipping");
-      return;
-    }
-    if (blockObserverId.isPresent()) {
-      LOG.debug("startOngoingMigration called while an observer is already registered; skipping");
-      return;
-    }
+  public void loadMigrationProgress() {
     migratedBlockNumber.set(getMigrationProgress().orElse(0L));
-    blockObserverId =
-        OptionalLong.of(
-            blockchain.observeBlockAdded(
-                event -> {
-                  if (!event.isNewCanonicalHead()) {
-                    return;
-                  }
-                  final long newTarget = archiveTarget(event.getHeader().getNumber());
-                  if (newTarget <= 0) {
-                    return;
-                  }
-                  ongoingTarget.accumulateAndGet(newTarget, Math::max);
-                  scheduleCatchUpIfNeeded();
-                }));
   }
 
-  private void scheduleCatchUpIfNeeded() {
-    if (!catchUpRunning.compareAndSet(false, true)) {
+  /**
+   * Migrates blocks from the one after the last migrated block up to {@code target}, one committed
+   * low-priority transaction per block. Blocks the calling thread until done or until {@code
+   * keepGoing} turns false, which is checked before each block.
+   *
+   * @param target the highest block number to migrate
+   * @param keepGoing returns false to stop between blocks
+   * @throws IllegalStateException if a block's trie log is missing
+   */
+  public void migrateTo(final long target, final BooleanSupplier keepGoing) {
+    migrateToTarget(() -> target, keepGoing);
+  }
+
+  private void migrateToTarget(final LongSupplier target, final BooleanSupplier keepGoing) {
+    final long startBlock = migratedBlockNumber.get() + 1;
+    final long initialTarget = target.getAsLong();
+    if (startBlock > initialTarget) {
       return;
     }
-    try {
-      executorService.submit(this::catchUp);
-    } catch (final RejectedExecutionException e) {
-      catchUpRunning.set(false);
-      LOG.debug(
-          "Bonsai migrator executor shut down; skipping migration up to block {}",
-          ongoingTarget.get());
+    final long blocksToMigrate = initialTarget - startBlock + 1;
+    final boolean shouldLog = blocksToMigrate >= CATCHUP_LOG_THRESHOLD;
+    final Instant catchUpStart = shouldLog ? Instant.now() : null;
+    if (shouldLog) {
+      LOG.info(
+          "Bonsai archive catch-up starting: {} blocks from {} to {}",
+          blocksToMigrate,
+          startBlock,
+          initialTarget);
     }
-  }
-
-  private void catchUp() {
-    try {
-      final long startBlock = migratedBlockNumber.get() + 1;
-      final long initialTarget = ongoingTarget.get();
-      if (startBlock > initialTarget) {
-        return;
-      }
-      final long blocksToMigrate = initialTarget - startBlock + 1;
-      final boolean shouldLog = blocksToMigrate >= CATCHUP_LOG_THRESHOLD;
-      final Instant catchUpStart = shouldLog ? Instant.now() : null;
-      if (shouldLog) {
-        LOG.info(
-            "Bonsai archive catch-up starting: {} blocks from {} to {}",
-            blocksToMigrate,
-            startBlock,
-            initialTarget);
-      }
-      migrateBlocks(startBlock, ongoingTarget, shouldLog);
-      if (shouldLog) {
-        final Duration duration = Duration.between(catchUpStart, Instant.now());
-        LOG.info(
-            "Bonsai archive catch-up complete: {} blocks in {}",
-            (migratedBlockNumber.get() - startBlock + 1),
-            DurationFormatUtils.formatDurationWords(duration.toMillis(), true, true));
-      }
-    } finally {
-      catchUpRunning.set(false);
-      if (migratedBlockNumber.get() < ongoingTarget.get()) {
-        scheduleCatchUpIfNeeded();
-      }
+    migrateBlocks(startBlock, target, shouldLog, keepGoing);
+    if (shouldLog) {
+      final Duration duration = Duration.between(catchUpStart, Instant.now());
+      LOG.info(
+          "Bonsai archive catch-up complete: {} blocks in {}",
+          (migratedBlockNumber.get() - startBlock + 1),
+          DurationFormatUtils.formatDurationWords(duration.toMillis(), true, true));
     }
   }
 
@@ -285,6 +262,10 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
     return migratedBlockNumber.get();
   }
 
+  /**
+   * Stops a bulk migration in flight: it stops between blocks, its block observer is removed and
+   * the executor is shut down, waiting briefly for the running block to finish.
+   */
   @Override
   public synchronized void close() {
     closed = true;
@@ -292,8 +273,9 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
     blockObserverId = OptionalLong.empty();
     executorService.shutdownNow();
     try {
-      if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) {
-        LOG.warn("Migration executor did not terminate within 10 seconds");
+      if (!executorService.awaitTermination(CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+        LOG.warn(
+            "Bonsai archive migration did not stop within {}s of close", CLOSE_TIMEOUT_SECONDS);
       }
     } catch (final InterruptedException e) {
       Thread.currentThread().interrupt();

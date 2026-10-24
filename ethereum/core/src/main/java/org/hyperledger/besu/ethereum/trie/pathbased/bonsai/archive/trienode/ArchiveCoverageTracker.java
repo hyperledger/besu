@@ -21,6 +21,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -48,34 +49,41 @@ public final class ArchiveCoverageTracker {
    * been indexed into the archive.
    */
   public boolean hasArchiveBlock(final long block) {
+    return getCoverage()
+        .map(coverage -> block >= coverage.startBlock() && block <= coverage.lastBlock())
+        .orElse(false);
+  }
+
+  /** Returns {@code true} once any block has been recorded. */
+  public boolean hasCoverage() {
+    return getCoverage().isPresent();
+  }
+
+  /** Returns the recorded coverage window or empty if nothing has been recorded. */
+  public Optional<Coverage> getCoverage() {
     return storage
         .get(TRIE_BRANCH_STORAGE_ARCHIVE, COVERAGE_KEY)
         .map(
             raw -> {
-              if (raw.length < 16) return false;
               final Bytes b = Bytes.wrap(raw);
-              return block >= b.getLong(0) && block <= b.getLong(8);
-            })
-        .orElse(false);
+              return new Coverage(b.getLong(0), b.getLong(8));
+            });
   }
 
   /**
-   * Writes updated progress for {@code block} into {@code tx}. The write is atomic with the
-   * archive-node writes that precede it in the same transaction.
-   *
-   * <p>{@code indexStartBlock} is set to {@code min(existing, block)} so the recorded window only
-   * ever grows backwards; {@code lastIndexedBlock} is always set to {@code block}.
+   * Records {@code block} as the end of the coverage window in {@code tx}, atomically with the
+   * block's archive-node writes.
    */
   public void record(final SegmentedKeyValueStorageTransaction tx, final long block) {
     final long startBlock =
-        storage
-            .get(TRIE_BRANCH_STORAGE_ARCHIVE, COVERAGE_KEY)
-            .map(raw -> Math.min(Bytes.wrap(raw).getLong(0), block))
-            .orElse(block);
+        getCoverage().map(coverage -> Math.min(coverage.startBlock(), block)).orElse(block);
     tx.put(
         TRIE_BRANCH_STORAGE_ARCHIVE,
         COVERAGE_KEY,
         Bytes.concatenate(Bytes.ofUnsignedLong(startBlock), Bytes.ofUnsignedLong(block))
             .toArrayUnsafe());
   }
+
+  /** The contiguous window of blocks indexed into the archive, both ends inclusive. */
+  public record Coverage(long startBlock, long lastBlock) {}
 }

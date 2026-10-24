@@ -140,6 +140,19 @@ class ArchiveTrieNodeWriterTest {
   }
 
   @Test
+  void markArchivedThroughMakesTheNextBlockDiffAgainstHistory() {
+    final Bytes nk = ArchiveNodeKey.account(LOCATION);
+    enqueueAndCommit(0L, nk, LOCATION, branchNode(0), null);
+    // the archive holds this chain up to block 4 (e.g. after repositioning past throwaway writes)
+    trieNodeWriter.markArchivedThrough(4L);
+    enqueueAndCommit(5L, nk, LOCATION, branchNode(5), branchNode(4));
+
+    final var entry = historyStore.getLatestBefore(nk, 5L).orElseThrow();
+    assertThat(entry.block()).isEqualTo(5L);
+    assertThat(entry.codecEntry().isFull()).isFalse();
+  }
+
+  @Test
   void rootSparseChange_producesDiffBetweenCheckpoints() {
     final Bytes nk = ArchiveNodeKey.account(ROOT_LOCATION);
     enqueueAndCommit(0L, nk, ROOT_LOCATION, branchNode(0), null);
@@ -406,6 +419,26 @@ class ArchiveTrieNodeWriterTest {
     assertThat(shallowBytes)
         .as("drastic churn: interval-32 (%s B) == interval-16 (%s B)", shallowBytes, deepBytes)
         .isEqualTo(deepBytes);
+  }
+
+  @Test
+  void onBeforeCommitRoutesArchiveWritesToRedirectTransactionWhenSet() {
+    final Bytes nk = ArchiveNodeKey.account(LOCATION);
+    final SegmentedKeyValueStorageTransaction persistTx = storage.startTransaction();
+    final SegmentedKeyValueStorageTransaction canonicalTx = storage.startTransaction();
+
+    trieNodeWriter.capture(nk, LOCATION, 5L, branchNode(5), null, persistTx);
+
+    trieNodeWriter.setArchiveWriteTransaction(canonicalTx);
+    trieNodeWriter.onBeforeCommit(persistTx);
+
+    // committing persistTx must NOT write the coverage entry (archive writes went to canonicalTx)
+    persistTx.commit();
+    assertThat(coverageTracker.hasArchiveBlock(5L)).isFalse();
+
+    // committing canonicalTx must have the coverage entry
+    canonicalTx.commit();
+    assertThat(coverageTracker.hasArchiveBlock(5L)).isTrue();
   }
 
   @Test

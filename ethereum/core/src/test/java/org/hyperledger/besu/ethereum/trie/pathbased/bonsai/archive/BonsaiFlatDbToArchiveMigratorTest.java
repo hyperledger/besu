@@ -23,7 +23,6 @@ import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.Bonsai
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -56,17 +55,14 @@ import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tuweni.units.bigints.UInt256;
-import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -302,32 +298,18 @@ public class BonsaiFlatDbToArchiveMigratorTest {
   }
 
   @Test
-  public void migrateHandsOffObserversFromInitialToOngoingWithoutGap() throws Exception {
+  public void migrateRemovesItsObserverOnCompletion() throws Exception {
     appendBlocks(3);
     final MutableBlockchain spyBlockchain = spy(blockchain);
     final BonsaiFlatDbToArchiveMigrator migrator =
         createMigrator(spyBlockchain, /*boundaryDistance*/ 1);
 
-    final AtomicBoolean injected = new AtomicBoolean(false);
-    doAnswer(
-            invocation -> {
-              final Object result = invocation.callRealMethod();
-              if (injected.compareAndSet(false, true)) {
-                // Now the old observer has just been removed. Fire a canonical head event.
-                appendBlocks(1);
-              }
-              return result;
-            })
-        .when(spyBlockchain)
-        .removeObserver(anyLong());
-
     migrator.migrate().get(MIGRATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
-    // head after the injected block = 4; boundaryDistance=1 → archiveTarget = 3.
-    // Block 3 must be migrated via catch-up triggered by the injected block 4 event.
-    Awaitility.await()
-        .atMost(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(getArchivedAccountKey(3L)).isPresent());
+    // Bulk registers one observer and leaves no other behind: ongoing catch-up is the
+    // coordinator's.
+    verify(spyBlockchain, times(1)).observeBlockAdded(any());
+    verify(spyBlockchain, times(1)).removeObserver(anyLong());
   }
 
   @Test
@@ -380,117 +362,45 @@ public class BonsaiFlatDbToArchiveMigratorTest {
   }
 
   @Test
-  public void blockObserverPersistsAndMigratesBlockAtBoundary() throws Exception {
-    // head=3, boundaryDistance=3 → initial target=0, nothing migrated initially
+  public void closeStopsBulkMigrationWithoutUpgradingToArchiveMode() throws Exception {
     appendBlocks(3);
-    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator(3);
-    migrator.migrate().get(MIGRATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-    assertThat(getArchivedAccountKey(1L)).isEmpty();
+    final CountDownLatch started = new CountDownLatch(1);
+    final CountDownLatch proceed = new CountDownLatch(1);
+    // Ignores the interrupt from close() so the loop itself must notice the closed flag.
+    when(trieLogManager.getTrieLogLayer(any()))
+        .thenAnswer(
+            invocation -> {
+              started.countDown();
+              boolean released = false;
+              while (!released) {
+                try {
+                  released = proceed.await(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                  if (!released) {
+                    throw new AssertionError("release was not called in time");
+                  }
+                } catch (final InterruptedException e) {
+                  // keep waiting
+                }
+              }
+              return Optional.of(createAccountTrieLog(Wei.ONE));
+            });
 
-    // block 4 arrives → observer submits migration of block 4-3=1
-    appendBlocks(1);
-    Awaitility.await()
-        .atMost(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(getArchivedAccountKey(1L)).isPresent());
-  }
+    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator(BOUNDARY_DISABLED);
+    final CompletableFuture<Void> future = migrator.migrate();
+    assertThat(started.await(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)).isTrue();
 
-  @Test
-  public void startOngoingMigrationRegistersObserverAndMigratesBlocks() {
-    appendBlocks(3);
-    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator(3);
-    assertThat(migrator.blockObserverId).isEmpty();
+    final Thread closer = new Thread(migrator::close);
+    closer.start();
+    // close() sets the closed flag before waiting for the executor
+    while (!migrator.closed) {
+      Thread.sleep(10);
+    }
+    proceed.countDown();
+    closer.join(TimeUnit.SECONDS.toMillis(AWAIT_TIMEOUT_SECONDS));
 
-    migrator.startOngoingMigration();
-    assertThat(migrator.blockObserverId).isPresent();
-
-    // block 4 arrives → observer migrates block 4-3=1
-    appendBlocks(1);
-    Awaitility.await()
-        .atMost(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(getArchivedAccountKey(1L)).isPresent());
-  }
-
-  @Test
-  public void ongoingMigrationCatchesUpMultipleBlocksBehind() throws Exception {
-    // head=3, boundaryDistance=1 → initial target=2; migrate blocks 1 and 2
-    appendBlocks(3);
-    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator(1);
-    migrator.migrate().get(MIGRATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-    assertThat(migrator.getMigrationProgress()).hasValue(2L);
-
-    // blocks 4 and 5 arrive while executor is idle; block 6 triggers catch-up of 4-1=3 up to 5-1=4
-    appendBlocks(3);
-    Awaitility.await()
-        .atMost(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(getArchivedAccountKey(3L)).isPresent());
-    Awaitility.await()
-        .atMost(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(getArchivedAccountKey(4L)).isPresent());
-  }
-
-  @Test
-  public void ongoingMigrationCoalescesBurstOfHeadEventsIntoOneSubmit() throws Exception {
-    // boundaryDistance=1 → target = head - 1
-    when(trieLogManager.getMaxLayersToLoad()).thenReturn(1L);
-    final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
-    final ScheduledExecutorService spyExecutor = spy(Executors.newScheduledThreadPool(1));
-    final BonsaiFlatDbToArchiveMigrator migrator =
-        new BonsaiFlatDbToArchiveMigrator(
-            worldStateStorage,
-            trieLogManager,
-            blockchain,
-            spyExecutor,
-            metricsSystem,
-            new BonsaiArchiveFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy()));
-    migrators.add(migrator);
-    migrator.startOngoingMigration();
-
-    final PausedMigration pause = pauseAtAnyTrieLogLookup();
-    // head=2 → target=1: triggers a single drain submission, paused at block 1's trie-log lookup.
-    appendBlocks(2);
-    pause.awaitStart();
-
-    // Burst of head events while drain is paused. Each bumps ongoingTarget; the single-flight
-    // CAS prevents additional submissions.
-    appendBlocks(20);
-    Awaitility.await()
-        .atMost(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(migrator.ongoingTarget.get()).isEqualTo(21L));
-    assertThat(migrator.catchUpRunning.get()).isTrue();
-    verify(spyExecutor, times(1)).submit(any(Runnable.class));
-
-    // Release: the same in-flight drain reads the live target and walks all the way to block 21.
-    pause.release();
-    Awaitility.await()
-        .atMost(MIGRATION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(migrator.migratedBlockNumber.get()).isEqualTo(21L));
-    // No additional submissions after the burst — the moving target absorbed everything.
-    verify(spyExecutor, times(1)).submit(any(Runnable.class));
-  }
-
-  @Test
-  public void ongoingMigrationUpdatesMetric() throws Exception {
-    appendBlocks(3);
-    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator(1);
-    migrator.migrate().get(MIGRATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-    final long metricAfterMigration = migrator.migratedBlockNumber.get();
-
-    // block 4 arrives → observer migrates block 3; metric should increment
-    appendBlocks(1);
-    Awaitility.await()
-        .atMost(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(
-            () ->
-                assertThat(migrator.migratedBlockNumber.get()).isGreaterThan(metricAfterMigration));
-  }
-
-  @Test
-  public void startOngoingMigrationAfterCloseIsNoOp() {
-    appendBlocks(3);
-    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator(3);
-    migrator.close();
-
-    migrator.startOngoingMigration();
+    future.get(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    assertThat(migrator.getMigratedBlockNumber()).isLessThan(3L);
+    verify(worldStateStorage, never()).upgradeToArchiveFlatDbMode();
     assertThat(migrator.blockObserverId).isEmpty();
   }
 
@@ -510,31 +420,51 @@ public class BonsaiFlatDbToArchiveMigratorTest {
   }
 
   @Test
-  public void startOngoingMigrationIsIdempotent() {
-    appendBlocks(3);
-    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator(3);
+  public void migrateToMigratesUpToTarget() {
+    appendBlocks(5);
+    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator(BOUNDARY_DISABLED);
 
-    migrator.startOngoingMigration();
-    final OptionalLong firstId = migrator.blockObserverId;
-    assertThat(firstId).isPresent();
+    migrator.migrateTo(3, () -> true);
 
-    migrator.startOngoingMigration(); // second call — should no-op
-    assertThat(migrator.blockObserverId).isEqualTo(firstId);
+    assertThat(getArchivedAccountKey(3L)).isPresent();
+    assertThat(getArchivedAccountKey(4L)).isEmpty();
+    assertThat(migrator.getMigrationProgress()).isEqualTo(Optional.of(3L));
   }
 
   @Test
-  public void startOngoingMigrationInitializesMetricFromSavedProgress() throws Exception {
+  public void migrateToStopsBetweenBlocksWhenKeepGoingTurnsFalse() {
+    appendBlocks(5);
+    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator(BOUNDARY_DISABLED);
+    final AtomicInteger checks = new AtomicInteger();
+
+    migrator.migrateTo(5, () -> checks.incrementAndGet() <= 2);
+
+    assertThat(migrator.getMigratedBlockNumber()).isEqualTo(2L);
+  }
+
+  @Test
+  public void migrateToThrowsOnMissingTrieLog() {
+    appendBlocks(3);
+    when(trieLogManager.getTrieLogLayer(hashAt(2L))).thenReturn(Optional.empty());
+    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator(BOUNDARY_DISABLED);
+
+    assertThatThrownBy(() -> migrator.migrateTo(3, () -> true))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("block 2");
+    assertThat(migrator.getMigratedBlockNumber()).isEqualTo(1L);
+  }
+
+  @Test
+  public void loadMigrationProgressSeedsFromSavedProgress() throws Exception {
     appendBlocks(5);
     final BonsaiFlatDbToArchiveMigrator firstMigrator = createMigrator(BOUNDARY_DISABLED);
     firstMigrator.migrate().get(MIGRATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     firstMigrator.close();
 
-    // Second migrator simulates a restart — metric should be initialized from saved progress
     final BonsaiFlatDbToArchiveMigrator secondMigrator = createMigrator(BOUNDARY_DISABLED);
-    assertThat(secondMigrator.migratedBlockNumber.get()).isEqualTo(0L);
-    secondMigrator.startOngoingMigration();
-    assertThat(secondMigrator.migratedBlockNumber.get()).isEqualTo(5L);
-    secondMigrator.close();
+    secondMigrator.loadMigrationProgress();
+
+    assertThat(secondMigrator.getMigratedBlockNumber()).isEqualTo(5L);
   }
 
   // --- test helpers ---
@@ -582,7 +512,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
             worldStateStorage,
             trieLogManager,
             blockchain,
-            Executors.newScheduledThreadPool(1),
+            Executors.newSingleThreadExecutor(),
             metricsSystem,
             archiveStrategy);
     migrators.add(migrator);
