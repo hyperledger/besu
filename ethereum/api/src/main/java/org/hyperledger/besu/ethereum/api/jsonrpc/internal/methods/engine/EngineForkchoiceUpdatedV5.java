@@ -123,30 +123,6 @@ public final class EngineForkchoiceUpdatedV5<
         });
   }
 
-  //  private List<Transaction> decodeInclusionListTransactions(final List<Bytes> rawTransactions) {
-  //    final List<Transaction> ilTxs = new ArrayList<>(rawTransactions.size());
-  //    for (final Bytes rawTransaction : rawTransactions) {
-  //      try {
-  //        ilTxs.add(TransactionDecoder.decodeOpaqueBytes(rawTransaction,
-  // EncodingContext.BLOCK_BODY));
-  //      } catch (final Exception e) {
-  //        logger()
-  //            .atInfo()
-  //            .setMessage("Ignoring invalid IL tx bytes {}")
-  //            .addArgument(rawTransaction::toHexString)
-  //            .log();
-  //      }
-  //    }
-  //
-  //    logger()
-  //        .atInfo()
-  //        .setMessage("Received {} inclusion list transactions")
-  //        .addArgument(ilTxs.size())
-  //        .log();
-  //
-  //    return ilTxs;
-  //  }
-
   @Override
   protected ForkchoiceUpdatedResultV1 createInvalidBlockResult(final ForkchoiceStateV1 forkChoice) {
     return new ForkchoiceUpdatedResultV2(

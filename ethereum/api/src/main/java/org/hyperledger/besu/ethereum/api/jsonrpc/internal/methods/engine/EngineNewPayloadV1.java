@@ -242,9 +242,8 @@ public sealed class EngineNewPayloadV1<
           .setMessage("block {} already present")
           .addArgument(newBlockHeader::toLogString)
           .log();
-      // the block was validated when it was first received, but this request can carry data it was
-      // not checked against (e.g. a different inclusion list), so the post-execution validation
-      // runs again
+      // versions decide when a payload already present must be processed again, e.g. because
+      // the request carries data it was not validated against, see isPayloadPresent
       return respondWithAlreadyExists(reqId, requestParameters, block.getHash());
     }
 
@@ -274,9 +273,6 @@ public sealed class EngineNewPayloadV1<
     final long startTimeNs = System.nanoTime();
     final BlockProcessingResult executionResult = rememberBlock(block, requestParameters);
     if (executionResult.isSuccessful()) {
-      //      final PayloadPostExecutionValidationResultV1 postExecutionResult =
-      //          validatePostExecution(reqId, requestParameters, block);
-
       lastExecutionTimeInNs = System.nanoTime() - startTimeNs;
       logImportedBlockInfo(
           block, lastExecutionTimeInNs, executionResult.getNbParallelizedTransactions());
@@ -405,8 +401,7 @@ public sealed class EngineNewPayloadV1<
       final Object requestId,
       final NPRP requestParameters,
       final BlockHeader newBlockHeader,
-      final BlockProcessingResult executionResult /*,
-      final PayloadPostExecutionValidationResultV1 postExecutionResult*/) {
+      final BlockProcessingResult executionResult) {
     return respondWithValidStatus(
         requestId, requestParameters, newBlockHeader.getHash(), executionResult);
   }
@@ -506,25 +501,6 @@ public sealed class EngineNewPayloadV1<
   protected ValidationResult<RpcErrorType> validateParameters(final NPRP requestParameters) {
     return ValidationResult.valid();
   }
-
-  //  /**
-  //   * Extension point for version-specific validation that requires a successfully processed
-  // block
-  //   * (e.g. inclusion list satisfaction, EIP-7805). The result is passed to {@link
-  //   * #createValidPayloadStatus} so that the VALID response can report it.
-  //   *
-  //   * <p>It is called both for a block that was just processed and for a block that was already
-  //   * present, since the request can carry data the block was not checked against yet.
-  //   *
-  //   * @param reqId the request id
-  //   * @param requestParameters the request parameters
-  //   * @param block the successfully processed block
-  //   * @return the post-execution validation result
-  //   */
-  //  protected PayloadPostExecutionValidationResultV1 validatePostExecution(
-  //      final Object reqId, final NPRP requestParameters, final Block block) {
-  //    return PayloadPostExecutionValidationResultV1.SUCCESS;
-  //  }
 
   protected ValidationResult<RpcErrorType> validateNewBlock(
       final Block newBlock,

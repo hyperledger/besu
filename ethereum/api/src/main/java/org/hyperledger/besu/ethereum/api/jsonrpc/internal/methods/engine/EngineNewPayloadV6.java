@@ -59,7 +59,6 @@ public final class EngineNewPayloadV6<
 
   private static final Logger LOG = LoggerFactory.getLogger(EngineNewPayloadV6.class);
 
-  //  private final InclusionListValidator inclusionListValidator = new InclusionListValidator();
   private final MutableBlockchain blockchain;
 
   public EngineNewPayloadV6(
@@ -178,74 +177,4 @@ public final class EngineNewPayloadV6<
         Optional.of(requestParameters.payloadParameter().getBlockAccessList()),
         requestParameters.inclusionListTransactions().getTransactions());
   }
-
-  //  @Override
-  //  protected PayloadPostExecutionValidationResultV1 validatePostExecution(
-  //      final Object reqId, final NPRP requestParameters, final Block block) {
-  //    final PayloadPostExecutionValidationResultV1 result =
-  //        validateInclusionList(requestParameters, block);
-  //    blockchain.putInclusionListStatus(block.getHash(), result.isInclusionListSatisfied());
-  //    return result;
-  //  }
-  //
-  //  private PayloadPostExecutionValidationResultV1 validateInclusionList(
-  //      final NPRP requestParameters, final Block block) {
-  //
-  //    final EP blockParam = requestParameters.payloadParameter();
-  //    final Set<Transaction> inclusionListHexTransactions =
-  //        requestParameters.inclusionListTransactions();
-  //    if (inclusionListHexTransactions == null || inclusionListHexTransactions.isEmpty()) {
-  //      return PayloadPostExecutionValidationResultV1.SUCCESS;
-  //    }
-  //
-  //    try {
-  //      final Set<Transaction> payloadTransactions = Set.copyOf(blockParam.getTransactions());
-  //      final List<Bytes> notConfirmedILTxs = new ArrayList<>();
-  //      for (final String ilHexTx : inclusionListHexTransactions) {
-  //        final Bytes rawTx = Bytes.fromHexString(ilHexTx);
-  //        if (isAlreadyInPayload(rawTx, payloadTransactions)) {
-  //          LOG.info("IL tx already confirmed: {}", ilHexTx);
-  //        } else {
-  //          LOG.info("IL tx not confirmed, verify if it could be included: {}", ilHexTx);
-  //          notConfirmedILTxs.add(rawTx);
-  //        }
-  //      }
-  //
-  //      if (notConfirmedILTxs.isEmpty()) {
-  //        return PayloadPostExecutionValidationResultV1.SUCCESS;
-  //      }
-  //
-  //      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
-  //
-  //      // the block has been validated, so its gas used is the cumulative block gas used, and it
-  // is
-  //      // also available when the block was already present and not processed again
-  //      final InclusionListValidationResult result =
-  //          inclusionListValidator.validate(
-  //              protocolSpec,
-  //              protocolContext,
-  //              block.getHeader(),
-  //              block.getHeader().getGasUsed(),
-  //              notConfirmedILTxs);
-  //      if (result.isValid()) {
-  //        return PayloadPostExecutionValidationResultV1.SUCCESS;
-  //      }
-  //
-  //      return new PayloadPostExecutionValidationResultV1(false);
-  //    } catch (final Exception e) {
-  //      throw e;
-  //    }
-  //  }
-  //
-  //  private boolean isAlreadyInPayload(
-  //      final Bytes rawTx, final Set<Transaction> payloadTransactions) {
-  //    try {
-  //      return payloadTransactions.contains(
-  //          TransactionDecoder.decodeOpaqueBytes(rawTx, EncodingContext.BLOCK_BODY));
-  //    } catch (final Exception e) {
-  //      // undecodable transactions cannot be confirmed as already included; let the validator
-  //      // decide (it safely skips undecodable bytes too)
-  //      return false;
-  //    }
-  //  }
 }
